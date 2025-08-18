@@ -59,7 +59,7 @@ class TestInputValidationAndErrorHandling:
         # Test preview with empty cards
         html = create_simple_grid_html([])
         assert isinstance(html, str)
-        assert "simple-card" in html or "empty" in html.lower()
+        assert "输入汉字以查看预览" in html
     
     def test_invalid_data_type_handling(self):
         """Test handling of invalid data types."""
