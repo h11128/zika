@@ -66,4 +66,6 @@ def pytest_collection_modifyitems(config, items):
 
         if 'performance' in nodeid:
             item.add_marker(pytest.mark.performance)
-            item.add_marker(pytest.mark.slow)
+            # Only mark as slow if it's specifically a slow performance test
+            if 'slow' in nodeid or 'benchmark' in nodeid:
+                item.add_marker(pytest.mark.slow)
