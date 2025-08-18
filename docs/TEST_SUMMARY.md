@@ -14,7 +14,7 @@ Root placement conventions:
 - Framework-agnostic modules live in src/; services wrap them for app use; UI does not import src directly
 
 ```text
-├── web_ui.py                 # Main Streamlit application (34 lines)
+├── web_ui.py                 # Main Streamlit application (163 lines)
 ├── core/
 │   ├── constants.py          # Application constants and defaults
 │   └── state.py              # Session state management
@@ -23,23 +23,20 @@ Root placement conventions:
 │   ├── export.py             # Export functionality (PPTX/PDF)
 │   └── processing.py         # Text processing and data generation
 ├── ui/
-│   ├── app_controller.py     # Main application controller (flows, error handling)
 │   ├── components.py         # Reusable UI components
 │   ├── sections.py           # Major page sections
 │   └── styles.py             # CSS and styling utilities
 
 
 ## Architecture Diagram
-
 ```mermaid
 flowchart TD
-  A[web_ui.py] --> L[ui/app_controller.py]
-  L --> B[ui/sections.py]
+  A[web_ui.py] --> B[ui/sections.py]
   B --> C[ui/components.py]
-  L --> D[core/state.py]
-  L --> E[services/processing.py]
-  L --> F[services/cache.py]
-  L --> G[services/export.py]
+  A --> D[core/state.py]
+  A --> E[services/processing.py]
+  A --> F[services/cache.py]
+  A --> G[services/export.py]
   E --> H[src/pinyin_utils.py]
   E --> I[src/dict_utils.py]
   G --> J[src/layout_pptx.py]

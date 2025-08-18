@@ -200,3 +200,38 @@ def is_export_ready(format_type: str) -> bool:
 def get_export_data(format_type: str) -> Dict[str, Any]:
     """Get export data for a specific format."""
     return st.session_state.export_data.get(format_type, {})
+
+
+# Enhanced parameter management functions
+def get_all_ui_params(card_size: float, gap: float, margin: float, page_size: str,
+                     font_hanzi: int, font_pinyin: int, font_english: int,
+                     processed_cards: List[Dict[str, str]]) -> Dict[str, Any]:
+    """Get all UI parameters for change detection in a unified way."""
+    layout = get_layout_settings()
+    prefs = get_ui_preferences()
+
+    return {
+        'card_size': card_size,
+        'gap': gap,
+        'margin': margin,
+        'page_size': page_size,
+        'font_hanzi': font_hanzi,
+        'font_pinyin': font_pinyin,
+        'font_english': font_english,
+        'hanzi_font': prefs['hanzi_font'],
+        'background_color': prefs['background_color'],
+        'rows': layout['rows'],
+        'cols': layout['cols'],
+        'auto_fill': layout['auto_fill'],
+        'total_cards': len(processed_cards)
+    }
+
+
+def handle_param_changes(current_params: Dict[str, Any]) -> bool:
+    """Handle parameter changes and return True if changes were detected."""
+    if check_params_changed(current_params):
+        set_current_page(0)
+        update_last_params(current_params)
+        clear_export_data()
+        return True
+    return False

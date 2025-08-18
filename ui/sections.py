@@ -5,16 +5,17 @@ Major page sections: sidebar, input, options, preview, and export.
 
 import streamlit as st
 import pandas as pd
-import tempfile
-import os
 import time
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Any
+from core.config import UIConfig, LayoutConfig, AppConfig
 from io import StringIO
 
 from core.constants import (
     HANZI_FONT_OPTIONS, PRESET_COLORS, DEFAULT_ROWS, DEFAULT_COLS, DEFAULT_AUTO_FILL
 )
+from core.state import get_ui_preferences, get_layout_settings, get_current_page, set_current_page
 from services.processing import parse_input_text, auto_segment_text
+from services.cache import create_preview_html
 from ui.components import render_color_palette, render_page_navigation, render_preview_section, render_page_info
 
 
@@ -432,3 +433,156 @@ def render_export_section(processed_cards: List[Dict[str, str]]) -> None:
         st.info(f"💡 将导出 {len(current_processed_cards)} 张卡片")
         if len(current_processed_cards) > 50:
             st.warning("⚠️ 卡片数量较多，导出可能需要一些时间")
+
+
+# High-level rendering functions for better organization
+def render_left_column():
+    """Render the left column with input and options, return all parameters."""
+    cards = render_input_section()
+    auto_pinyin, auto_translate, page_size, card_size = render_options_section()
+    gap, margin, font_hanzi, font_pinyin, font_english, _, _ = render_advanced_options()
+
+    return {
+        'cards': cards,
+        'auto_pinyin': auto_pinyin,
+        'auto_translate': auto_translate,
+        'page_size': page_size,
+        'card_size': card_size,
+        'gap': gap,
+        'margin': margin,
+        'font_hanzi': font_hanzi,
+        'font_pinyin': font_pinyin,
+        'font_english': font_english
+    }
+
+
+def render_preview_column_header():
+    """Render the preview column header with mode selection."""
+    # Get UI preferences
+    prefs = get_ui_preferences()
+    hanzi_font, background_color = prefs['hanzi_font'], prefs['background_color']
+
+    # Preview mode selection
+    preview_mode = st.radio(
+        "预览模式",
+        ["📄 完整页面", "🔲 简单网格"],
+        horizontal=True,
+        help="完整页面：按实际打印布局预览；简单网格：快速查看卡片内容"
+    )
+
+    return {
+        'hanzi_font': hanzi_font,
+        'background_color': background_color,
+        'preview_mode': preview_mode
+    }
+
+
+def _validate_preview_inputs(processed_cards: List[Dict[str, str]],
+                           config: AppConfig) -> Tuple[List[Dict[str, str]], AppConfig]:
+    """Validate and sanitize input parameters for preview rendering."""
+    if not isinstance(processed_cards, list):
+        processed_cards = []
+    if not isinstance(config, AppConfig):
+        config = AppConfig.default()
+
+    return processed_cards, config
+
+
+def _calculate_pagination(processed_cards: List[Dict[str, str]]) -> Tuple[int, int]:
+    """Calculate pagination information for cards."""
+    layout = get_layout_settings()
+    cards_per_page = max(1, layout['rows'] * layout['cols'])
+    total_pages = max(1, (len(processed_cards) + cards_per_page - 1) // cards_per_page)
+    return cards_per_page, total_pages
+
+
+def _manage_page_state(total_pages: int) -> None:
+    """Manage current page state and reset if out of range."""
+    current_page = get_current_page()
+    if current_page >= total_pages:
+        set_current_page(0)
+
+
+def _render_preview_ui(processed_cards: List[Dict[str, str]],
+                      config: AppConfig,
+                      cards_per_page: int,
+                      total_pages: int) -> None:
+    """Render the preview UI components."""
+    render_page_navigation(total_pages)
+    render_preview_section(
+        processed_cards, config.ui.preview_mode,
+        config.layout.card_size, config.layout.gap, config.layout.margin,
+        config.layout.font_hanzi, config.layout.font_pinyin, config.layout.font_english,
+        config.layout.page_size, config.ui.hanzi_font, config.ui.background_color,
+        config.layout.rows, config.layout.cols, config.layout.auto_fill
+    )
+    render_page_info(processed_cards, cards_per_page, total_pages)
+
+
+def _render_empty_preview() -> None:
+    """Render preview for empty cards case."""
+    try:
+        st.components.v1.html(create_preview_html([]), height=650)
+    except Exception as e:
+        st.error(f"预览渲染错误: {e}")
+
+
+def render_preview_content(processed_cards: List[Dict[str, str]],
+                          config: AppConfig) -> Tuple[int, int]:
+    """
+    Render the preview content area with navigation and editing.
+
+    Args:
+        processed_cards: List of card dictionaries with hanzi, pinyin, english
+        config: Application configuration object containing UI and layout settings
+
+    Returns:
+        Tuple[int, int]: (cards_per_page, total_pages)
+    """
+    # Validate inputs
+    processed_cards, config = _validate_preview_inputs(processed_cards, config)
+
+    if processed_cards:
+        # Calculate pagination
+        cards_per_page, total_pages = _calculate_pagination(processed_cards)
+
+        # Manage page state
+        _manage_page_state(total_pages)
+
+        # Render UI components
+        _render_preview_ui(processed_cards, config, cards_per_page, total_pages)
+
+        return cards_per_page, total_pages
+    else:
+        # Handle empty cards case
+        _render_empty_preview()
+        return 0, 1  # 0 cards per page, but at least 1 page for empty state
+
+
+# Legacy function for backward compatibility
+def render_preview_content_legacy(processed_cards: List[Dict[str, str]],
+                                 preview_params: Dict[str, str],
+                                 layout_params: Dict[str, Any]) -> Tuple[int, int]:
+    """Legacy function that converts dict parameters to config objects."""
+    from core.config import create_config_from_params
+
+    # Extract layout settings from current state
+    layout_settings = get_layout_settings()
+
+    config = create_config_from_params(
+        card_size=layout_params.get('card_size', 5.5),
+        gap=layout_params.get('gap', 0.5),
+        margin=layout_params.get('margin', 1.0),
+        page_size=layout_params.get('page_size', 'A4'),
+        font_hanzi=layout_params.get('font_hanzi', 48),
+        font_pinyin=layout_params.get('font_pinyin', 18),
+        font_english=layout_params.get('font_english', 14),
+        hanzi_font=preview_params.get('hanzi_font', 'SimHei'),
+        background_color=preview_params.get('background_color', '#ffffff'),
+        preview_mode=preview_params.get('preview_mode', '📄 完整页面'),
+        rows=layout_settings.get('rows', 2),
+        cols=layout_settings.get('cols', 3),
+        auto_fill=layout_settings.get('auto_fill', True)
+    )
+
+    return render_preview_content(processed_cards, config)

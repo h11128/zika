@@ -10,11 +10,11 @@ python -m streamlit run web_ui.py
 
 然后在浏览器中打开 `http://localhost:8501`
 
-> 提示：以下截图为占位。请在使用中替换为实际应用截图。
+> 提示：以下截图为演示示意。
 >
-> - 颜色调色板与实时预览（占位）
+> - 颜色调色板与实时预览
 >   - images/color_palette.png
-> - 完整页面预览（占位）
+> - 完整页面预览
 >   - images/page_preview.png
 
 ## 📱 界面介绍

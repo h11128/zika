@@ -282,9 +282,9 @@ def create_preview_html(cards: List[Dict[str, str]], max_cards: int = 9) -> str:
     from core.constants import (
         DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN, DEFAULT_FONT_HANZI,
         DEFAULT_FONT_PINYIN, DEFAULT_FONT_ENGLISH, DEFAULT_PAGE_SIZE,
-        DEFAULT_ROWS, DEFAULT_AUTO_FILL
+        DEFAULT_ROWS, DEFAULT_COLS, DEFAULT_AUTO_FILL
     )
     return cached_create_page_preview_html(cards, 0, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
                                          DEFAULT_FONT_HANZI, DEFAULT_FONT_PINYIN, DEFAULT_FONT_ENGLISH,
                                          DEFAULT_PAGE_SIZE, DEFAULT_HANZI_FONT, DEFAULT_BACKGROUND_COLOR,
-                                         DEFAULT_ROWS, DEFAULT_ROWS, DEFAULT_AUTO_FILL)
+                                         DEFAULT_ROWS, DEFAULT_COLS, DEFAULT_AUTO_FILL)
