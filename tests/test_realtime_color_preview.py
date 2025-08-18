@@ -6,20 +6,21 @@ Test the real-time color preview functionality
 import sys
 import os
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Ensure project root is on sys.path for `from src...` imports
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-from pinyin_utils import hanzi_to_pinyin, contains_chinese
-from dict_utils import create_default_dict
+from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
+from src.dict_utils import create_default_dict
 
 def test_color_preview_html_generation():
     """Test that HTML generation works with different colors."""
     print("🎨 Testing real-time color preview HTML generation...")
     
-    # Import the HTML generation functions
-    sys.path.insert(0, os.path.dirname(__file__))
-    from web_ui import create_simple_grid_html, create_page_preview_html
-    
+    # Import the HTML generation functions directly from services.cache to avoid importing web_ui during tests
+    from services.cache import create_simple_grid_html, create_page_preview_html
+
     # Test cards
     test_cards = [
         {'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'},

@@ -6,11 +6,13 @@ Test Web UI translation functionality with CC-CEDICT
 import sys
 import os
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Ensure project root is on sys.path for `from src...` imports
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-from pinyin_utils import hanzi_to_pinyin, contains_chinese
-from dict_utils import create_default_dict
+from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
+from src.dict_utils import create_default_dict
 
 def simulate_web_ui_card_generation():
     """Simulate the card generation process from web UI."""

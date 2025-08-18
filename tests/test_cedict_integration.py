@@ -6,10 +6,12 @@ Test CC-CEDICT integration
 import sys
 import os
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Ensure project root is on sys.path for `from src...` imports
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-from dict_utils import create_default_dict
+from src.dict_utils import create_default_dict
 
 def test_cedict_integration():
     """Test the CEDICT integration."""

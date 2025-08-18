@@ -5,12 +5,15 @@ Test script to verify export functionality works correctly
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Ensure project root is on sys.path for `from src...` imports
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-from pinyin_utils import hanzi_to_pinyin, contains_chinese
-from dict_utils import create_default_dict
-from layout_pptx import PPTXCardGenerator
-from layout_pdf import PDFCardGenerator
+from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
+from src.dict_utils import create_default_dict
+from src.layout_pptx import PPTXCardGenerator
+from src.layout_pdf import PDFCardGenerator
 
 def test_export_workflow():
     """Test the complete export workflow"""

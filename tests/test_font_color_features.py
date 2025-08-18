@@ -7,12 +7,14 @@ import sys
 import os
 import tempfile
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Ensure project root is on sys.path for `from src...` imports
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-from pinyin_utils import hanzi_to_pinyin, contains_chinese
-from dict_utils import create_default_dict
-from layout_pptx import PPTXCardGenerator
+from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
+from src.dict_utils import create_default_dict
+from src.layout_pptx import PPTXCardGenerator
 
 def test_font_and_color_features():
     """Test the new font and background color features."""
@@ -118,10 +120,9 @@ def test_web_ui_integration():
     """Test integration with web UI export function."""
     print(f"\n🌐 Testing Web UI integration...")
     
-    # Import the export function from web UI
-    sys.path.insert(0, os.path.dirname(__file__))
-    from web_ui import export_cards
-    
+    # Import the export function directly from services (avoid importing web_ui during tests)
+    from services.export import export_cards
+
     # Test cards
     test_cards = [
         {'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'},
