@@ -1,0 +1,4 @@
+# Relax markdownlint for archived docs by ignoring them
+# This prevents lint rules from applying to these historical files.
+docs/archive/**
+

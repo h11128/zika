@@ -1,5 +1,7 @@
 # web_ui.py 重构方案（遵循最佳实践）
 
+> 状态：已完成（Completed）。最终架构请参考《ARCHITECTURE.md》。以下步骤保留为历史记录与规范说明。
+
 ## 一、背景与目标
 
 当前 `web_ui.py` 文件承载了页面配置、状态管理、数据处理、UI 组件、预览渲染、导出等多重职责，文件体量大、耦合高，不利于维护与测试。重构目标：
@@ -11,7 +13,9 @@
 
 ## 二、建议目录结构
 
-```
+参见《ARCHITECTURE.md》的“Directory Structure”和“Module Responsibilities”章节以获取最终实现版本与职责边界说明。
+
+```text
 web_ui.py                 # 应用入口（薄层 orchestrator）
 
 core/
@@ -52,8 +56,6 @@ docs/
   - `web_ui.py`（入口）、核心库模块（如 `layout_*`、工具类库）、README/指南类文档
 - 迁移后不应再新增 UI/Services/Core 等子模块于根目录
 - `docs/`、`ui/`、`services/`、`core/` 独立文件夹，用于分层管理
-
-
 
 ## 三、模块职责边界
 
@@ -104,11 +106,11 @@ docs/
 
 ## 五、迁移步骤（小步安全演进）
 
-1) 抽常量与缓存
+1. 抽常量与缓存
+
 - 新建 `core/constants.py`：预设颜色、字体、默认值
 - 新建 `services/cache.py`：迁移 `cached_create_page_preview_html`、`cached_create_simple_grid_html`
 - `web_ui.py` 改为 `from services.cache import ...`
-
 
 ## 六.1、Cleanup Plan（清理计划）
 
@@ -126,24 +128,29 @@ docs/
   - 手动回归：颜色选择、预览更新、分页、导出
   - 脚本测试：运行现有测试脚本 `test_*`，增补 services 层单测
 
-2) 抽 UI 组件
+1. 抽 UI 组件
+
 - 新建 `ui/components.py`：迁移 `render_color_palette`、分页导航、预览占位等
 - `web_ui.py` 改为使用组件函数，删除重复/内联实现
 
-3) 抽 Sections
+1. 抽 Sections
+
 - 新建 `ui/sections.py`：将“侧边栏/输入/高级选项/预览/导出”拆为独立函数
 - `web_ui.py` 仅保留“调用顺序”和少量数据传递
 
-4) 抽处理与导出
+1. 抽处理与导出
+
 - 新建 `services/processing.py`：`parse_input_text`、`generate_missing_data`
 - 新建 `services/export.py`：`export_cards`（封装现有 layout_* 调用）
 - `web_ui.py` 改为从 `services` 导入
 
-5) 抽 State
+1. 抽 State
+
 - 新建 `core/state.py`：session_state 初始化与读写门面
 - `web_ui.py` 改为使用 `state.*` 函数
 
-6) 清理与文档
+1. 清理与文档
+
 - 移除散落的 CSS/JS，集中到 `ui/styles.py` 或组件内部
 - 新建/更新 `docs/ARCHITECTURE.md`，记录模块边界、依赖关系、缓存策略
 
@@ -206,3 +213,4 @@ docs/
 
 - v1.0：初始化文档与分层方案
 
+```text

@@ -1,246 +1,273 @@
-# Chinese Character Learning Cards Generator
+# 🀄 Chinese Learning Cards Generator
 
-A Python tool for generating printable Chinese character learning cards with automatic pinyin and English translation generation. Creates 3×3 grid layouts in PPTX or PDF format for easy printing and studying.
+Streamlit-based web app to generate printable Chinese learning cards, with real-time preview and export to PPTX/PDF. A CLI workflow is also available for batch/offline use.
 
-## Features
+- UI guide: docs/WEB_UI_GUIDE.md
+- Architecture: docs/ARCHITECTURE.md
+- Refactor plan (completed): docs/WEB_UI_REFACTOR_PLAN.md
+- Color UI details: docs/Color_UI_Improvements.md
+- Docs index: docs/README.md
 
-- **Input**: CSV/TSV files with Chinese words (supports missing pinyin/translations)
-- **Auto-generation**: Automatic pinyin generation using `pypinyin` and English translations using built-in dictionary
-- **Output formats**: 
-  - **PPTX**: Editable PowerPoint slides with independent text boxes
-  - **PDF**: Print-ready PDF with vector graphics
-- **Customizable layout**: Adjustable card size, spacing, margins, and fonts
-- **Offline operation**: No internet required, uses built-in Chinese-English dictionary
+> 注：本仓库同时保留了最初的 CLI 文档作为补充说明（见 docs/要求.md）。
 
-## Installation
+# 一、目标与范围
 
-1. **Clone or download this repository**
+## 目标
 
-2. **Install Python dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+* 输入：一份词表（`汉字/词语, [可选]拼音, [可选]英文`）。
+* 处理：若拼音/翻译缺失，自动生成：
 
-3. **Verify installation**:
-   ```bash
-   python src/gen_cards.py --help
-   ```
+  * 拼音：带声调的标准拼音；
+  * 翻译：优先取词典首义项，可人工覆盖。
+* 输出（任选其一或全部）：
 
-## Quick Start
+  1. **PPTX（推荐）**：每页 3×3 独立方框（互不共享边线），可在 PowerPoint 里直接编辑与打印；
+  2. **PDF**：同样的 3×3 布局，直接打印最稳定；
+  3. **DOCX（备选）**：用表格+间距实现接近效果（Word 的表格边线天然共享，已知限制）。
 
-### Option 1: Web UI (Recommended) 🌟
+**不做**（初版）：在线翻译接口调用、复杂多义项选择 UI、自动断行/缩放到极端字号。
 
-1. **Launch the web interface**:
-   ```bash
-   python -m streamlit run web_ui.py
-   ```
+---
 
-2. **Open your browser** to `http://localhost:8501`
+# 二、技术选型（以“最快落地”为原则）
 
-3. **Enter Chinese characters** in the text box (space-separated):
-   ```
-   爱 家 朋友 水 火 山 月 日 木
-   ```
+* **语言**：Python 3.10+
+* **库**
 
-   Or enter continuous text and use auto-segmentation:
-   ```
-   我爱我的家人朋友们 → 我 爱 我的 家人 朋友 们
-   ```
+  * 拼音：`pypinyin`（支持多音字、声调：`Style.TONE`）
+  * 翻译词典：**CC-CEDICT**（离线开源中英词典）。做法：项目内自带一个**精简 JSON 词典**（常用字/词 2–5k 条，覆盖率高）；也支持用户放入完整 `cedict_ts.u8` 文件以提升覆盖率
+  * 生成 PPT：`python-pptx`（每个卡片=独立矩形文本框，独立边线，编辑与打印友好）
+  * 生成 PDF：`reportlab`（矢量方框，印刷级稳定）
+  * 可选：`opencc`（繁简转换），`jieba`（需要时做分词，处理多字词）
 
-4. **See real-time preview** with 3×3 grid layout and click "导出 PPTX" or "导出 PDF"
+---
 
-**Web UI Features:**
-- 🎯 **Real-time preview**: See your cards as you type
-- ⚙️ **Interactive controls**: Adjust fonts, sizes, and layout with sliders
-- 📱 **Responsive design**: Works on desktop and mobile browsers
-- 🚀 **One-click export**: Download PPTX or PDF instantly
-- 🔧 **Advanced options**: Fine-tune spacing, margins, and typography
-- 🔤 **Smart segmentation**: Auto-split continuous Chinese text into words
-- 📊 **Usage statistics**: Track your card generation history
-- 📁 **File upload**: Import CSV files with batch processing
+# 三、目录结构（简化）
 
-### Option 2: Command Line
-
-1. **Prepare your word list** (see `samples/words.csv` for format):
-   ```csv
-   hanzi,pinyin,english
-   爱,,love
-   家,jiā,home
-   朋友,péngyou,friend
-   水,,water
-   ```
-
-2. **Generate PPTX cards with auto-completion**:
-   ```bash
-   python src/gen_cards.py \
-     --in samples/words.csv \
-     --out out/cards.pptx \
-     --format pptx \
-     --auto-pinyin --auto-translate \
-     --card-size 5.5 --gap 0.5
-   ```
-
-3. **Generate PDF cards**:
-   ```bash
-   python src/gen_cards.py \
-     --in samples/words.csv \
-     --out out/cards.pdf \
-     --format pdf \
-     --auto-pinyin --auto-translate \
-     --card-size 5.5 --gap 0.5
-   ```
-
-## Usage
-
-### Basic Command Structure
-```bash
-python src/gen_cards.py --in INPUT_FILE --out OUTPUT_FILE --format FORMAT [OPTIONS]
+```text
+.
+├─ web_ui.py                  # Streamlit 应用入口
+├─ core/                      # 常量、状态
+├─ services/                  # 处理、导出、缓存
+├─ ui/                        # 组件、区块、样式
+├─ src/                       # 与框架无关的库模块（pinyin、dict、layout_*、脚本）
+├─ docs/                      # 文档（见 docs/README.md）
+├─ tests/                     # 测试
+├─ data/                      # 词典数据
+├─ samples/                   # 示例输入
+└─ out/                       # 导出文件
 ```
 
-### Input File Format
+---
 
-**CSV format** (recommended):
+# 四、输入格式（CSV/TSV/纯文本）
+
+* **CSV（推荐）**：`hanzi,pinyin,english`
+* 允许缺列或留空：缺失时自动补全
+* 示例 `samples/words.csv`：
+
 ```csv
-hanzi,pinyin,english
 爱,,love
 家,jiā,home
 朋友,péngyou,friend
+水,,water
+火,huǒ,fire
+山,,mountain
+月,,moon
+日,,sun
+木,,wood
 ```
 
-**Flexible column names**: The tool recognizes various column names:
-- Chinese: `hanzi`, `chinese`, `word`, `character`
-- Pinyin: `pinyin`, `pronunciation`, `reading`
-- English: `english`, `translation`, `meaning`, `definition`
+---
 
-**Missing data**: Leave pinyin or English columns empty to auto-generate them.
+# 四、运行与使用
 
-### Command Line Options
+## 启动 Web UI
 
-#### Required Arguments
-- `--in INPUT_FILE`: Input CSV/TSV file
-- `--out OUTPUT_FILE`: Output file path
-- `--format {pptx,pdf}`: Output format
-
-#### Processing Options
-- `--auto-pinyin`: Auto-generate pinyin for missing entries
-- `--auto-translate`: Auto-generate English translations
-- `--heteronym`: Show multiple pronunciations for polyphonic characters
-- `--dict DICT_PATH`: Custom dictionary file path
-
-#### Layout Options
-- `--page {A4,Letter}`: Page size (default: A4)
-- `--card-size SIZE`: Card size in cm (default: 6.0)
-- `--gap SIZE`: Gap between cards in cm (default: 0.6)
-- `--margin SIZE`: Page margin in cm (default: 1.0)
-
-#### Font Options
-- `--font-hanzi SIZE`: Chinese character font size (default: 48)
-- `--font-pinyin SIZE`: Pinyin font size (default: 18)
-- `--font-english SIZE`: English font size (default: 14)
-
-### Examples
-
-**Basic usage with auto-generation**:
 ```bash
-python src/gen_cards.py --in words.csv --out cards.pptx --format pptx --auto-pinyin --auto-translate
+python -m streamlit run web_ui.py
 ```
 
-**Custom layout for smaller cards**:
+然后在浏览器中打开 <http://localhost:8501>
+
+## 导出
+
+- PPTX 和 PDF 导出按钮位于主界面
+- 导出文件会通过浏览器下载
+
+# 五、CLI 用法（示例）
+
 ```bash
-python src/gen_cards.py --in words.csv --out cards.pdf --format pdf \
-  --card-size 5 --gap 0.8 --margin 1.5 --auto-pinyin --auto-translate
+# 安装依赖
+pip install pypinyin python-pptx reportlab opencc jieba
+
+# 生成 PPTX（可编辑、独立边框）
+python src/gen_cards.py \
+  --in samples/words.csv \
+  --out out/cards.pptx \
+  --format pptx \
+  --page A4 --card-size 6 --gap 0.6 --margin 1 \
+  --font-hanzi 48 --font-pinyin 18 --font-en 14 \
+  --auto-pinyin --auto-translate --dict data/mini_cedict.json
+
+# 生成 PDF（直接打印）
+python src/gen_cards.py \
+  --in samples/words.csv \
+  --out out/cards.pdf \
+  --format pdf \
+  --page A4 --card-size 6 --gap 0.6 --margin 1
 ```
 
-**Large fonts for beginners**:
-```bash
-python src/gen_cards.py --in words.csv --out cards.pptx --format pptx \
-  --font-hanzi 60 --font-pinyin 24 --font-english 18 --auto-pinyin --auto-translate
+## 关键参数
+
+* `--page`：A4 / Letter
+* `--card-size`：单卡片边长（cm，默认 6）
+* `--gap`：卡片间距（cm，默认 0.6）
+* `--margin`：页面外边距（cm，默认 1）
+* 字体：`--font-hanzi` / `--font-pinyin` / `--font-en`（pt）
+* 自动补全：`--auto-pinyin` / `--auto-translate`
+* 词典：`--dict` 指向 `mini_cedict.json` 或完整 `cedict_ts.u8`
+
+---
+
+# 六、核心实现要点
+
+## 1) 拼音生成
+
+* 使用 `pypinyin`：
+
+  * 多字词直接传整词，得到词级拼音；
+  * 样式：`Style.TONE`（带声调），fallback：`Style.TONE3`（数字声调）；
+  * 多音字策略：默认取**首个常用读音**；支持 `--heteronym` 输出多读音供人工挑选（可写入旁注列）。
+
+## 2) 翻译生成
+
+* 优先查**精简 JSON 词典**（覆盖常用字词，速度快、离线稳定）；
+* 若未命中且提供 `cedict_ts.u8`，则解析 CEDICT，取**首义项**；找不到则留空；
+* 用户手动补充翻译 → 程序优先使用用户给定值（不覆盖）。
+
+## 3) 布局与样式（3×3 九宫格）
+
+* **PPTX**：用 `python-pptx` 在空白幻灯片上添加 9 个矩形 Shape（独立边框，不共享），每个 Shape 内部：
+
+  * 行 1：汉字（加粗，大字号，行距 1.1）
+  * 行 2：拼音（斜体，中字号）
+  * 行 3：英文（小字号）
+  * 文字居中（水平、垂直）
+* **PDF**：`reportlab` 画 9 个方框（`rect`），再在中心写三行文本；同样的边距、间距、字号参数，保证与 PPTX 视觉一致。
+* 页尺寸与边距：A4/Letter + 自定义 `margin`；栅格宽度＝`card-size*3 + gap*2`，按 `start_left/top = margin` 计算九宫格坐标。
+
+---
+
+# 七、最小代码骨架（节选）
+
+**`pinyin_utils.py`**
+
+```python
+from pypinyin import pinyin, Style
+
+def hanzi_to_pinyin(text: str) -> str:
+    py = pinyin(text, style=Style.TONE, heteronym=False)
+    return " ".join(syll[0] for syll in py)
 ```
 
-**Show multiple pronunciations**:
-```bash
-python src/gen_cards.py --in words.csv --out cards.pptx --format pptx \
-  --heteronym --auto-pinyin --auto-translate
+**`dict_utils.py`**
+
+```python
+import json, re
+
+def load_mini_dict(path: str) -> dict:
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def lookup_en(word: str, mini: dict, cedict=None) -> str | None:
+    if word in mini: return mini[word][0]  # 取首义项
+    if cedict:
+        # 简化：假设 cedict 为 {hanzi: [defs...]}
+        defs = cedict.get(word)
+        if defs: return defs[0]
+    return None
 ```
 
-## Project Structure
+**`layout_pptx.py`（单页绘制核心）**
 
+```python
+from pptx import Presentation
+from pptx.util import Cm, Pt
+from pptx.enum.text import PP_ALIGN
+
+def add_page(prs, cards, card_cm=6.0, gap_cm=0.6, margin_cm=1.0,
+             f_hz=48, f_py=18, f_en=14):
+    slide = prs.slides.add_slide(prs.slide_layouts[6])  # 空白
+    for i, card in enumerate(cards):
+        r, c = divmod(i, 3)
+        left = Cm(margin_cm + c * (card_cm + gap_cm))
+        top  = Cm(margin_cm + r * (card_cm + gap_cm))
+        width = height = Cm(card_cm)
+        shape = slide.shapes.add_shape(
+            1, left, top, width, height  # 1=MSO_SHAPE.RECTANGLE
+        )
+        shape.line.width = Pt(2)
+        tf = shape.text_frame
+        tf.clear()
+        for text, size, bold, italic in [
+            (card['hanzi'], f_hz, True, False),
+            (card['pinyin'], f_py, False, True),
+            (card['english'], f_en, False, False),
+        ]:
+            p = tf.add_paragraph() if tf.paragraphs[0].text else tf.paragraphs[0]
+            p.text = text
+            p.font.size = Pt(size); p.font.bold = bold; p.font.italic = italic
+            p.alignment = PP_ALIGN.CENTER
+        # 垂直居中
+        tf.vertical_anchor = 2  # MSO_ANCHOR.MIDDLE
 ```
-hanzi-cards/
-├── data/
-│   └── mini_cedict.json        # Built-in Chinese-English dictionary
-├── src/
-│   ├── gen_cards.py            # Main CLI script
-│   ├── pinyin_utils.py         # Pinyin generation utilities
-│   ├── dict_utils.py           # Dictionary lookup utilities
-│   ├── layout_pptx.py          # PPTX generation
-│   └── layout_pdf.py           # PDF generation
-├── samples/
-│   └── words.csv               # Sample word list
-├── out/                        # Generated output files
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
+
+**`gen_cards.py`（主流程示意）**
+
+```python
+# 1) 读 CSV → rows
+# 2) 对每行：若缺拼音→pypinyin；若缺英文→lookup
+# 3) 分组每9个 → 调用 layout_pptx.add_page 或 layout_pdf.add_page
 ```
 
-## Dictionary
+---
 
-The tool includes a built-in mini dictionary (`data/mini_cedict.json`) with ~300 common Chinese words and characters. For better coverage, you can:
+# 八、质量与边界策略
 
-1. **Use the built-in dictionary** (default): Covers most common words
-2. **Add full CEDICT**: Download `cedict_ts.u8` from [CC-CEDICT](https://www.mdbg.net/chinese/dictionary?page=cc-cedict) and place it in the `data/` directory
+* 多音字：默认首读音；提供 `--heteronym` 导出辅助列供人工审核；
+* 词典未命中：英文留空，不阻断流程；导出后可在 PPTX 手动补齐；
+* 长词/专有名词：可在 CSV 中显式给定拼音/英文以覆盖自动结果；
+* 字体：默认系统字体，用户可在 PPTX 中二次修改（宋体/思源黑体等）。
 
-## Output Formats
+---
 
-### PPTX Format
-- **Advantages**: Editable in PowerPoint, independent text boxes, easy to modify
-- **Use case**: When you need to edit cards after generation
-- **Features**: Each card is a separate shape with independent borders
+# 九、交付物
 
-### PDF Format
-- **Advantages**: Print-ready, consistent formatting, smaller file size
-- **Use case**: Direct printing without editing
-- **Features**: Vector graphics, professional print quality
+* `gen_cards.py` 可执行脚本
+* 示例词表 `samples/words.csv`
+* 预置 `data/mini_cedict.json`（常用词/字）
+* 使用说明 `README.md`
+* 生成样例：`out/cards.pptx`、`out/cards.pdf`
 
-## Tips
+---
 
-1. **Card Layout**: The 3×3 grid fits 9 cards per page. Larger word lists automatically create multiple pages.
+# 十、后续可选增强
 
-2. **Font Considerations**: 
-   - Chinese characters work best with fonts like SimSun, SimHei, or system Chinese fonts
-   - The tool automatically tries to use appropriate fonts for Chinese text
+* 更多导出格式（DOCX、HTML）
+* 主题与样式系统（深/浅色主题、模板）
+* 更丰富的词典来源与用户词典
+* 插件式导出与布局
 
-3. **Printing**: 
-   - Use PDF format for the most reliable printing results
-   - A4 page size with 6cm cards and default margins fits standard printers well
-
-4. **Customization**: 
-   - Start with default settings and adjust based on your needs
-   - Smaller cards (4-5cm) allow for more cards per page
-   - Larger fonts help beginners but may require larger cards
-
-## Troubleshooting
-
-**"No translation found" warnings**: Normal for uncommon words. You can:
-- Add translations manually to your CSV file
-- Use the full CEDICT dictionary for better coverage
-
-**Font issues**: If Chinese characters don't display correctly:
-- Ensure you have Chinese fonts installed on your system
-- Try different output formats (PPTX vs PDF)
-
-**Layout issues**: If cards don't fit on the page:
-- Reduce card size (`--card-size`)
-- Reduce margins (`--margin`)
-- Use Letter page size for US standard paper
-
-## License
+---
 
 This project is open source. The CC-CEDICT dictionary data is licensed under Creative Commons Attribution-Share Alike 3.0.
 
 ## Contributing
 
-Contributions welcome! Areas for improvement:
+Contributions welcome! See docs/ARCHITECTURE.md and docs/WEB_UI_GUIDE.md to get started. Suggestions:
+
 - Additional output formats (DOCX, HTML)
 - More dictionary sources
-- GUI interface
+- UI/UX improvements
 - Additional languages
