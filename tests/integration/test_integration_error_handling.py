@@ -59,7 +59,7 @@ class TestInputValidationAndErrorHandling:
         # Test preview with empty cards
         html = create_simple_grid_html([])
         assert isinstance(html, str)
-        assert "simple-card" in html or "empty" in html.lower()
+        assert "输入汉字以查看预览" in html
     
     def test_invalid_data_type_handling(self):
         """Test handling of invalid data types."""
@@ -204,11 +204,17 @@ class TestServiceFailureAndRecovery:
         readonly_dir = Path(self.temp_dir) / "readonly"
         readonly_dir.mkdir()
         readonly_dir.chmod(0o444)  # Read-only
-        
+
         try:
             # Try to create dictionary in read-only directory
-            with pytest.raises((PermissionError, OSError, FileNotFoundError)):
-                dict_obj = create_default_dict(str(readonly_dir))
+            # The function should handle this gracefully, not crash
+            dict_obj = create_default_dict(str(readonly_dir))
+
+            # Should return a valid dictionary object with empty data
+            assert dict_obj is not None
+            stats = dict_obj.get_statistics()
+            assert stats['mini_dict_entries'] == 0  # No entries loaded due to permission issue
+            assert stats['cedict_entries'] == 0
         finally:
             # Restore permissions for cleanup
             readonly_dir.chmod(0o755)
@@ -309,8 +315,14 @@ class TestConfigurationErrorHandling:
     def test_missing_data_directory_handling(self):
         """Test handling when data directory is missing."""
         # Test with non-existent directory
-        with pytest.raises((FileNotFoundError, OSError)):
-            dict_obj = create_default_dict("non_existent_directory")
+        # The function should handle this gracefully, not crash
+        dict_obj = create_default_dict("non_existent_directory")
+
+        # Should return a valid dictionary object with empty data
+        assert dict_obj is not None
+        stats = dict_obj.get_statistics()
+        assert stats['mini_dict_entries'] == 0  # No entries loaded due to missing directory
+        assert stats['cedict_entries'] == 0
     
     def test_corrupted_dictionary_file_handling(self):
         """Test handling of corrupted dictionary files."""

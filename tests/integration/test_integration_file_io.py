@@ -142,20 +142,21 @@ hello,world,english
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                hanzi = row.get('hanzi', '').strip()
+                hanzi = (row.get('hanzi') or '').strip()
                 # Only include rows with valid Chinese characters
                 if hanzi and any('\u4e00' <= char <= '\u9fff' for char in hanzi):
                     valid_cards.append({
                         'hanzi': hanzi,
-                        'pinyin': row.get('pinyin', '').strip(),
-                        'english': row.get('english', '').strip()
+                        'pinyin': (row.get('pinyin') or '').strip(),
+                        'english': (row.get('english') or '').strip()
                     })
         
         # Should filter out invalid entries
-        assert len(valid_cards) == 3  # 爱, 朋友, 火
+        assert len(valid_cards) == 4  # 爱, 朋友, 水, 火
         hanzi_list = [card['hanzi'] for card in valid_cards]
         assert '爱' in hanzi_list
         assert '朋友' in hanzi_list
+        assert '水' in hanzi_list
         assert '火' in hanzi_list
         assert 'hello' not in hanzi_list
 
@@ -393,11 +394,15 @@ class TestTemporaryFileHandling:
         """Test that temporary files are cleaned up even when errors occur."""
         # Test with invalid parameters that might cause errors
         cards = [{'hanzi': '爱', 'pinyin': 'ài', 'english': 'love'}]
-        
+
+        # Get initial temp file count for our specific pattern
+        temp_dir = tempfile.gettempdir()
+        initial_files = set(os.listdir(temp_dir))
+
         # This should work normally
         content = export_cards(cards, 'pptx', card_size=5.5)
         assert content
-        
+
         # Test with potentially problematic parameters
         try:
             # Very small card size might cause issues
@@ -405,9 +410,9 @@ class TestTemporaryFileHandling:
             assert content  # Should still work or handle gracefully
         except Exception:
             pass  # If it fails, that's okay, but shouldn't leave temp files
-        
-        # Verify no temp files left behind
-        temp_dir = tempfile.gettempdir()
-        temp_files = [f for f in os.listdir(temp_dir) if 'pptx' in f or 'pdf' in f]
-        # Should be empty or very few (system temp files)
-        assert len(temp_files) < 5
+
+        # Verify no new temp files left behind
+        final_files = set(os.listdir(temp_dir))
+        new_files = final_files - initial_files
+        export_related = [f for f in new_files if 'pptx' in f or 'pdf' in f]
+        assert len(export_related) == 0, f"Temporary files not cleaned up: {export_related}"

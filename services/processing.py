@@ -91,9 +91,14 @@ def generate_missing_data(cards: List[Dict[str, str]], auto_pinyin: bool, auto_t
 
         # Generate translation if missing and enabled
         if auto_translate and not processed_card['english'] and dictionary:
-            translation = dictionary.lookup_translation(processed_card['hanzi'])
-            if translation:
-                processed_card['english'] = translation
+            try:
+                translation = dictionary.lookup_translation(processed_card['hanzi'])
+                if translation:
+                    processed_card['english'] = translation
+            except Exception:
+                # If dictionary service fails, continue without translation
+                # This allows the function to be resilient to dictionary errors
+                pass
 
         processed_cards.append(processed_card)
 
