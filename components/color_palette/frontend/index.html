@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Color Palette Component</title>
+    <!-- Prefer local vendor UMD (no Internet dependency); CDN is fallback only -->
+    <script src="vendor/streamlit-component-lib.js"></script>
+    <script src="https://unpkg.com/streamlit-component-lib/dist/streamlit-component-lib.js"></script>
+
+
+    <style>
+      :root { color-scheme: light; }
+      html, body { margin: 0; padding: 0; background: transparent; }
+      .palette { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; padding: 8px; background: transparent; }
+      .chip {
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.08s ease;
+        min-width: 30px;
+      }
+      .chip.selected { outline: 2px solid #1e90ff; border-color: #1e90ff; }
+      .chip:hover { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    </style>
+  </head>
+  <body>
+    <div class="palette" id="palette"></div>
+    <script>
+      (function () {
+        // Use Streamlit component library for robust handshake
+        let preset = [];
+        let current = '#FFFFFF';
+        const log = () => {};
+        const normalize = c => (c||'').startsWith('#') ? c.toUpperCase() : ('#'+c).toUpperCase();
+        // Determine strict target origin from streamlitUrl
+        let targetOrigin = '*';
+        try {
+          const q = new URLSearchParams(window.location.search);
+          const su = q.get('streamlitUrl');
+          if (su) { targetOrigin = new URL(su).origin; }
+        } catch (_e) {}
+
+
+        function renderPalette() {
+          const root = document.getElementById('palette');
+          root.innerHTML='';
+          const count = (preset && preset.length) ? preset.length : 0;
+          if (count === 0) {
+            Streamlit.setFrameHeight(40);
+            return;
+          }
+
+          (preset||[]).forEach((c, index) => {
+            const el = document.createElement('button');
+            el.className = 'chip' + (normalize(c)===current ? ' selected' : '');
+            el.style.backgroundColor = c;
+            el.style.border = normalize(c)===current ? '3px solid #1e90ff' : '2px solid #ddd';
+            el.title = c;
+            el.addEventListener('click', () => {
+              current = normalize(c);
+              renderPalette();
+              try { Streamlit.setComponentValue(current); } catch(e) { log(`[setValue-error] ${e}`); }
+            });
+            root.appendChild(el);
+          });
+
+          try { Streamlit.setFrameHeight(document.body.scrollHeight); } catch(e) { log(`[height-error] ${e}`); }
+        }
+
+        let __renderReceived = false;
+        function onRender(event) {
+          try {
+            __renderReceived = true;
+            const data = event.detail || {};
+            const args = data.args || {};
+            log(`[render] id=${data.id ?? 'N/A'} keys=${Object.keys(args)} len=${(args.preset_colors||[]).length}`);
+            preset = Array.isArray(args.preset_colors) ? args.preset_colors : [];
+            const initial = args.value || (preset[0] || '#FFFFFF');
+            current = normalize(initial);
+            renderPalette();
+          } catch (e) {
+            log(`[render-error] ${e}`);
+          }
+        }
+
+        function sendReadyPing() {
+          try { log('[ready-ping] lib'); if (window.Streamlit && Streamlit.setComponentReady) Streamlit.setComponentReady(); } catch(_e) {}
+          const msg = { isStreamlitMessage: true, type: 'streamlit:componentReady', apiVersion: 1 };
+          try { log('[ready-ping] raw->parent'); window.parent.postMessage(msg, targetOrigin); } catch(_e) {}
+          try { if (window.top && window.top !== window.parent) { log('[ready-ping] raw->top'); window.top.postMessage(msg, targetOrigin); } } catch(_e) {}
+        }
+
+        function initWithLib() {
+          Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+          sendReadyPing();
+          // Send an immediate height to establish communication
+          setTimeout(() => {
+            try { Streamlit.setFrameHeight(Math.max(100, document.body.scrollHeight)); } catch(_e) {}
+          }, 100);
+          try {
+            const ro = new ResizeObserver(() => {
+              try { if (__renderReceived) Streamlit.setFrameHeight(document.body.scrollHeight); } catch(_e) {}
+            });
+            ro.observe(document.body);
+          } catch (_e) {}
+        }
+
+        function initWithShim() {
+          // Minimal shim to work without external CDN
+          let readySent = false;
+          if (!window.Streamlit) {
+            try {
+              const evtTarget = document.createElement('span'); // simple EventTarget
+              window.Streamlit = {
+                RENDER_EVENT: 'shim:render',
+                events: {
+                  addEventListener: (t, h) => evtTarget.addEventListener(t, h),
+                  removeEventListener: (t, h) => evtTarget.removeEventListener(t, h),
+                  dispatchEvent: (e) => evtTarget.dispatchEvent(e),
+                },
+                setComponentReady: () => {
+                  if (readySent) return; readySent = true;
+                  window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:componentReady', apiVersion: 1 }, '*');
+                },
+                setComponentValue: (val) => {
+                  const msg = { isStreamlitMessage: true, type: 'streamlit:setComponentValue', id: window.__compId, value: val };
+                  try { if (window.__compId != null) window.parent.postMessage(msg, targetOrigin); } catch(_e) {}
+                  try { if (window.__compId != null && window.top && window.top !== window.parent) window.top.postMessage(msg, targetOrigin); } catch(_e) {}
+                },
+                setFrameHeight: (h) => {
+                  if (window.__compId == null) return; // don't send before id is known
+                  const msg = { isStreamlitMessage: true, type: 'streamlit:setFrameHeight', id: window.__compId, height: h };
+                  try { window.parent.postMessage(msg, targetOrigin); } catch(_e) {}
+                  try { if (window.top && window.top !== window.parent) window.top.postMessage(msg, targetOrigin); } catch(_e) {}
+                }
+              };
+            } catch (e) { log(`[shim-init-error] ${e}`); }
+          }
+
+          // Bridge parent messages to shim events
+          window.addEventListener('message', (event) => {
+            const d = event.data || {};
+            if (d && d.isStreamlitMessage && d.type === 'streamlit:render') {
+              window.__compId = d.id;
+              const ce = new CustomEvent(Streamlit.RENDER_EVENT, { detail: d });
+              Streamlit.events.dispatchEvent(ce);
+            }
+          });
+
+          const startPings = () => {
+            let tries = 0;
+            const iv = setInterval(() => {
+              if (__renderReceived || tries++ > 20) { clearInterval(iv); return; }
+              sendReadyPing();
+            }, 500);
+          };
+          try {
+            const ro = new ResizeObserver(() => {
+              try { if (window.__compId != null) Streamlit.setFrameHeight(document.body.scrollHeight); } catch(_e) {}
+            });
+            ro.observe(document.body);
+          } catch (_e) {}
+          if (document.readyState === 'complete') { startPings(); }
+          else { window.addEventListener('load', startPings); }
+        }
+
+        // Always attach a direct parent-message fallback handler
+        window.addEventListener('message', (event) => {
+          const d = event.data || {};
+          if (d && d.isStreamlitMessage) {
+            log(`[message] type=${d.type} id=${d.id ?? 'N/A'}`);
+          }
+          if (d && d.isStreamlitMessage && d.type === 'streamlit:render') {
+            window.__compId = d.id;
+            onRender({ detail: d });
+          }
+        });
+
+        function init() {
+          log(`[boot] Streamlit-lib=${!!(window.Streamlit && window.Streamlit.events && window.Streamlit.setComponentReady)}`);
+          if (window.Streamlit && window.Streamlit.events && window.Streamlit.setComponentReady) {
+            initWithLib();
+          } else {
+            initWithShim();
+          }
+          // Fallback: if still没收到render，手动再发一次ready（不发送高度，避免未注册日志）
+          setTimeout(() => {
+            try { if (!__renderReceived) { log('[fallback-ready]'); window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:componentReady', apiVersion: 1 }, targetOrigin); } } catch(_e) {}
+          }, 600);
+
+          // Quick fallback: if no render after 800ms, simulate one to kickstart the process
+          setTimeout(() => {
+            if (!__renderReceived) {
+              log('[quick-render] simulating render to kickstart');
+              const simulatedRender = {
+                isStreamlitMessage: true,
+                type: 'streamlit:render',
+                componentId: 'quick-' + Date.now(),
+                args: {
+                  preset_colors: ["#000000","#333333","#FF4444","#FF8800","#FFDD00","#44FF44","#00DDDD","#4488FF","#8844FF","#FF44FF","#FFFFFF","#CCCCCC","#FF9999","#FFBB77","#FFEE77","#99FF99","#77EEEE","#99BBFF","#BB99FF","#FF99FF"],
+                  value: "#FFFFFF"
+                }
+              };
+              window.dispatchEvent(new MessageEvent('message', { data: simulatedRender }));
+            }
+          }, 800);
+        }
+
+        init();
+      })();
+    </script>
+  </body>
+</html>
+

@@ -15,25 +15,28 @@ import os
 
 
 class PDFCardGenerator:
-    """Generator for PDF format learning cards."""
-    
+    """Generator for PDF format learning cards (rows x cols grid)."""
+
     def __init__(self, page_size: str = "A4", card_size_cm: float = 6.0,
-                 gap_cm: float = 0.6, margin_cm: float = 1.0, inner_padding_cm: float = 0.6):
+                 gap_cm: float = 0.6, margin_cm: float = 1.0, inner_padding_cm: float = 0.6,
+                 rows: int = 3, cols: int = 3, auto_fill: bool = True):
         """
         Initialize the PDF generator.
-        
+
         Args:
             page_size: Page size ("A4" or "Letter")
-            card_size_cm: Size of each card in cm
+            card_size_cm: Size of each card in cm (used when auto_fill is False)
             gap_cm: Gap between cards in cm
             margin_cm: Page margin in cm
         """
         self.page_size = page_size
-        self.card_size_cm = card_size_cm
         self.gap_cm = gap_cm
         self.margin_cm = margin_cm
+        self.rows = max(1, int(rows or 3))
+        self.cols = max(1, int(cols or 3))
         self.inner_padding = inner_padding_cm * cm  # inner padding inside each card
-        
+        self.auto_fill = bool(auto_fill)
+
         # Set page dimensions
         if page_size.upper() == "A4":
             self.page_width, self.page_height = A4
@@ -41,32 +44,41 @@ class PDFCardGenerator:
             self.page_width, self.page_height = letter
         else:
             raise ValueError(f"Unsupported page size: {page_size}")
-        
+
         # Convert to points (ReportLab uses points)
-        self.card_size = card_size_cm * cm
         self.gap = gap_cm * cm
         self.margin = margin_cm * cm
-        
-        # Calculate grid layout
-        self.grid_width = self.card_size * 3 + self.gap * 2
-        self.grid_height = self.card_size * 3 + self.gap * 2
-        
-        # Ensure grid fits within margins; if not, shrink card size slightly to fit
-        tolerance = 0.1 * cm
+
+        # Available area in points
         max_w = self.page_width - 2 * self.margin
         max_h = self.page_height - 2 * self.margin
+
+        # Determine card size (points)
+        if self.auto_fill:
+            size_w = (max_w - max(0, self.cols - 1) * self.gap) / self.cols if self.cols > 0 else 0
+            size_h = (max_h - max(0, self.rows - 1) * self.gap) / self.rows if self.rows > 0 else 0
+            self.card_size = max(0, min(size_w, size_h))
+        else:
+            self.card_size = card_size_cm * cm
+
+        # Calculate grid layout
+        self.grid_width = self.cols * self.card_size + max(0, self.cols - 1) * self.gap
+        self.grid_height = self.rows * self.card_size + max(0, self.rows - 1) * self.gap
+
+        # Ensure grid fits within margins; if not, shrink card size slightly to fit
+        tolerance = 0.1 * cm
         if self.grid_width > max_w + tolerance or self.grid_height > max_h + tolerance:
             # Compute the scale factor needed to fit and apply to card_size
-            scale_w = max_w / self.grid_width
-            scale_h = max_h / self.grid_height
+            scale_w = max_w / self.grid_width if self.grid_width > 0 else 1.0
+            scale_h = max_h / self.grid_height if self.grid_height > 0 else 1.0
             scale = min(scale_w, scale_h) * 0.995  # small safety margin
             self.card_size *= scale
-            self.grid_width = self.card_size * 3 + self.gap * 2
-            self.grid_height = self.card_size * 3 + self.gap * 2
-        
+            self.grid_width = self.cols * self.card_size + max(0, self.cols - 1) * self.gap
+            self.grid_height = self.rows * self.card_size + max(0, self.rows - 1) * self.gap
+
         # Try to register Chinese fonts
         self._register_fonts()
-    
+
     def _register_fonts(self):
         """Register fonts for Chinese characters."""
         self.chinese_font = "Helvetica"  # Fallback
@@ -285,11 +297,11 @@ class PDFCardGenerator:
         # Draw text
         self._draw_card_text(c, card, x, y, font_hanzi, font_pinyin, font_english)
     
-    def add_cards_page(self, c: canvas.Canvas, cards: List[Dict[str, str]], 
+    def add_cards_page(self, c: canvas.Canvas, cards: List[Dict[str, str]],
                       font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14) -> None:
         """
-        Add a page with up to 9 cards in 3x3 grid.
-        
+        Add a page with up to rows*cols cards in a grid.
+
         Args:
             c: Canvas object
             cards: List of card dictionaries with 'hanzi', 'pinyin', 'english' keys
@@ -297,58 +309,62 @@ class PDFCardGenerator:
             font_pinyin: Font size for pinyin
             font_english: Font size for English
         """
-        # Add up to 9 cards
-        for i, card in enumerate(cards[:9]):
-            row, col = divmod(i, 3)
+        max_cards = self.rows * self.cols
+        for i, card in enumerate(cards[:max_cards]):
+            row = i // self.cols
+            col = i % self.cols
             self._add_single_card(c, card, row, col, font_hanzi, font_pinyin, font_english)
-        
+
         # Finish the page
         c.showPage()
-    
+
     def generate_pdf(self, cards: List[Dict[str, str]], output_path: str,
                     font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14) -> bool:
         """
         Generate complete PDF file with all cards.
-        
+
         Args:
             cards: List of all card data
             output_path: Output file path
             font_hanzi: Font size for Chinese characters
             font_pinyin: Font size for pinyin
             font_english: Font size for English
-            
+
         Returns:
             True if successful
         """
         try:
             # Create canvas
             c = canvas.Canvas(output_path, pagesize=(self.page_width, self.page_height))
-            
-            # Split cards into pages of 9
-            for i in range(0, len(cards), 9):
-                page_cards = cards[i:i+9]
+
+            # Split cards into pages of rows*cols
+            page_size = max(1, self.rows * self.cols)
+            for i in range(0, len(cards), page_size):
+                page_cards = cards[i:i+page_size]
                 self.add_cards_page(c, page_cards, font_hanzi, font_pinyin, font_english)
-            
+
             # Save PDF
             c.save()
             return True
-            
+
         except Exception as e:
             print(f"Error generating PDF: {e}")
             return False
-    
+
     def get_layout_info(self) -> Dict[str, any]:
         """Get layout information for debugging."""
         return {
             'page_size': self.page_size,
             'page_width_cm': self.page_width / cm,
             'page_height_cm': self.page_height / cm,
-            'card_size_cm': self.card_size_cm,
-            'gap_cm': self.gap_cm,
-            'margin_cm': self.margin_cm,
+            'card_size_cm': self.card_size / cm,
+            'gap_cm': self.gap / cm,
+            'margin_cm': self.margin / cm,
+            'rows': self.rows,
+            'cols': self.cols,
             'grid_width_cm': self.grid_width / cm,
             'grid_height_cm': self.grid_height / cm,
-            'cards_per_page': 9,
+            'cards_per_page': self.rows * self.cols,
             'chinese_font': self.chinese_font,
             'english_font': self.english_font
         }

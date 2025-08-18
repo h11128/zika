@@ -229,9 +229,14 @@ def create_default_dict(data_dir: str = "data") -> ChineseDict:
     dict_instance.load_mini_dict(mini_path)
     
     # Try to load full CEDICT if available
-    cedict_path = os.path.join(data_dir, "cedict_ts.u8")
+    cedict_path = os.path.join(data_dir, "cedict_ts.txt")
     if os.path.exists(cedict_path):
         dict_instance.load_cedict_file(cedict_path)
+    else:
+        # Fallback to compressed version
+        cedict_gz_path = os.path.join(data_dir, "cedict_ts.u8")
+        if os.path.exists(cedict_gz_path):
+            dict_instance.load_cedict_file(cedict_gz_path)
     
     return dict_instance
 
