@@ -59,8 +59,54 @@ def run_new_tests():
 def run_coverage():
     """Run tests with coverage report."""
     return run_command(
-        "python -m pytest tests/ --cov=core --cov=ui --cov=services --cov-report=term-missing",
+        "python -m pytest tests/ --cov=core --cov=ui --cov=services --cov=src --cov-report=term-missing",
         "Running Tests with Coverage Report"
+    )
+
+
+def run_integration_tests():
+    """Run integration tests only."""
+    integration_files = [
+        "tests/test_integration_end_to_end.py",
+        "tests/test_integration_cross_module.py",
+        "tests/test_integration_file_io.py",
+        "tests/test_integration_error_handling.py",
+        "tests/test_integration_performance.py",
+        "tests/test_integration_configuration.py"
+    ]
+    cmd = f"python -m pytest {' '.join(integration_files)} -v"
+    return run_command(cmd, "Running Integration Tests")
+
+
+def run_unit_tests():
+    """Run unit tests only (excluding integration tests)."""
+    return run_command(
+        "python -m pytest tests/ -v -k 'not integration'",
+        "Running Unit Tests Only"
+    )
+
+
+def run_performance_tests():
+    """Run performance and caching tests."""
+    return run_command(
+        "python -m pytest tests/test_integration_performance.py -v --tb=short",
+        "Running Performance Tests"
+    )
+
+
+def run_fast_tests():
+    """Run fast tests suitable for pre-commit hooks."""
+    return run_command(
+        "python -m pytest tests/test_integration_cross_module.py tests/test_integration_configuration.py -q",
+        "Running Fast Integration Tests"
+    )
+
+
+def run_ci_tests():
+    """Run tests suitable for CI/CD (excluding slow performance tests)."""
+    return run_command(
+        "python -m pytest tests/ -k 'not (performance and slow)' --maxfail=5",
+        "Running CI/CD Test Suite"
     )
 
 
@@ -83,23 +129,34 @@ def run_quick_check():
 def main():
     """Main test runner."""
     parser = argparse.ArgumentParser(description="Test runner for Chinese Character Learning Cards")
-    parser.add_argument("command", nargs="?", default="all", 
-                       choices=["all", "new", "coverage", "quick", "config", "controller", "preview", "error"],
+    parser.add_argument("command", nargs="?", default="all",
+                       choices=["all", "unit", "integration", "performance", "coverage", "fast", "ci",
+                               "new", "quick", "config", "controller", "preview", "error"],
                        help="Test command to run")
-    
+
     args = parser.parse_args()
-    
+
     print("🀄 Chinese Character Learning Cards - Test Runner")
     print("=" * 60)
-    
+
     success = True
-    
+
     if args.command == "all":
         success = run_all_tests()
-    elif args.command == "new":
-        success = run_new_tests()
+    elif args.command == "unit":
+        success = run_unit_tests()
+    elif args.command == "integration":
+        success = run_integration_tests()
+    elif args.command == "performance":
+        success = run_performance_tests()
     elif args.command == "coverage":
         success = run_coverage()
+    elif args.command == "fast":
+        success = run_fast_tests()
+    elif args.command == "ci":
+        success = run_ci_tests()
+    elif args.command == "new":
+        success = run_new_tests()
     elif args.command == "quick":
         success = run_quick_check()
     elif args.command == "config":
@@ -119,9 +176,27 @@ def main():
         print("❌ SOME TESTS FAILED")
         print("🔧 Please fix the issues before deployment")
     print(f"{'='*60}")
-    
+
+    # Print help information
+    if args.command == "all" and success:
+        print("\n📚 Available Test Categories:")
+        print("  unit         - Unit tests only (fast)")
+        print("  integration  - Integration tests only")
+        print("  performance  - Performance and caching tests (slow)")
+        print("  coverage     - All tests with coverage report")
+        print("  fast         - Fast tests for pre-commit hooks")
+        print("  ci           - CI/CD test suite (excludes slow tests)")
+        print("\n🔧 Development Commands:")
+        print("  quick        - Quick smoke test")
+        print("  new          - Recently added tests")
+        print("  config       - Configuration tests")
+        print("  controller   - App controller tests")
+        print("  preview      - Preview functionality tests")
+        print("  error        - Error handling tests")
+
     return 0 if success else 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

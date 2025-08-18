@@ -1,0 +1,13 @@
+[run]
+branch = True
+source = 
+    core
+    services
+    ui
+    src
+
+[report]
+show_missing = True
+precision = 1
+fail_under = 80
+

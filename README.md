@@ -95,6 +95,16 @@ python -m streamlit run web_ui.py
 - PPTX 和 PDF 导出按钮位于主界面
 - 导出文件会通过浏览器下载
 
+## 测试
+
+- 运行全部测试：
+  - `python scripts/run_tests.py all`
+- 快速冒烟测试：
+  - `python scripts/run_tests.py quick`
+- 直接使用 pytest：
+  - `python -m pytest -q`
+
+
 # 五、CLI 用法（示例）
 
 ```bash

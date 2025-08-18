@@ -41,3 +41,29 @@ def cleanup_out_dir_session():
     # Clean after tests
     _clean()
 
+def pytest_collection_modifyitems(config, items):
+    """Auto-assign markers based on filename patterns to organize the suite.
+
+    - integration: tests under tests/integration/ or files named test_integration_*.py
+    - e2e: tests whose nodeid contains 'end_to_end'
+    - performance: tests whose nodeid contains 'performance'; also mark as slow
+    - slow: added for performance tests (and any future slow selectors)
+    - ui: tests under tests/ui/
+    """
+    for item in items:
+        # Normalize for Windows paths
+        path = str(getattr(item, 'fspath', '')).replace('\\', '/').lower()
+        nodeid = item.nodeid.lower()
+
+        if '/tests/integration/' in path or '/tests/test_integration_' in path:
+            item.add_marker(pytest.mark.integration)
+
+        if '/tests/ui/' in path:
+            item.add_marker(pytest.mark.ui)
+
+        if 'end_to_end' in nodeid:
+            item.add_marker(pytest.mark.e2e)
+
+        if 'performance' in nodeid:
+            item.add_marker(pytest.mark.performance)
+            item.add_marker(pytest.mark.slow)

@@ -181,3 +181,8 @@ small_*.pptx
 # PowerPoint temporary files
 ~$*.pptx
 ~$*.ppt
+
+# Linting and analysis reports
+ml-report.txt
+lint-report.*
+analysis-report.*
