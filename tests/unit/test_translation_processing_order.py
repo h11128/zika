@@ -75,6 +75,26 @@ def test_generate_missing_data_ordered_google_only(monkeypatch):
     assert out[0]["english"] == "trial"
 
 
+def test_generate_missing_data_ordered_mixed_mode(monkeypatch):
+    cards = _make_cards("测试")
+    d = DummyDict({"测试": "test; testing"})
+    monkeypatch.setattr(sp, "translate_with_google", lambda text: "trial")
+
+    out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="mixed")
+    # Should combine both results since they're different
+    assert out[0]["english"] == "test; testing | trial"
+
+
+def test_generate_missing_data_ordered_mixed_mode_same_result(monkeypatch):
+    cards = _make_cards("测试")
+    d = DummyDict({"测试": "test"})
+    monkeypatch.setattr(sp, "translate_with_google", lambda text: "test")
+
+    out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="mixed")
+    # Should not duplicate when results are the same
+    assert out[0]["english"] == "test"
+
+
 def test_final_translation_has_no_chinese(monkeypatch):
     # Local returns mixed content including Chinese; cleaner should remove it
     cards = _make_cards("混合")

@@ -138,7 +138,7 @@ def test_render_options_and_advanced(monkeypatch):
     # Options section
     monkeypatch.setattr(us, "st", st)
     st.checkbox = lambda label, value=True: value
-    st.selectbox = lambda label, options, index=0: options[index]
+    st.selectbox = lambda label, options, index=0, **kwargs: options[index]
     st.slider = lambda *a, **k: 5.5
 
     auto_pinyin, auto_translate, page_size, card_size = us.render_options_section()
