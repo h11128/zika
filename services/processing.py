@@ -7,6 +7,8 @@ import re
 import jieba
 from typing import List, Dict
 from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
+from .translation import translate_with_google, clean_english_text
+
 
 
 def parse_input_text(text: str) -> List[Dict[str, str]]:
@@ -90,16 +92,92 @@ def generate_missing_data(cards: List[Dict[str, str]], auto_pinyin: bool, auto_t
             processed_card['pinyin'] = pinyin
 
         # Generate translation if missing and enabled
-        if auto_translate and not processed_card['english'] and dictionary:
-            try:
-                translation = dictionary.lookup_translation(processed_card['hanzi'])
-                if translation:
-                    processed_card['english'] = translation
-            except Exception:
-                # If dictionary service fails, continue without translation
-                # This allows the function to be resilient to dictionary errors
-                pass
+        if auto_translate and not processed_card['english']:
+            hanzi = processed_card.get('hanzi', '')
+            translation = None
+
+            # 1) Local dictionary first
+            if dictionary is not None:
+                try:
+                    translation = dictionary.lookup_translation(hanzi)
+                except Exception:
+                    translation = None
+
+            translation = clean_english_text(translation) if translation else None
+
+            # 2) Fallback to Google Translate if needed
+            if not translation:
+                google_trans = translate_with_google(hanzi)
+                if google_trans:
+                    translation = google_trans
+
+            if translation:
+                processed_card['english'] = translation
 
         processed_cards.append(processed_card)
 
     return processed_cards
+
+
+def generate_missing_data_ordered(cards: List[Dict[str, str]], auto_pinyin: bool, auto_translate: bool, dictionary=None, translate_order: str = 'local_first') -> List[Dict[str, str]]:
+    """Generate missing pinyin and translations with configurable translate order.
+
+    translate_order options:
+      - 'local_first' (default): local dict -> Google
+      - 'google_first': Google -> local dict
+      - 'local_only': local dict only
+      - 'google_only': Google only
+      - 'mixed': local + Google, combined result
+    """
+    order = (translate_order or 'local_first').lower()
+    processed_cards = []
+
+    for card in cards:
+        processed_card = card.copy()
+
+        # Pinyin
+        if auto_pinyin and not processed_card.get('pinyin'):
+            processed_card['pinyin'] = hanzi_to_pinyin(processed_card.get('hanzi', ''))
+
+        # Translation
+        if auto_translate and not processed_card.get('english'):
+            hanzi = processed_card.get('hanzi', '')
+            translation = None
+
+            def try_local():
+                if dictionary is None:
+                    return None
+                try:
+                    t = dictionary.lookup_translation(hanzi)
+                    return clean_english_text(t) if t else None
+                except Exception:
+                    return None
+
+            def try_google():
+                t = translate_with_google(hanzi)
+                return t if t else None
+
+            if order == 'google_first':
+                translation = try_google() or try_local()
+            elif order == 'local_only':
+                translation = try_local()
+            elif order == 'google_only':
+                translation = try_google()
+            elif order == 'mixed':
+                # Combine both sources
+                local_trans = try_local()
+                google_trans = try_google()
+                if local_trans and google_trans and local_trans != google_trans:
+                    translation = f"{local_trans} | {google_trans}"
+                else:
+                    translation = local_trans or google_trans
+            else:  # local_first
+                translation = try_local() or try_google()
+
+            if translation:
+                processed_card['english'] = translation
+
+        processed_cards.append(processed_card)
+
+    return processed_cards
+
