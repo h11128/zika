@@ -137,13 +137,76 @@ def _are_different_translations(t1: Optional[str], t2: Optional[str]) -> bool:
     return True
 
 
+def combine_translations_smart(*translations: Optional[str]) -> Optional[str]:
+    """
+    Intelligently combine multiple translations, removing duplicates and checking for meaningful differences.
+
+    Args:
+        *translations: Variable number of translation strings from different sources
+
+    Returns:
+        Combined translation string with unique definitions separated by ' | '
+    """
+    # Filter out None and empty translations
+    valid_translations = [t for t in translations if t and t.strip()]
+
+    if not valid_translations:
+        return None
+
+    if len(valid_translations) == 1:
+        return valid_translations[0]
+
+    # Split and normalize definitions from all sources
+    def normalize_defs(text):
+        return [d.strip() for d in text.split(';') if d.strip()]
+
+    # Track seen definitions (case-insensitive) and their sources
+    seen_lower = set()
+    result_groups = []
+
+    for translation in valid_translations:
+        defs = normalize_defs(translation)
+        unique_defs = []
+
+        for d in defs:
+            d_lower = d.lower()
+            # Skip if exact match or containment relationship with any seen definition
+            is_duplicate = False
+            for existing in seen_lower:
+                if d_lower == existing or d_lower in existing or existing in d_lower:
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                unique_defs.append(d)
+                seen_lower.add(d_lower)
+
+        # Only add this group if it has unique definitions
+        if unique_defs:
+            result_groups.append('; '.join(unique_defs))
+
+    # Combine all unique groups
+    if len(result_groups) > 1:
+        return ' | '.join(result_groups)
+    elif result_groups:
+        return result_groups[0]
+    else:
+        return None
+
+
+# Backward compatibility function for two-argument calls
+def combine_two_translations(t1: Optional[str], t2: Optional[str]) -> Optional[str]:
+    """Backward compatibility wrapper for two-translation combining."""
+    return combine_translations_smart(t1, t2)
+
+
 def translate_with_strategy(text: str, dictionary=None, strategy: str = 'local_first') -> Optional[str]:
     """Translate text using the specified strategy.
 
     Args:
         text: Text to translate
         dictionary: Local dictionary object with lookup_translation method
-        strategy: Translation strategy - 'local_first', 'google_first', 'local_only', 'google_only', 'mixed'
+        strategy: Translation strategy - 'local_first', 'google_first', 'local_only', 'google_only', 'mixed', 'dict_mixed'
 
     Returns:
         Translated text or None
@@ -157,6 +220,19 @@ def translate_with_strategy(text: str, dictionary=None, strategy: str = 'local_f
         except Exception:
             return None
 
+    def try_local_mixed() -> Optional[str]:
+        if dictionary is None:
+            return None
+        try:
+            # Use mixed dictionary strategy if available
+            if hasattr(dictionary, 'lookup_translation_mixed'):
+                t = dictionary.lookup_translation_mixed(text)
+            else:
+                t = dictionary.lookup_translation(text)
+            return clean_english_text(t) if t else None
+        except Exception:
+            return None
+
     def try_google() -> Optional[str]:
         return translate_with_google(text)
 
@@ -166,13 +242,13 @@ def translate_with_strategy(text: str, dictionary=None, strategy: str = 'local_f
         return try_local()
     elif strategy == 'google_only':
         return try_google()
+    elif strategy == 'dict_mixed':
+        # Use mixed dictionary strategy (Mini + CEDICT)
+        return try_local_mixed()
     elif strategy == 'mixed':
         local_trans = try_local()
         google_trans = try_google()
-        if _are_different_translations(local_trans, google_trans):
-            return f"{local_trans} | {google_trans}"
-        else:
-            return local_trans or google_trans
+        return combine_translations_smart(local_trans, google_trans)
     else:  # local_first (default)
         return try_local() or try_google()
 

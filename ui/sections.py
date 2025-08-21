@@ -157,7 +157,7 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
         auto_translate = st.checkbox("自动生成翻译", value=True)
         translate_order_display = st.selectbox(
             "翻译优先级",
-            ["本地优先", "Google优先", "仅本地", "仅Google", "混合模式"],
+            ["本地优先", "Google优先", "仅本地", "仅Google", "混合模式", "词典混合"],
             index=0,
             key="translate_order_select"
         )
@@ -168,6 +168,7 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
             "仅本地": "local_only",
             "仅Google": "google_only",
             "混合模式": "mixed",
+            "词典混合": "dict_mixed",
         }
         new_order = order_map.get(translate_order_display, "local_first")
 

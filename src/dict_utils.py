@@ -145,7 +145,153 @@ class ChineseDict:
                 return " + ".join(char_translations)
         
         return None
-    
+
+    def get_all_translations(self, word: str, max_definitions: int = 3) -> Dict[str, Optional[str]]:
+        """
+        Get translations from all available dictionary sources.
+
+        Args:
+            word: Chinese word to translate
+            max_definitions: Maximum number of definitions per source
+
+        Returns:
+            Dictionary mapping source names to their translations
+        """
+        if not word or not word.strip():
+            return {}
+
+        word = word.strip()
+        translations = {}
+
+        # Mini Dictionary
+        if word in self.mini_dict:
+            definitions = self.mini_dict[word][:max_definitions]
+            translations['mini'] = "; ".join(definitions)
+
+        # CEDICT with cleaning
+        if word in self.cedict_data:
+            definitions = self.cedict_data[word][:max_definitions]
+            cleaned_defs = []
+
+            def is_english_only(text):
+                """Check if text contains only English characters, punctuation, and spaces."""
+                allowed_pattern = r'^[a-zA-Z0-9\s\.,;:\-\'\"!?()]+$'
+                return bool(re.match(allowed_pattern, text))
+
+            for def_item in definitions:
+                # Split by semicolon to handle individual definitions
+                parts = [part.strip() for part in def_item.split(';')]
+
+                for part in parts:
+                    if not part:
+                        continue
+
+                    # Remove brackets and parentheses content first
+                    cleaned = re.sub(r'\([^)]*\)', '', part)
+                    cleaned = re.sub(r'\[[^\]]*\]', '', cleaned)
+                    cleaned = cleaned.strip()
+
+                    # Skip if contains non-English characters
+                    if not is_english_only(cleaned):
+                        continue
+
+                    # Skip technical markers and low-value definitions
+                    if any(marker in cleaned.lower() for marker in [
+                        'used in', 'abbr for', 'abbr.', 'cl:', 'surname',
+                        'see also', 'variant of', '...'
+                    ]):
+                        continue
+
+                    # Keep meaningful English definitions
+                    if len(cleaned) > 2 and cleaned not in cleaned_defs:
+                        cleaned_defs.append(cleaned)
+
+            if cleaned_defs:
+                translations['cedict'] = "; ".join(cleaned_defs[:max_definitions])
+
+        # Custom dictionaries (if any)
+        if hasattr(self, 'custom_dicts'):
+            for dict_name, dict_data in self.custom_dicts.items():
+                if word in dict_data:
+                    definitions = dict_data[word][:max_definitions]
+                    translations[dict_name] = "; ".join(definitions)
+
+        return translations
+
+    def lookup_translation_mixed(self, word: str, max_definitions: int = 3) -> Optional[str]:
+        """
+        Look up English translation using mixed strategy (combine all available dictionary sources).
+
+        Args:
+            word: Chinese word to translate
+            max_definitions: Maximum number of definitions to return per source
+
+        Returns:
+            English translation combining all sources or None if not found
+        """
+        if not word or not word.strip():
+            return None
+
+        word = word.strip()
+
+        # Get translations from all available sources
+        all_translations = self.get_all_translations(word, max_definitions)
+
+        # Extract translation strings in priority order (mini first, then others)
+        translation_values = []
+
+        # Add mini dictionary first (highest priority)
+        if 'mini' in all_translations:
+            translation_values.append(all_translations['mini'])
+
+        # Add CEDICT
+        if 'cedict' in all_translations:
+            translation_values.append(all_translations['cedict'])
+
+        # Add any custom dictionaries
+        for source_name, translation in all_translations.items():
+            if source_name not in ['mini', 'cedict']:
+                translation_values.append(translation)
+
+        # Use shared translation combining logic for multiple sources
+        from services.translation import combine_translations_smart
+        result = combine_translations_smart(*translation_values)
+
+        # If we got a result from dictionaries, return it
+        if result:
+            return result
+
+        # Fallback to character-by-character lookup
+        if len(word) > 1:
+            char_translations = []
+            for char in word:
+                char_trans = self.lookup_translation(char, max_definitions=1)
+                if char_trans:
+                    char_translations.append(char_trans)
+
+            if char_translations:
+                return " + ".join(char_translations)
+
+        return None
+
+    def add_custom_dictionary(self, name: str, data: Dict[str, List[str]]) -> bool:
+        """
+        Add a custom dictionary source.
+
+        Args:
+            name: Name of the dictionary source
+            data: Dictionary mapping Chinese words to lists of English definitions
+
+        Returns:
+            True if added successfully
+        """
+        if not hasattr(self, 'custom_dicts'):
+            self.custom_dicts = {}
+
+        self.custom_dicts[name] = data
+        self.loaded_sources.append(f"Custom dict '{name}': {len(data)} entries")
+        return True
+
     def get_word_info(self, word: str) -> Dict[str, any]:
         """
         Get comprehensive information about a word.

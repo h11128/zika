@@ -1,5 +1,5 @@
 import pytest
-from services.translation import translate_with_strategy, _are_different_translations
+from services.translation import translate_with_strategy, _are_different_translations, combine_translations_smart
 
 
 class MockDict:
@@ -73,3 +73,40 @@ def test_translate_with_strategy_mixed_containment(monkeypatch):
     dictionary = MockDict({"测试": "testing"})
     result = translate_with_strategy("测试", dictionary, "mixed")
     assert result == "testing"  # Should not duplicate due to containment
+
+
+def test_combine_translations_smart():
+    # Test exact duplicates
+    assert combine_translations_smart("love", "love") == "love"
+
+    # Test case insensitive duplicates
+    assert combine_translations_smart("Love", "love") == "Love"
+
+    # Test containment relationships
+    assert combine_translations_smart("hello", "hello world") == "hello"
+    assert combine_translations_smart("test", "testing") == "test"
+
+    # Test meaningful differences
+    result = combine_translations_smart("love; to love", "to love; to be fond of; to like")
+    assert result == "love | to be fond of; to like"
+
+    # Test with None values
+    assert combine_translations_smart(None, "test") == "test"
+    assert combine_translations_smart("test", None) == "test"
+    assert combine_translations_smart(None, None) is None
+
+    # Test complex deduplication
+    result = combine_translations_smart("book", "book; letter")
+    assert result == "book | letter"
+
+    # Test multiple sources (3+)
+    result = combine_translations_smart("love", "affection", "romance")
+    assert result == "love | affection | romance"
+
+    # Test multiple sources with duplicates
+    result = combine_translations_smart("book", "book; letter", "tome; manuscript")
+    assert result == "book | letter | tome; manuscript"
+
+    # Test empty and None mixed with valid
+    result = combine_translations_smart("hello", None, "greeting", "")
+    assert result == "hello | greeting"
