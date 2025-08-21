@@ -7,7 +7,7 @@ import streamlit as st
 from typing import List, Dict, Tuple
 
 # Import required modules
-from services.processing import generate_missing_data
+from services.processing import generate_missing_data, generate_missing_data_ordered
 from core.state import (
     initialize_session_state, get_processed_cards, get_current_page, get_layout_settings,
     get_ui_preferences, set_processed_cards, set_current_page, clear_export_data,
@@ -58,7 +58,7 @@ class AppController:
             st.error(f"检查卡片状态时出错: {e}")
             return True  # Force reprocessing on error
     
-    def process_cards_if_needed(self, cards, auto_pinyin, auto_translate):
+    def process_cards_if_needed(self, cards, auto_pinyin, auto_translate, translate_order: str = 'local_first'):
         """Process cards and generate missing data if needed with error handling."""
         try:
             # Input validation
@@ -70,12 +70,16 @@ class AppController:
                     clear_processed_cards()
                 return []
 
-            current_source = f"cards:{len(cards)}:{hash(str(cards))}"
+            current_source = f"cards:{len(cards)}:{hash(str(cards))}:{translate_order}"
 
             if self.should_reprocess_cards(cards, current_source):
                 clear_export_data()
                 try:
-                    processed_cards = generate_missing_data(cards, auto_pinyin, auto_translate, get_dictionary())
+                    # Use ordered variant only if non-default to preserve backwards compat
+                    if translate_order and translate_order != 'local_first':
+                        processed_cards = generate_missing_data_ordered(cards, auto_pinyin, auto_translate, get_dictionary(), translate_order)
+                    else:
+                        processed_cards = generate_missing_data(cards, auto_pinyin, auto_translate, get_dictionary())
                     set_processed_cards(processed_cards, current_source)
                     return processed_cards
                 except Exception as e:
@@ -148,7 +152,7 @@ class AppController:
 
         # Process cards
         processed_cards = self.process_cards_if_needed(
-            left_params['cards'], left_params['auto_pinyin'], left_params['auto_translate']
+            left_params['cards'], left_params['auto_pinyin'], left_params['auto_translate'], left_params.get('translate_order', 'local_first')
         )
 
         if processed_cards:

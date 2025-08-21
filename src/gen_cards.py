@@ -21,6 +21,14 @@ from dict_utils import create_default_dict
 from layout_pptx import PPTXCardGenerator
 from layout_pdf import PDFCardGenerator
 
+# Optional: Google Translate fallback (available when running from repo root)
+try:
+    from services.translation import translate_with_google, clean_english_text
+except Exception:
+    translate_with_google = None
+    def clean_english_text(text):
+        return text
+
 
 class CardGenerator:
     """Main card generation orchestrator."""
@@ -138,16 +146,28 @@ class CardGenerator:
                 pinyin = hanzi_to_pinyin(processed_card['hanzi'], heteronym=heteronym)
                 processed_card['pinyin'] = pinyin
                 print(f"Generated pinyin for '{processed_card['hanzi']}': {pinyin}")
-            
+
             # Generate translation if missing
             if auto_translate and not processed_card['english']:
-                translation = self.dictionary.lookup_translation(processed_card['hanzi'])
+                hanzi = processed_card['hanzi']
+                translation = None
+                # 1) Local dictionary first
+                try:
+                    translation = self.dictionary.lookup_translation(hanzi)
+                except Exception:
+                    translation = None
+                translation = clean_english_text(translation) if translation else None
+                # 2) Fallback to Google if available
+                if not translation and translate_with_google is not None:
+                    g = translate_with_google(hanzi)
+                    if g:
+                        translation = g
                 if translation:
                     processed_card['english'] = translation
-                    print(f"Generated translation for '{processed_card['hanzi']}': {translation}")
+                    print(f"Generated translation for '{hanzi}': {translation}")
                 else:
-                    print(f"Warning: No translation found for '{processed_card['hanzi']}'")
-            
+                    print(f"Warning: No translation found for '{hanzi}'")
+
             processed_cards.append(processed_card)
         
         return processed_cards

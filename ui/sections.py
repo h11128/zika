@@ -155,6 +155,32 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
     with col_opt1:
         auto_pinyin = st.checkbox("自动生成拼音", value=True)
         auto_translate = st.checkbox("自动生成翻译", value=True)
+        translate_order_display = st.selectbox(
+            "翻译优先级",
+            ["本地优先", "Google优先", "仅本地", "仅Google", "混合模式"],
+            index=0,
+            key="translate_order_select"
+        )
+        # Map display text to internal values used by processing layer and store in session
+        order_map = {
+            "本地优先": "local_first",
+            "Google优先": "google_first",
+            "仅本地": "local_only",
+            "仅Google": "google_only",
+            "混合模式": "mixed",
+        }
+        new_order = order_map.get(translate_order_display, "local_first")
+
+        # Force reprocessing if order changed
+        if getattr(st.session_state, 'translate_order', 'local_first') != new_order:
+            if hasattr(st.session_state, 'cards_source'):
+                st.session_state.cards_source = None  # Force reprocessing
+
+        st.session_state.translate_order = new_order
+
+        # Debug info
+        if new_order != 'local_first':
+            st.caption(f"🔄 当前模式: {translate_order_display}")
 
     with col_opt2:
         page_size = st.selectbox("页面尺寸", ["A4", "Letter"], index=0)
@@ -446,6 +472,7 @@ def render_left_column():
         'cards': cards,
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
+        'translate_order': getattr(st.session_state, 'translate_order', 'local_first'),
         'page_size': page_size,
         'card_size': card_size,
         'gap': gap,

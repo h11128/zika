@@ -8,6 +8,13 @@ import streamlit as st
 import os
 import sys
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env file from current directory
+except ImportError:
+    pass  # dotenv not available, skip
+
 # Page configuration - must be first Streamlit command
 st.set_page_config(
     page_title="中文学习卡片生成器",
