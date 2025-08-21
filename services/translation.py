@@ -120,3 +120,59 @@ def translate_with_google(text: str, api_key: Optional[str] = None, timeout: int
         # Be conservative: never let translation errors bubble up into the app
         return None
 
+
+def _are_different_translations(t1: Optional[str], t2: Optional[str]) -> bool:
+    """Check if two translations are meaningfully different."""
+    if not t1 or not t2:
+        return False
+    # Normalize for comparison
+    norm1 = t1.lower().strip()
+    norm2 = t2.lower().strip()
+    # Same text
+    if norm1 == norm2:
+        return False
+    # One contains the other (avoid subset duplicates)
+    if norm1 in norm2 or norm2 in norm1:
+        return False
+    return True
+
+
+def translate_with_strategy(text: str, dictionary=None, strategy: str = 'local_first') -> Optional[str]:
+    """Translate text using the specified strategy.
+
+    Args:
+        text: Text to translate
+        dictionary: Local dictionary object with lookup_translation method
+        strategy: Translation strategy - 'local_first', 'google_first', 'local_only', 'google_only', 'mixed'
+
+    Returns:
+        Translated text or None
+    """
+    def try_local() -> Optional[str]:
+        if dictionary is None:
+            return None
+        try:
+            t = dictionary.lookup_translation(text)
+            return clean_english_text(t) if t else None
+        except Exception:
+            return None
+
+    def try_google() -> Optional[str]:
+        return translate_with_google(text)
+
+    if strategy == 'google_first':
+        return try_google() or try_local()
+    elif strategy == 'local_only':
+        return try_local()
+    elif strategy == 'google_only':
+        return try_google()
+    elif strategy == 'mixed':
+        local_trans = try_local()
+        google_trans = try_google()
+        if _are_different_translations(local_trans, google_trans):
+            return f"{local_trans} | {google_trans}"
+        else:
+            return local_trans or google_trans
+    else:  # local_first (default)
+        return try_local() or try_google()
+

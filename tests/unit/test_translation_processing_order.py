@@ -2,6 +2,7 @@ import types
 import pytest
 
 from services import processing as sp
+from services import translation as st
 from services.translation import clean_english_text
 
 
@@ -50,7 +51,7 @@ def test_generate_missing_data_local_first_falls_back_to_google(monkeypatch):
 def test_generate_missing_data_ordered_google_first(monkeypatch):
     cards = _make_cards("测试")
     d = DummyDict({"测试": "test; testing"})
-    monkeypatch.setattr(sp, "translate_with_google", lambda text: "trial")
+    monkeypatch.setattr(st, "translate_with_google", lambda text: "trial")
 
     out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="google_first")
     assert out[0]["english"] == "trial"  # google first wins
@@ -60,7 +61,7 @@ def test_generate_missing_data_ordered_local_only(monkeypatch):
     cards = _make_cards("测试")
     d = DummyDict({"测试": "test; testing"})
     # If google would return, it should be ignored in local_only
-    monkeypatch.setattr(sp, "translate_with_google", lambda text: "trial")
+    monkeypatch.setattr(st, "translate_with_google", lambda text: "trial")
 
     out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="local_only")
     assert out[0]["english"] == "test; testing"
@@ -69,7 +70,7 @@ def test_generate_missing_data_ordered_local_only(monkeypatch):
 def test_generate_missing_data_ordered_google_only(monkeypatch):
     cards = _make_cards("测试")
     d = DummyDict({"测试": "test; testing"})
-    monkeypatch.setattr(sp, "translate_with_google", lambda text: "trial")
+    monkeypatch.setattr(st, "translate_with_google", lambda text: "trial")
 
     out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="google_only")
     assert out[0]["english"] == "trial"
@@ -78,7 +79,7 @@ def test_generate_missing_data_ordered_google_only(monkeypatch):
 def test_generate_missing_data_ordered_mixed_mode(monkeypatch):
     cards = _make_cards("测试")
     d = DummyDict({"测试": "test; testing"})
-    monkeypatch.setattr(sp, "translate_with_google", lambda text: "trial")
+    monkeypatch.setattr(st, "translate_with_google", lambda text: "trial")
 
     out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="mixed")
     # Should combine both results since they're different
@@ -88,7 +89,7 @@ def test_generate_missing_data_ordered_mixed_mode(monkeypatch):
 def test_generate_missing_data_ordered_mixed_mode_same_result(monkeypatch):
     cards = _make_cards("测试")
     d = DummyDict({"测试": "test"})
-    monkeypatch.setattr(sp, "translate_with_google", lambda text: "test")
+    monkeypatch.setattr(st, "translate_with_google", lambda text: "test")
 
     out = sp.generate_missing_data_ordered(cards, auto_pinyin=False, auto_translate=True, dictionary=d, translate_order="mixed")
     # Should not duplicate when results are the same
@@ -101,7 +102,7 @@ def test_final_translation_has_no_chinese(monkeypatch):
     class DirtyDict:
         def lookup_translation(self, hanzi):
             return "混合; mix"
-    monkeypatch.setattr(sp, "translate_with_google", lambda text: None)
+    monkeypatch.setattr(st, "translate_with_google", lambda text: None)
     out = sp.generate_missing_data(cards, auto_pinyin=False, auto_translate=True, dictionary=DirtyDict())
     assert out[0]["english"] is not None
     assert all(ord(ch) < 128 or ch.isascii() for ch in out[0]["english"] if ch.strip())  # basic ASCII assurance
