@@ -260,7 +260,7 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
     return auto_pinyin, auto_translate, page_size, card_size
 
 
-def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
+def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]: # returns (gap, margin, font_hanzi, font_pinyin, font_english, rows, cols)
     """Render the advanced options section and return advanced option values."""
     with st.expander("🔧 高级选项"):
         # Layout options
