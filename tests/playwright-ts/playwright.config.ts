@@ -44,6 +44,9 @@ export default defineConfig({
     /* Global timeout for navigation */
     navigationTimeout: 60000, // Increased from 30s
 
+    /* Enable downloads for export tests */
+    acceptDownloads: true,
+
     /* Automatically close pages after tests */
     contextOptions: {
       // Close context after each test to clean up pages
@@ -61,15 +64,24 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testMatch: ['**/*.spec.ts'],
+    },
+    {
+      name: 'critical',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: ['**/csv-upload.spec.ts', '**/export-functionality.spec.ts', '**/pagination-navigation.spec.ts'],
+      grep: /@critical/,
     },
     // Uncomment to test on other browsers
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },
+    //   testMatch: ['**/auto-features.spec.ts', '**/basic-input-flow.spec.ts'], // Smoke tests only
     // },
     // {
     //   name: 'webkit',
     //   use: { ...devices['Desktop Safari'] },
+    //   testMatch: ['**/auto-features.spec.ts', '**/basic-input-flow.spec.ts'], // Smoke tests only
     // },
   ],
 

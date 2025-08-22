@@ -73,44 +73,41 @@ class ZikaAppPage {
     // Try multiple strategies to find and interact with the checkbox
     let success = false;
 
-    // Strategy 1: Try to find by label text (more reliable for hidden checkboxes)
+    // Strategy 1: Try to find by exact label text (more reliable for hidden checkboxes)
     try {
-      const label = this.page.getByText('自动生成拼音');
+      const label = this.page.getByText('自动生成拼音', { exact: true });
       await label.waitFor({ state: 'visible', timeout: 3000 });
       await label.click();
       console.log(`✅ Auto pinyin toggled via label click`);
       success = true;
-    } catch (error) {
-      console.log(`⚠️ Label click failed: ${error.message}`);
+    } catch (error: any) {
+      console.log(`⚠️ Label click failed: ${error?.message || 'Unknown error'}`);
     }
 
-    // Strategy 2: Force click on hidden checkbox
+    // Strategy 2: Try to find the checkbox by aria-label
     if (!success) {
       try {
-        const checkbox = this.page.getByRole('checkbox', { name: /自动生成拼音/ });
-        await checkbox.click({ force: true }); // Force click even if hidden
-        console.log(`✅ Auto pinyin toggled via force click`);
+        const checkbox = this.page.locator('input[aria-label="自动生成拼音"]');
+        await checkbox.scrollIntoViewIfNeeded();
+        await checkbox.click({ force: true });
+        console.log(`✅ Auto pinyin toggled via checkbox click`);
         success = true;
-      } catch (error) {
-        console.log(`⚠️ Force click failed: ${error.message}`);
+      } catch (error: any) {
+        console.log(`⚠️ Checkbox click failed: ${error?.message || 'Unknown error'}`);
       }
     }
 
-    // Strategy 3: Use JavaScript to toggle
+    // Strategy 3: Try different selector approaches
     if (!success) {
       try {
-        await this.page.evaluate(() => {
-          const checkbox = document.querySelector('input[aria-label*="自动生成拼音"]') as HTMLInputElement;
-          if (checkbox) {
-            checkbox.click();
-            return true;
-          }
-          return false;
-        });
-        console.log(`✅ Auto pinyin toggled via JavaScript`);
+        // Try finding by text content in a label
+        const labelElement = this.page.locator('label').filter({ hasText: '自动生成拼音' });
+        await labelElement.scrollIntoViewIfNeeded();
+        await labelElement.click();
+        console.log(`✅ Auto pinyin toggled via label element`);
         success = true;
-      } catch (error) {
-        console.log(`⚠️ JavaScript toggle failed: ${error.message}`);
+      } catch (error: any) {
+        console.log(`⚠️ Label element click failed: ${error?.message || 'Unknown error'}`);
       }
     }
 
@@ -125,44 +122,41 @@ class ZikaAppPage {
     // Try multiple strategies to find and interact with the checkbox
     let success = false;
 
-    // Strategy 1: Try to find by label text (more reliable for hidden checkboxes)
+    // Strategy 1: Try to find by exact label text (more reliable for hidden checkboxes)
     try {
-      const label = this.page.getByText('自动生成翻译');
+      const label = this.page.getByText('自动生成翻译', { exact: true });
       await label.waitFor({ state: 'visible', timeout: 3000 });
       await label.click();
       console.log(`✅ Auto translate toggled via label click`);
       success = true;
-    } catch (error) {
-      console.log(`⚠️ Label click failed: ${error.message}`);
+    } catch (error: any) {
+      console.log(`⚠️ Label click failed: ${error?.message || 'Unknown error'}`);
     }
 
-    // Strategy 2: Force click on hidden checkbox
+    // Strategy 2: Try to find the checkbox by aria-label
     if (!success) {
       try {
-        const checkbox = this.page.getByRole('checkbox', { name: /自动生成翻译/ });
-        await checkbox.click({ force: true }); // Force click even if hidden
-        console.log(`✅ Auto translate toggled via force click`);
+        const checkbox = this.page.locator('input[aria-label="自动生成翻译"]');
+        await checkbox.scrollIntoViewIfNeeded();
+        await checkbox.click({ force: true });
+        console.log(`✅ Auto translate toggled via checkbox click`);
         success = true;
-      } catch (error) {
-        console.log(`⚠️ Force click failed: ${error.message}`);
+      } catch (error: any) {
+        console.log(`⚠️ Checkbox click failed: ${error?.message || 'Unknown error'}`);
       }
     }
 
-    // Strategy 3: Use JavaScript to toggle
+    // Strategy 3: Try different selector approaches
     if (!success) {
       try {
-        await this.page.evaluate(() => {
-          const checkbox = document.querySelector('input[aria-label*="自动生成翻译"]') as HTMLInputElement;
-          if (checkbox) {
-            checkbox.click();
-            return true;
-          }
-          return false;
-        });
-        console.log(`✅ Auto translate toggled via JavaScript`);
+        // Try finding by text content in a label
+        const labelElement = this.page.locator('label').filter({ hasText: '自动生成翻译' });
+        await labelElement.scrollIntoViewIfNeeded();
+        await labelElement.click();
+        console.log(`✅ Auto translate toggled via label element`);
         success = true;
-      } catch (error) {
-        console.log(`⚠️ JavaScript toggle failed: ${error.message}`);
+      } catch (error: any) {
+        console.log(`⚠️ Label element click failed: ${error?.message || 'Unknown error'}`);
       }
     }
 
@@ -173,20 +167,30 @@ class ZikaAppPage {
 
   async setTranslatePriority(priority: 'local' | 'online') {
     console.log(`🔧 Setting translate priority to ${priority}...`);
-    
+
     try {
       const selectBox = this.page.getByRole('combobox', { name: /翻译优先级/ });
       await selectBox.waitFor({ state: 'visible', timeout: 5000 });
-      
+
       await selectBox.click();
-      
+      await this.page.waitForTimeout(500); // Wait for dropdown to open
+
       const optionText = priority === 'local' ? '本地优先' : '在线优先';
-      const option = this.page.getByText(optionText);
-      await option.click();
-      
-      console.log(`✅ Translate priority set to ${priority}`);
-    } catch (error) {
-      console.log(`⚠️ Could not set translate priority: ${error.message}`);
+
+      // Try to select from the dropdown specifically
+      try {
+        const dropdownOption = this.page.getByTestId('stSelectboxVirtualDropdown').getByText(optionText, { exact: true });
+        await dropdownOption.click();
+        console.log(`✅ Translate priority set to ${priority} via dropdown`);
+      } catch (dropdownError) {
+        // Fallback: try any visible option with the text
+        const option = this.page.getByText(optionText, { exact: true }).last();
+        await option.click();
+        console.log(`✅ Translate priority set to ${priority} via fallback`);
+      }
+
+    } catch (error: any) {
+      console.log(`⚠️ Could not set translate priority: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -290,7 +294,7 @@ class ZikaAppPage {
 
 test.describe('Auto Features', () => {
   // Clean up after each test
-  test.afterEach(async ({ page, context }) => {
+  test.afterEach(async ({ context }) => {
     console.log('🧹 Cleaning up test page and context...');
     try {
       // Close all pages in the context

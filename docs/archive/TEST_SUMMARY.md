@@ -192,13 +192,14 @@ flowchart TD
 - **Location**: `tests/playwright-ts/`
 - **Coverage**: Complete user workflows, browser interactions, visual validation
 - **Framework**: Playwright with TypeScript
+- **Current Status**: 12 tests, 100% passing, ~40-50% feature coverage
 - **Key Areas**:
   - Auto features (pinyin/translation generation)
   - Basic input flow and card generation
   - Card size adjustment functionality
   - Preview mode switching
-- **Test Count**: 12 tests, 100% passing
 - **Documentation**: See `docs/E2E_TESTS_DOCUMENTATION.md` for detailed coverage
+- **Improvement Plan**: See `docs/E2E_TESTS_IMPROVEMENT_PLAN.md` for expansion roadmap
 
 ## Future Improvements
 

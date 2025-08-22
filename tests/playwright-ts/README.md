@@ -52,29 +52,43 @@ npm run force-cleanup
 
 ## 📊 Test Overview
 
-### Test Suites (12 tests total)
+### Test Suites (36 tests total)
+- **Application Health** (6 tests) - Error detection and stability checks
 - **Auto Features** (4 tests) - Auto pinyin/translation generation
-- **Basic Input Flow** (3 tests) - Core card generation functionality  
+- **Basic Input Flow** (3 tests) - Core card generation functionality
 - **Card Size Adjustment** (2 tests) - Card sizing in different modes
+- **CSV Upload** (6 tests) - File upload and processing functionality
+- **Export Functionality** (6 tests) - PPTX/PDF export and download
+- **Pagination Navigation** (6 tests) - Multi-page content handling
 - **Preview Modes** (3 tests) - Preview mode switching
 
-### Current Status: ✅ 100% Passing
+### Current Status: ✅ 100% Passing (36/36 tests)
+### Average Runtime: ~8.5 minutes (single worker)
 
 ## 📁 File Structure
 
 ```
 tests/playwright-ts/
-├── tests/                    # Test files
-│   ├── auto-features.spec.ts
-│   ├── basic-input-flow.spec.ts
-│   ├── card-size-adjustment.spec.ts
-│   └── preview-modes.spec.ts
-├── cleanup.ts               # Pre-test cleanup
-├── force-cleanup.ts         # Post-test cleanup
-├── global-teardown.ts       # Global cleanup
-├── playwright.config.ts     # Playwright configuration
-├── package.json            # Dependencies and scripts
-└── README.md               # This file
+├── tests/                          # Test files
+│   ├── app-health.spec.ts          # Application health checks
+│   ├── auto-features.spec.ts       # Auto pinyin/translation
+│   ├── basic-input-flow.spec.ts    # Core input functionality
+│   ├── card-size-adjustment.spec.ts # UI customization
+│   ├── csv-upload.spec.ts          # CSV file processing
+│   ├── export-functionality.spec.ts # PPTX/PDF export
+│   ├── pagination-navigation.spec.ts # Multi-page handling
+│   └── preview-modes.spec.ts       # Display modes
+├── page-objects/
+│   └── ZikaAppPage.ts              # Main page object
+├── test-data/
+│   ├── csv-files/                  # Valid CSV test files
+│   └── invalid-csv-files/          # Invalid CSV test files
+├── cleanup.ts                      # Pre-test cleanup
+├── force-cleanup.ts                # Post-test cleanup
+├── global-teardown.ts              # Global cleanup
+├── playwright.config.ts            # Playwright configuration
+├── package.json                    # Dependencies and scripts
+└── README.md                       # This file
 ```
 
 ## 🛠️ Configuration
@@ -95,10 +109,13 @@ tests/playwright-ts/
 
 ### Page Object Model
 Tests use a `ZikaAppPage` class that provides:
-- Navigation and setup methods
-- Element interaction with multiple fallback strategies
-- Verification and assertion helpers
-- Comprehensive logging for debugging
+- **Navigation and setup methods**: `goto()`, `setupCards()`, `checkForStreamlitErrors()`
+- **CSV operations**: `uploadCSVFile()`, `validateCSVUploadError()`, `selectCSVUploadMethod()`
+- **Export operations**: `exportToPPTX()`, `exportToPDF()`, `verifyDownloadedFile()`
+- **Navigation methods**: `navigateToPage()`, `getPageInfo()`, `verifyPageNavigation()`
+- **Element interaction**: Multiple fallback strategies for reliability
+- **Verification helpers**: `verifyCardsGenerated()`, `verifyPreviewContent()`
+- **Comprehensive logging**: Detailed debugging information
 
 ### Robust Element Interaction
 Each interaction implements multiple strategies:

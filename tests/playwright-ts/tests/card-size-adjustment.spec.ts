@@ -20,7 +20,7 @@ class ZikaAppPage {
 
   async goto() {
     await this.page.goto('/');
-    await expect(this.page.getByText('Chinese Learning Cards Generator')).toBeVisible({ timeout: 30000 });
+    await expect(this.page.getByText('Chinese Learning Cards Generator', { exact: true })).toBeVisible({ timeout: 30000 });
     console.log('✅ App loaded successfully');
   }
 
@@ -64,18 +64,18 @@ class ZikaAppPage {
         await simpleGridRadio.check({ timeout: 5000 });
         console.log('✅ Switched to simple grid mode via radiogroup');
         success = true;
-      } catch (error) {
-        console.log('⚠️ Method 1 failed:', error.message);
+      } catch (error: any) {
+        console.log('⚠️ Method 1 failed:', error?.message || 'Unknown error');
       }
 
       // Method 2: Direct text search
       if (!success) {
         try {
-          await this.page.getByText('🔲 简单网格').click({ timeout: 5000 });
+          await this.page.getByText('🔲 简单网格', { exact: true }).click({ timeout: 5000 });
           console.log('✅ Switched to simple grid mode via text click');
           success = true;
-        } catch (error) {
-          console.log('⚠️ Method 2 failed:', error.message);
+        } catch (error: any) {
+          console.log('⚠️ Method 2 failed:', error?.message || 'Unknown error');
         }
       }
 
@@ -84,8 +84,8 @@ class ZikaAppPage {
       } else {
         console.log('⚠️ Could not switch to simple grid mode, using default');
       }
-    } catch (error) {
-      console.log('⚠️ Switch mode error:', error.message);
+    } catch (error: any) {
+      console.log('⚠️ Switch mode error:', error?.message || 'Unknown error');
     }
   }
 
@@ -174,7 +174,7 @@ class ZikaAppPage {
     if (!success) {
       try {
         // First expand advanced options
-        const advancedToggle = this.page.getByText('🔧 高级选项');
+        const advancedToggle = this.page.getByText('🔧 高级选项', { exact: true });
         await advancedToggle.click({ timeout: 5000 });
         await this.page.waitForTimeout(1000);
 
@@ -238,7 +238,7 @@ class ZikaAppPage {
       } catch {
         // Strategy 2: By input type near text
         try {
-          await this.page.getByText('卡片大小 (cm)').waitFor({ state: 'visible', timeout: 3000 });
+          await this.page.getByText('卡片大小 (cm)', { exact: true }).waitFor({ state: 'visible', timeout: 3000 });
           slider = this.page.locator('input[type="range"]').first();
           await slider.waitFor({ state: 'visible', timeout: 3000 });
           console.log('✅ Found slider by input type');

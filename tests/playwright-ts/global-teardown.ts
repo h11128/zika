@@ -8,23 +8,14 @@ const execAsync = promisify(exec);
 async function globalTeardown() {
   console.log('🧹 Starting global cleanup...');
 
-  try {
-    // 1. Force close all Chrome processes (aggressive cleanup)
-    console.log('🔪 Force closing all Chrome processes...');
-    try {
-      if (process.platform === 'win32') {
-        await execAsync('taskkill /F /IM chrome.exe /T');
-        console.log('✅ All Chrome processes terminated');
-      } else {
-        await execAsync('pkill -f chrome');
-        console.log('✅ All Chrome processes terminated');
-      }
-    } catch (error) {
-      console.log('ℹ️ No Chrome processes to terminate');
-    }
+  // Note: Playwright automatically handles browser cleanup when tests complete normally.
+  // We only need to clean up artifacts and handle edge cases where processes might be stuck.
 
-    // Wait a moment for processes to fully close
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  try {
+    // 1. Let Playwright handle browser cleanup naturally
+    console.log('🔄 Allowing Playwright to complete browser cleanup...');
+    // Playwright automatically closes browsers when tests complete
+    // We only clean up artifacts and temporary files
 
     // 2. Clean up test artifacts
     console.log('🗑️ Cleaning up test artifacts...');

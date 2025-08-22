@@ -314,57 +314,52 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
             st.caption("快速选择颜色：点击下方色块选择背景色")
             render_color_palette(PRESET_COLORS)
 
-            # Custom color input - simplified approach
+            # Custom color input - simplified approach (single column to avoid triple nesting)
             st.write("**自定义颜色:**")
 
-            # Create two columns for color picker and current color display
-            col_picker, col_current = st.columns([1, 1])
+            # Use a dedicated state key for the picker to ensure we can detect changes reliably
+            if 'custom_color_picker' not in st.session_state:
+                st.session_state.custom_color_picker = st.session_state.background_color
+            prev_custom_color = st.session_state.get('_prev_custom_color', st.session_state.custom_color_picker)
 
-            with col_picker:
-                # Use a dedicated state key for the picker to ensure we can detect changes reliably
-                if 'custom_color_picker' not in st.session_state:
-                    st.session_state.custom_color_picker = st.session_state.background_color
-                prev_custom_color = st.session_state.get('_prev_custom_color', st.session_state.custom_color_picker)
+            custom_color = st.color_picker(
+                "选择颜色",
+                value=st.session_state.custom_color_picker,
+                key="custom_color_picker"
+            )
 
-                custom_color = st.color_picker(
-                    "选择颜色",
-                    value=st.session_state.custom_color_picker,
-                    key="custom_color_picker"
-                )
+            # Show current color below the picker
+            st.write("当前颜色:")
+            st.markdown(
+                f"<div style='width:100px;height:40px;background-color:{st.session_state.background_color};"
+                f"border:2px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;'>"
+                f"<span style='color:white;text-shadow:1px 1px 2px black;font-weight:bold;font-size:12px;'>"
+                f"{st.session_state.background_color}</span>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
-                # Detect reliable change via the picker state
-                if custom_color != prev_custom_color or custom_color != st.session_state.background_color:
-                    st.session_state.background_color = custom_color
-                    st.session_state._prev_custom_color = custom_color
-                    # Clear preview cache when color changes
-                    from services.cache import clear_preview_cache
-                    clear_preview_cache()
-                    # Force preview parameter reset
-                    if 'last_preview_params' in st.session_state:
-                        del st.session_state.last_preview_params
-                    st.rerun()
+            # Detect reliable change via the picker state
+            if custom_color != prev_custom_color or custom_color != st.session_state.background_color:
+                st.session_state.background_color = custom_color
+                st.session_state._prev_custom_color = custom_color
+                # Clear preview cache when color changes
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                # Force preview parameter reset
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
+                st.rerun()
 
-            with col_current:
-                st.write("当前颜色:")
-                # Show current color
-                st.markdown(
-                    f"<div style='width:100px;height:40px;background-color:{st.session_state.background_color};"
-                    f"border:2px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;'>"
-                    f"<span style='color:white;text-shadow:1px 1px 2px black;font-weight:bold;font-size:12px;'>"
-                    f"{st.session_state.background_color}</span>"
-                    f"</div>",
-                    unsafe_allow_html=True
-                )
-
-        # Font size options
-        st.write("**字体大小:**")
-        col_font1, col_font2, col_font3 = st.columns(3)
-        with col_font1:
-            font_hanzi = st.slider("汉字", 20, 80, 48, 2, key="font_hanzi")
-        with col_font2:
-            font_pinyin = st.slider("拼音", 10, 40, 18, 1, key="font_pinyin")
-        with col_font3:
-            font_english = st.slider("英文", 8, 30, 14, 1, key="font_english")
+    # Font size options (moved outside the expander to avoid triple nesting)
+    st.write("**字体大小:**")
+    col_font1, col_font2, col_font3 = st.columns(3)
+    with col_font1:
+        font_hanzi = st.slider("汉字", 20, 80, 48, 2, key="font_hanzi")
+    with col_font2:
+        font_pinyin = st.slider("拼音", 10, 40, 18, 1, key="font_pinyin")
+    with col_font3:
+        font_english = st.slider("英文", 8, 30, 14, 1, key="font_english")
 
         # Update session state and clear cache if values changed
         layout_changed = (
