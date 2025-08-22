@@ -25,7 +25,7 @@ test.describe('Application Health Checks', () => {
     }
   });
 
-  test('should load without Streamlit errors', async () => {
+  test('should load without Streamlit errors @critical', async () => {
     console.log('🧪 Testing application health on load...');
     
     // This will automatically check for Streamlit errors
@@ -67,7 +67,7 @@ test.describe('Application Health Checks', () => {
     console.log('✅ Advanced options work without column nesting errors');
   });
 
-  test('should generate cards and preview without errors', async () => {
+  test('should generate cards and preview without errors @critical', async () => {
     console.log('🧪 Testing card generation and preview health...');
     
     await app.goto();

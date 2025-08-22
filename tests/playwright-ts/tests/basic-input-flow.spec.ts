@@ -167,7 +167,7 @@ test.describe('Basic Input Flow', () => {
     }
   });
 
-  test('should generate cards from Chinese text input', async ({ page }) => {
+  test('should generate cards from Chinese text input @critical', async ({ page }) => {
     const app = new ZikaAppPage(page);
 
     // Navigate to app

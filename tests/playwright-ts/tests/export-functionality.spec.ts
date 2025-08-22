@@ -35,7 +35,7 @@ test.describe('Export Functionality', () => {
     }
   });
 
-  test('should export cards to PPTX and verify download', async () => {
+  test('should export cards to PPTX and verify download @critical', async () => {
     console.log('🧪 Testing PPTX export and download...');
     
     // Export to PPTX

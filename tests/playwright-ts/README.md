@@ -5,10 +5,12 @@ This directory contains End-to-End tests for the Chinese Learning Cards applicat
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js (v16 or higher)
 - The main application running on `http://localhost:8504`
 
 ### Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -18,6 +20,7 @@ npm run install
 ```
 
 ### Running Tests
+
 ```bash
 # Run all tests
 npm run test
@@ -42,6 +45,7 @@ npx playwright test --grep "should generate pinyin"
 ```
 
 ### Cleanup
+
 ```bash
 # Manual cleanup (removes test artifacts)
 npm run cleanup
@@ -53,6 +57,7 @@ npm run force-cleanup
 ## 📊 Test Overview
 
 ### Test Suites (36 tests total)
+
 - **Application Health** (6 tests) - Error detection and stability checks
 - **Auto Features** (4 tests) - Auto pinyin/translation generation
 - **Basic Input Flow** (3 tests) - Core card generation functionality
@@ -63,11 +68,12 @@ npm run force-cleanup
 - **Preview Modes** (3 tests) - Preview mode switching
 
 ### Current Status: ✅ 100% Passing (36/36 tests)
+
 ### Average Runtime: ~8.5 minutes (single worker)
 
 ## 📁 File Structure
 
-```
+```text
 tests/playwright-ts/
 ├── tests/                          # Test files
 │   ├── app-health.spec.ts          # Application health checks
@@ -102,8 +108,12 @@ tests/playwright-ts/
 - **Videos**: Retained on failure
 
 ### Browser Support
-- **Primary**: Chromium (default)
-- **Future**: Firefox, Safari support planned
+- Primary: Chromium (default)
+- Cross-browser smoke: Firefox、WebKit 在关键场景上抽查（Interleaved Layout / Complex Custom Color）
+- CI 策略：
+  - PR：Chromium @critical + Firefox/WebKit 关键场景
+  - Push：Chromium 全量 + Firefox/WebKit 关键场景
+  - Nightly（定时）：Chromium 全量 + @stress + Firefox/WebKit 关键场景
 
 ## 🧪 Test Architecture
 

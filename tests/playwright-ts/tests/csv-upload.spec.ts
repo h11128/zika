@@ -27,7 +27,7 @@ test.describe('CSV Upload Functionality', () => {
     }
   });
 
-  test('should successfully upload and process valid CSV file', async () => {
+  test('should successfully upload and process valid CSV file @critical', async () => {
     console.log('🧪 Testing successful CSV upload...');
     
     // Upload valid CSV file

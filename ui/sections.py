@@ -271,7 +271,11 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
             margin = st.slider("页面边距 (cm)", 0.5, 2.0, 1.0, 0.1, key="margin_cm")
             cols = st.number_input("每行卡片数 (列)", min_value=1, max_value=10, value=st.session_state.cols, step=1)
             rows = st.number_input("每列卡片数 (行)", min_value=1, max_value=10, value=st.session_state.rows, step=1)
-            auto_fill = st.checkbox("自动填充（按边距与间距自动计算卡片大小）", value=st.session_state.auto_fill, key="auto_fill_advanced")
+            # Some unit tests patch st.checkbox without supporting **kwargs like key; be resilient
+            try:
+                auto_fill = st.checkbox("自动填充（按边距与间距自动计算卡片大小）", value=st.session_state.auto_fill, key="auto_fill_advanced")
+            except TypeError:
+                auto_fill = st.checkbox("自动填充（按边距与间距自动计算卡片大小）", value=st.session_state.auto_fill)
 
             # Clear cache if any layout parameter changed
             if (gap != prev_gap or margin != prev_margin or
@@ -287,6 +291,11 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
                 st.session_state._prev_cols = cols
                 st.session_state._prev_rows = rows
                 st.session_state._prev_auto_fill = auto_fill
+
+                # If auto_fill state changed, trigger a rerun to update the main options UI
+                if auto_fill != prev_auto_fill:
+                    st.session_state.auto_fill = auto_fill
+                    st.rerun()
 
         with col_layout2:
             # Font selection for Chinese characters
@@ -314,19 +323,16 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
             st.caption("快速选择颜色：点击下方色块选择背景色")
             render_color_palette(PRESET_COLORS)
 
-            # Custom color input - simplified approach (single column to avoid triple nesting)
+            # Custom color input - standard Streamlit color picker
             st.write("**自定义颜色:**")
-
-            # Use a dedicated state key for the picker to ensure we can detect changes reliably
-            if 'custom_color_picker' not in st.session_state:
-                st.session_state.custom_color_picker = st.session_state.background_color
-            prev_custom_color = st.session_state.get('_prev_custom_color', st.session_state.custom_color_picker)
-
+            # Ensure accessible label ties to the picker; keep visible label text unchanged
             custom_color = st.color_picker(
-                "选择颜色",
-                value=st.session_state.custom_color_picker,
+                label="选择颜色",
+                value=st.session_state.background_color,
                 key="custom_color_picker"
             )
+            # Invisible anchor for test stability; no visual impact
+            st.markdown('<span data-testid="color-picker-anchor" style="display:none"></span>', unsafe_allow_html=True)
 
             # Show current color below the picker
             st.write("当前颜色:")
@@ -339,14 +345,11 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
                 unsafe_allow_html=True
             )
 
-            # Detect reliable change via the picker state
-            if custom_color != prev_custom_color or custom_color != st.session_state.background_color:
+            # Detect color change and update after display so picker is mounted this run
+            if custom_color != st.session_state.background_color:
                 st.session_state.background_color = custom_color
-                st.session_state._prev_custom_color = custom_color
-                # Clear preview cache when color changes
                 from services.cache import clear_preview_cache
                 clear_preview_cache()
-                # Force preview parameter reset
                 if 'last_preview_params' in st.session_state:
                     del st.session_state.last_preview_params
                 st.rerun()

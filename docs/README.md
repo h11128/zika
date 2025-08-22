@@ -12,6 +12,7 @@ This index helps you find the right document quickly.
 - **E2E testing guide**: E2E_TESTS_DOCUMENTATION.md
 - **Test coverage report**: TEST_COVERAGE_REPORT.md
 - **Integration testing**: INTEGRATION_TESTS_SUMMARY.md
+- **CI E2E testing**: CI_E2E_TESTING.md
 
 ## Audience Guide
 
@@ -34,6 +35,7 @@ This index helps you find the right document quickly.
 - docs/INTEGRATION_TESTS_SUMMARY.md — Integration testing documentation
 - docs/E2E_TESTS_DOCUMENTATION.md — Complete E2E testing guide (36 tests)
 - docs/TEST_COVERAGE_REPORT.md — Comprehensive test coverage analysis
+- docs/CI_E2E_TESTING.md — CI/CD E2E testing configuration
 
 ### Archive
 - docs/archive/completed-plans/ — Completed improvement plans and refactor docs

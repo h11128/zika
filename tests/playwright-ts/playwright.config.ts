@@ -73,16 +73,16 @@ export default defineConfig({
       grep: /@critical/,
     },
     // Uncomment to test on other browsers
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    //   testMatch: ['**/auto-features.spec.ts', '**/basic-input-flow.spec.ts'], // Smoke tests only
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    //   testMatch: ['**/auto-features.spec.ts', '**/basic-input-flow.spec.ts'], // Smoke tests only
-    // },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      testMatch: ['**/interleaved-layout-preview-cycle.spec.ts', '**/complex-custom-color-transitions.spec.ts'], // Smoke tests only
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+      testMatch: ['**/interleaved-layout-preview-cycle.spec.ts', '**/complex-custom-color-transitions.spec.ts'], // Smoke tests only
+    }
   ],
 
   /* Run your local dev server before starting the tests */

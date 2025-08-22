@@ -8,6 +8,8 @@ Streamlit-based web app to generate printable Chinese learning cards, with real-
 - **E2E Testing**: docs/E2E_TESTS_DOCUMENTATION.md
 - **Test Coverage**: docs/TEST_COVERAGE_REPORT.md
 - **Integration Testing**: docs/INTEGRATION_TESTS_SUMMARY.md
+- **CI E2E Testing**: docs/CI_E2E_TESTING.md
+
 - Docs index: docs/README.md
 
 > 注：本仓库同时保留了最初的 CLI 文档作为补充说明（见 docs/要求.md）。
@@ -105,7 +107,6 @@ python -m streamlit run web_ui.py
   - `python scripts/run_tests.py quick`
 - 直接使用 pytest：
   - `python -m pytest -q`
-
 
 # 五、CLI 用法（示例）
 
@@ -280,13 +281,16 @@ This project is open source. The CC-CEDICT dictionary data is licensed under Cre
 Contributions welcome! See docs/ARCHITECTURE.md and docs/WEB_UI_GUIDE.md to get started.
 
 ### Testing
+
 This project includes comprehensive E2E testing:
+
 - **36 E2E tests** covering all major functionality
 - **100% pass rate** with robust error detection
 - **90% functional coverage** of user workflows
 - See [E2E Testing Guide](tests/playwright-ts/README.md) for details
 
 ### Development Suggestions
+
 - Additional output formats (DOCX, HTML)
 - More dictionary sources
 - UI/UX improvements
