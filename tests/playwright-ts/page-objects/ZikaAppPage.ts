@@ -9,8 +9,13 @@ export class ZikaAppPage {
     console.log('🌐 Navigating to app...');
     await this.page.goto('/');
     await this.page.waitForLoadState('networkidle');
-    // Wait for a stable section header rather than exact English title (handles emoji and i18n)
-    await this.page.waitForSelector('text=⚙️ 选项', { timeout: 20000 });
+    // Prefer stable test anchors when available
+    try {
+      await this.page.getByTestId('select-translate-priority').waitFor({ timeout: 20000 });
+    } catch {
+      // Fallback to visible section header if test id not present
+      await this.page.waitForSelector('text=⚙️ 选项', { timeout: 20000 });
+    }
 
     // Check for Streamlit errors
     await this.checkForStreamlitErrors();
@@ -71,6 +76,8 @@ export class ZikaAppPage {
 
     // Use template to ensure reliable card generation
     try {
+      // Wait for template select test anchor to ensure UI is ready
+      await this.page.getByTestId('select-template').waitFor({ timeout: 5000 }).catch(() => {});
       const templateSelect = this.page.getByLabel('选择模板');
       await templateSelect.click();
       await this.page.waitForTimeout(500);
@@ -81,6 +88,8 @@ export class ZikaAppPage {
       console.log('⚠️ Template selection failed, using manual input');
 
       // Fallback to manual input
+      // Ensure input anchor present
+      await this.page.getByTestId('input-hanzi').waitFor({ timeout: 5000 }).catch(() => {});
       const textInput = this.page.getByLabel('输入汉字（空格分隔）');
       await textInput.clear();
       const cards = '一 二 三 四 五';

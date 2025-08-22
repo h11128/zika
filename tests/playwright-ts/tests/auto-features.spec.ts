@@ -16,6 +16,7 @@ class ZikaAppPage {
 
     // Use template selection for reliable card generation
     try {
+      await this.page.getByTestId('select-template').waitFor({ timeout: 5000 }).catch(() => {});
       const templateSelect = this.page.getByLabel('选择模板');
       await templateSelect.click();
       await this.page.waitForTimeout(500);
@@ -48,6 +49,7 @@ class ZikaAppPage {
     } catch (error) {
       console.log('⚠️ Template selection failed, using manual input');
       // Fallback to manual input with space-separated characters
+      await this.page.getByTestId('input-hanzi').waitFor({ timeout: 5000 }).catch(() => {});
       const textInput = this.page.getByLabel('输入汉字（空格分隔）');
       await textInput.clear();
       await textInput.fill('一 二 三 四 五');
