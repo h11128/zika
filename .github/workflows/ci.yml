@@ -97,7 +97,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         cd tests/playwright-ts
-        npx playwright install --with-deps chromium
+        npx playwright install --with-deps chromium firefox webkit
 
     - name: Install Playwright browsers (push/schedule)
       if: github.event_name == 'push' || github.event_name == 'schedule'
