@@ -293,9 +293,10 @@ export class ZikaAppPage {
         console.log('Strategy 1 failed, trying strategy 2...');
       }
 
-      // Strategy 2: Look for Streamlit file uploader structure
+      // Strategy 2: Wait for our stable test anchor and then locate Streamlit file uploader
       if (!fileUploader) {
         try {
+          await this.page.getByTestId('csv-upload').waitFor({ timeout: 5000 });
           fileUploader = this.page.locator('[data-testid="stFileUploader"] input[type="file"]').first();
           await fileUploader.waitFor({ state: 'attached', timeout: 5000 });
         } catch (error) {

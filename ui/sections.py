@@ -117,6 +117,7 @@ def render_input_section() -> List[Dict[str, str]]:
             cards = parse_input_text(text_input)
 
     else:  # CSV upload
+        st.markdown('<span data-testid="csv-upload" style="display:none"></span>', unsafe_allow_html=True)
         uploaded_file = st.file_uploader("选择CSV文件", type=['csv'])
         if uploaded_file is not None:
             try:
