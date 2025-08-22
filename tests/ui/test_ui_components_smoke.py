@@ -70,9 +70,25 @@ def test_render_page_navigation_noop_when_single_page(monkeypatch):
 def test_render_preview_section_calls_html(monkeypatch):
     st = setup_dummy_st(monkeypatch)
 
+    # Initialize session state with required keys
+    st.session_state.current_page = 0
+    st.session_state.rows = 2
+    st.session_state.cols = 3
+    st.session_state.auto_fill = True
+    st.session_state.hanzi_font = "SimHei"
+    st.session_state.background_color = "#FFFFFF"
+
     # Monkeypatch cached HTML creators to avoid heavy logic
     monkeypatch.setattr(uc, "cached_create_page_preview_html", lambda *a, **k: "<html></html>")
     monkeypatch.setattr(uc, "cached_create_simple_grid_html", lambda *a, **k: "<html></html>")
+
+    # Mock the immediate rendering functions from services.cache
+    monkeypatch.setattr("services.cache.create_page_preview_html_immediate", lambda *a, **k: "<html></html>")
+    monkeypatch.setattr("services.cache.create_simple_grid_html_immediate", lambda *a, **k: "<html></html>")
+
+    # Mock the state functions to avoid complex dependencies
+    monkeypatch.setattr("core.state.get_all_ui_params", lambda *a, **k: {})
+    monkeypatch.setattr("core.state.check_params_changed", lambda *a, **k: False)
 
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     uc.render_preview_section(

@@ -142,6 +142,12 @@ class AppController:
                                 'pinyin': new_pinyin,
                                 'english': new_english
                             }
+                            # Clear preview cache when cards are edited
+                            from services.cache import clear_preview_cache
+                            clear_preview_cache()
+                            # Force preview parameter reset
+                            if 'last_preview_params' in st.session_state:
+                                del st.session_state.last_preview_params
     
 
     

@@ -23,6 +23,12 @@ def render_color_palette(preset_colors: List[str]) -> None:
 
         if isinstance(selected, str) and selected and selected != current:
             st.session_state.background_color = selected
+            # Clear preview cache when color changes
+            from services.cache import clear_preview_cache
+            clear_preview_cache()
+            # Force preview parameter reset
+            if 'last_preview_params' in st.session_state:
+                del st.session_state.last_preview_params
             st.rerun()
 
     except Exception as e:
@@ -42,6 +48,12 @@ def render_color_palette(preset_colors: List[str]) -> None:
 
         if selected_color != current:
             st.session_state.background_color = selected_color
+            # Clear preview cache when color changes
+            from services.cache import clear_preview_cache
+            clear_preview_cache()
+            # Force preview parameter reset
+            if 'last_preview_params' in st.session_state:
+                del st.session_state.last_preview_params
             st.rerun()
 
 
@@ -91,12 +103,35 @@ def render_preview_section(processed_cards: List[Dict[str, str]], preview_mode: 
                            font_hanzi: int, font_pinyin: int, font_english: int,
                            page_size: str, hanzi_font: str, background_color: str,
                            rows: int, cols: int, auto_fill: bool) -> None:
-    """Render the preview area with caching and a stable placeholder."""
+    """Render the preview area with proper parameter change detection."""
+    from services.cache import cached_create_page_preview_html, cached_create_simple_grid_html
+    from services.cache import create_page_preview_html_immediate, create_simple_grid_html_immediate
+    from core.state import check_params_changed, get_all_ui_params
+
     cards_per_page = max(1, rows * cols)
     preview_placeholder = st.empty()
-    
+
+    # Check if parameters have changed to decide whether to use cache or immediate rendering
+    current_params = get_all_ui_params(
+        card_size, gap, margin, page_size,
+        font_hanzi, font_pinyin, font_english,
+        processed_cards
+    )
+
+    # Use immediate rendering if parameters changed recently or if this is a fresh session
+    use_immediate = (
+        check_params_changed(current_params) or
+        not hasattr(st.session_state, 'last_preview_params') or
+        st.session_state.get('last_preview_params') != current_params
+    )
+
     if preview_mode == "📄 完整页面":
-        html = cached_create_page_preview_html(
+        # Debug: Print parameters being passed to preview
+        if st.session_state.get('debug_preview', False):
+            st.write(f"🔍 Preview params: card_size={card_size}, auto_fill={auto_fill}, rows={rows}, cols={cols}")
+
+        # 强制使用即时渲染，避免任何缓存导致的预览滞后
+        html = create_page_preview_html_immediate(
             processed_cards, st.session_state.current_page,
             card_size, gap, margin,
             font_hanzi, font_pinyin, font_english,
@@ -109,9 +144,18 @@ def render_preview_section(processed_cards: List[Dict[str, str]], preview_mode: 
         start_idx = st.session_state.current_page * cards_per_page
         end_idx = min(start_idx + cards_per_page, len(processed_cards))
         current_page_cards = processed_cards[start_idx:end_idx]
-        html = cached_create_simple_grid_html(current_page_cards, hanzi_font, background_color, rows, cols)
+
+        if use_immediate:
+            html = create_simple_grid_html_immediate(current_page_cards, hanzi_font, background_color, rows, cols,
+                                                     font_hanzi, font_pinyin, font_english, card_size, auto_fill)
+        else:
+            html = cached_create_simple_grid_html(current_page_cards, hanzi_font, background_color, rows, cols,
+                                                  font_hanzi, font_pinyin, font_english, card_size, auto_fill)
         with preview_placeholder.container():
             st.components.v1.html(html, height=650)
+
+    # Update last preview params
+    st.session_state.last_preview_params = current_params
 
 
 def render_page_info(processed_cards: List[Dict[str, str]], cards_per_page: int, total_pages: int) -> None:

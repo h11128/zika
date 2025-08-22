@@ -1,0 +1,22 @@
+{
+  "name": "zika-playwright-tests",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for Zika Chinese Learning Cards",
+  "scripts": {
+    "cleanup": "npx ts-node cleanup.ts",
+    "force-cleanup": "npx ts-node force-cleanup.ts",
+    "test": "npm run cleanup && playwright test && npm run force-cleanup",
+    "test:headed": "npm run cleanup && playwright test --headed && npm run force-cleanup",
+    "test:debug": "npm run cleanup && playwright test --debug && npm run force-cleanup",
+    "test:ui": "npm run cleanup && playwright test --ui && npm run force-cleanup",
+    "test:record": "npm run cleanup && playwright test --headed --video=on --screenshot=on && npm run force-cleanup",
+    "test:safe": "npm run cleanup && playwright test --workers=1 && npm run force-cleanup",
+    "show-report": "playwright show-report",
+    "install": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  }
+}
