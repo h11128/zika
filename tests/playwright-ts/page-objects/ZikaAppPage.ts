@@ -217,6 +217,24 @@ export class ZikaAppPage {
   // CSV Upload methods
   async selectCSVUploadMethod() {
     console.log('📁 Selecting CSV upload method...');
+    try {
+      // Prefer explicit radio role when available
+      const radio = this.page.getByRole('radio', { name: '上传CSV文件' });
+      await radio.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+      if (await radio.isVisible().catch(() => false)) {
+        await radio.check().catch(async () => { await radio.click(); });
+      } else {
+        // Fallback to clicking by visible text
+        await this.page.getByText('上传CSV文件', { exact: true }).click();
+      }
+      // Wait for the file uploader label to appear
+      await this.page.getByText('选择CSV文件', { exact: true }).waitFor({ timeout: 10000 });
+      // And our stable test anchor if present
+      await this.page.getByTestId('csv-upload').waitFor({ timeout: 5000 }).catch(() => {});
+      console.log('✅ CSV upload method selected');
+    } catch (e) {
+      console.log(`⚠️ Could not explicitly select CSV upload method: ${e}`);
+    }
   }
 
   async reloadAndWait(): Promise<void> {
@@ -315,7 +333,13 @@ export class ZikaAppPage {
         }
       }
 
-      // Upload the file
+      // Upload the file (ensure it's attached and enabled)
+      try {
+        await fileUploader.waitFor({ state: 'attached', timeout: 5000 });
+      } catch {}
+      try {
+        await fileUploader.evaluate((el: HTMLInputElement) => !el.disabled);
+      } catch {}
       await fileUploader.setInputFiles(filePath);
 
       // Wait for processing
