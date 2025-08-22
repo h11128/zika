@@ -106,7 +106,9 @@ python -m streamlit run web_ui.py
 - 快速冒烟测试：
   - `python scripts/run_tests.py quick`
 - 直接使用 pytest：
-  - `python -m pytest -q`
+  - 安装依赖：`pip install -r requirements.txt`
+  - 运行：`python -m pytest -q`
+  - 覆盖率：`pytest --cov --cov-report=term-missing --cov-report=xml`
 
 # 五、CLI 用法（示例）
 

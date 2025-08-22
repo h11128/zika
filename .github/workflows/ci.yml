@@ -37,25 +37,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run quick tests
-      run: |
-        python -m pytest -q
-
-    - name: Run unit tests
-      run: |
-        python -m pytest -q -m "not (integration or slow)"
-
-    - name: Run integration tests
-      run: |
-        python -m pytest -m integration -q
-
-    - name: Run UI tests
-      run: |
-        python -m pytest -m ui -q
 
     - name: Run tests with coverage
       run: |
-        python -m pytest tests/ --cov=core --cov=ui --cov=services --cov-report=term-missing --cov-report=xml
+        python -m pytest --cov --cov-report=term-missing --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -120,16 +105,6 @@ jobs:
         cd tests/playwright-ts
         npx playwright install --with-deps chromium firefox webkit
 
-    - name: Start Streamlit app
-      run: |
-        python -m streamlit run web_ui.py --server.port 8504 --server.headless true &
-        sleep 10  # Wait for app to start
-      env:
-        STREAMLIT_SERVER_HEADLESS: true
-
-    - name: Wait for app to be ready
-      run: |
-        timeout 30 bash -c 'until curl -f http://localhost:8504; do sleep 2; done'
 
     - name: Run E2E smoke tests (PR)
       if: github.event_name == 'pull_request'

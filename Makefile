@@ -65,7 +65,7 @@ quick:
 	$(PY) scripts/run_tests.py quick
 
 coverage:
-	$(PY) -m pytest tests/ --cov=core --cov=ui --cov=services --cov-report=term-missing
+	$(PY) -m pytest --cov --cov-report=term-missing --cov-report=xml
 
 # Marker-based shortcuts
 test-integration:

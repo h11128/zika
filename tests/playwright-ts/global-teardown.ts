@@ -37,25 +37,8 @@ async function globalTeardown() {
       }
     }
 
-    // 3. Clean up temporary files
+    // 3. Clean up temporary files (none at present)
     console.log('🧽 Cleaning up temporary files...');
-    const tempFiles = [
-      '../../test_card_size_fix.py',
-      '../../debug_card_size.py',
-      '../../debug_auto_fill.py'
-    ];
-
-    for (const file of tempFiles) {
-      const filePath = path.join(__dirname, file);
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-          console.log(`✅ Removed ${file}`);
-        } catch (error) {
-          console.log(`⚠️ Could not remove ${file}: ${error instanceof Error ? error.message : String(error)}`);
-        }
-      }
-    }
 
     console.log('✅ Global cleanup completed');
   } catch (error) {

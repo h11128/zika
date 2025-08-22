@@ -69,6 +69,7 @@ def render_input_section() -> List[Dict[str, str]]:
         }
 
         selected_template = st.selectbox("选择模板", list(templates.keys()), key="template_select")
+        st.markdown('<span data-testid="select-template" style="display:none"></span>', unsafe_allow_html=True)
 
         # Determine default text from template selection
         default_text = templates[st.session_state.template_select]
@@ -101,6 +102,7 @@ def render_input_section() -> List[Dict[str, str]]:
                 placeholder="例如：你好 世界 学习 中文",
                 help="输入汉字，用空格分隔。支持单字、词语和短句。"
             )
+            st.markdown('<span data-testid="input-hanzi" style="display:none"></span>', unsafe_allow_html=True)
 
         with col_btn:
             st.write("")  # Add some spacing
@@ -164,13 +166,16 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
 
     with col_opt1:
         auto_pinyin = st.checkbox("自动生成拼音", value=True)
+        st.markdown('<span data-testid="toggle-auto-pinyin" style="display:none"></span>', unsafe_allow_html=True)
         auto_translate = st.checkbox("自动生成翻译", value=True)
+        st.markdown('<span data-testid="toggle-auto-translate" style="display:none"></span>', unsafe_allow_html=True)
         translate_order_display = st.selectbox(
             "翻译优先级",
             ["本地优先", "Google优先", "仅本地", "仅Google", "混合模式", "词典混合"],
             index=0,
             key="translate_order_select"
         )
+        st.markdown('<span data-testid="select-translate-priority" style="display:none"></span>', unsafe_allow_html=True)
         # Map display text to internal values used by processing layer and store in session
         order_map = {
             "本地优先": "local_first",
