@@ -53,23 +53,18 @@ export default defineConfig({
       // Close context after each test to clean up pages
     },
 
-    /* Close browser after each test */
-    launchOptions: {
-      // Ensure browser closes properly
-      args: ['--no-sandbox', '--disable-dev-shm-usage'],
-    },
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] } },
       testMatch: ['**/*.spec.ts'],
     },
     {
       name: 'critical',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] } },
       testMatch: ['**/csv-upload.spec.ts', '**/export-functionality.spec.ts', '**/pagination-navigation.spec.ts'],
       grep: /@critical/,
     },
