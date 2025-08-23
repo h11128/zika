@@ -68,6 +68,10 @@ def clean_english_text(text: Optional[str]) -> Optional[str]:
     text = re.sub(r';+', ';', text)
     text = re.sub(r';\s*$', '', text)
 
+    # Remove empty definitions so we don't leave orphan semicolons like "; ;"
+    parts = [p.strip() for p in text.split(';') if p.strip()]
+    text = '; '.join(parts)
+
     # Normalize whitespace
     text = _WHITESPACE_RE.sub(" ", text).strip()
 
