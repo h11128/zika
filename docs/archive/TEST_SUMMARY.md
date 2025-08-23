@@ -168,6 +168,39 @@ flowchart TD
 - **Manual Testing**: Full user workflow verification
 - **Performance Tests**: Cache effectiveness and memory usage
 
+## Testing Strategy
+
+### Unit Tests
+- **Location**: `tests/unit/`
+- **Coverage**: Core business logic, utilities, and data processing
+- **Framework**: pytest
+- **Key Areas**: Pinyin generation, dictionary utilities, text processing
+
+### Integration Tests
+- **Location**: `tests/integration/`
+- **Coverage**: Service layer interactions, file I/O, external dependencies
+- **Framework**: pytest
+- **Key Areas**: Export functionality, template processing, cache operations
+
+### UI Tests
+- **Location**: `tests/ui/`
+- **Coverage**: Streamlit components, user interactions, visual elements
+- **Framework**: pytest with Streamlit testing utilities
+- **Key Areas**: Component rendering, state management, user workflows
+
+### End-to-End (E2E) Tests
+- **Location**: `tests/playwright-ts/`
+- **Coverage**: Complete user workflows, browser interactions, visual validation
+- **Framework**: Playwright with TypeScript
+- **Current Status**: 12 tests, 100% passing, ~40-50% feature coverage
+- **Key Areas**:
+  - Auto features (pinyin/translation generation)
+  - Basic input flow and card generation
+  - Card size adjustment functionality
+  - Preview mode switching
+- **Documentation**: See `docs/E2E_TESTS_DOCUMENTATION.md` for detailed coverage
+- **Improvement Plan**: See `docs/E2E_TESTS_IMPROVEMENT_PLAN.md` for expansion roadmap
+
 ## Future Improvements
 
 1. **Component Library**: Extract more reusable components

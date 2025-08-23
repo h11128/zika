@@ -178,58 +178,81 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
 
 def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAULT_HANZI_FONT,
                            background_color: str = DEFAULT_BACKGROUND_COLOR,
-                           rows: int = 3, cols: int = 3) -> str:
-    """Create simple HTML preview of cards in rows x cols grid with custom styling."""
+                           rows: int = 3, cols: int = 3,
+                           font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
+                           card_size: float = 5.5, auto_fill: bool = True) -> str:
+    """Create simple HTML preview of cards in rows x cols grid with custom styling.
+    Respects font sizes and card size when provided to keep behavior consistent with full-page preview.
+    """
     rows = max(1, int(rows or 3))
     cols = max(1, int(cols or 3))
 
     if not cards:
         return "<div style='text-align: center; color: #666; padding: 50px;'>输入汉字以查看预览</div>"
 
+    # Calculate card size in pixels (similar to full page preview)
+    if auto_fill:
+        # For simple grid, use responsive sizing
+        card_size_px = "auto"
+        card_width = "1fr"
+    else:
+        # Convert cm to pixels for manual sizing
+        mm_to_px = 3.78  # 96 DPI conversion factor
+        card_size_px = card_size * 10 * mm_to_px  # cm to mm to px
+        card_width = f"{card_size_px}px"
+
     simple_html = f"""
     <style>
     .simple-grid {{
         display: grid;
-        grid-template-columns: repeat({cols}, 1fr);
+        grid-template-columns: repeat({cols}, {card_width});
         gap: 15px;
         max-width: 900px;
         margin: 0 auto;
         padding: 20px;
+        justify-content: center;
     }}
     .simple-card {{
         border: 2px solid #333;
-        aspect-ratio: 1;
+        {"aspect-ratio: 1;" if auto_fill else f"width: {card_size_px}px; height: {card_size_px}px;"}
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 15px;
+        padding: {max(10, card_size_px * 0.1 if not auto_fill else 15)}px;
         background: {background_color};
         font-family: '{hanzi_font}', 'Microsoft YaHei', 'SimSun', sans-serif;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-sizing: border-box;
     }}
     .simple-card.empty {{
         border-style: dashed;
         opacity: 0.3;
     }}
     .simple-hanzi {{
-        font-size: 2.5em;
+        font-size: {font_hanzi}px;
         font-weight: bold;
-        margin-bottom: 8px;
+        margin-bottom: max(6px, {font_hanzi * 0.2}px);
         color: #000;
+        line-height: 1.1;
+        text-align: center;
     }}
     .simple-pinyin {{
-        font-size: 1.2em;
+        font-size: {font_pinyin}px;
         font-style: italic;
-        margin-bottom: 8px;
+        margin-bottom: max(4px, {font_pinyin * 0.2}px);
         color: #333;
+        line-height: 1.2;
+        text-align: center;
     }}
     .simple-english {{
-        font-size: 1em;
+        font-size: {font_english}px;
         text-align: center;
         color: #555;
-        line-height: 1.3;
+        line-height: 1.2;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }}
     </style>
     <div class="simple-grid">
@@ -253,7 +276,7 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
     return simple_html
 
 
-# Cached versions of the functions
+# Cached versions of the functions with hash-based cache keys
 @st.cache_data(show_spinner=False)
 def cached_create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
                            card_size: float, gap: float, margin: float,
@@ -261,6 +284,7 @@ def cached_create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
                            page_size: str = "A4", hanzi_font: str = DEFAULT_HANZI_FONT,
                            background_color: str = DEFAULT_BACKGROUND_COLOR,
                            rows: int = 3, cols: int = 3, auto_fill: bool = True) -> str:
+    """Cached version of create_page_preview_html with proper parameter tracking."""
     return create_page_preview_html(cards, page_num, card_size, gap, margin,
                                    font_hanzi, font_pinyin, font_english,
                                    page_size, hanzi_font, background_color,
@@ -269,8 +293,45 @@ def cached_create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
 
 @st.cache_data(show_spinner=False)
 def cached_create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAULT_HANZI_FONT,
-                           background_color: str = DEFAULT_BACKGROUND_COLOR, rows: int = 3, cols: int = 3) -> str:
-    return create_simple_grid_html(cards, hanzi_font, background_color, rows, cols)
+                           background_color: str = DEFAULT_BACKGROUND_COLOR, rows: int = 3, cols: int = 3,
+                           font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
+                           card_size: float = 5.5, auto_fill: bool = True) -> str:
+    """Cached version of create_simple_grid_html with proper parameter tracking."""
+    return create_simple_grid_html(cards, hanzi_font, background_color, rows, cols,
+                                   font_hanzi, font_pinyin, font_english, card_size, auto_fill)
+
+
+# Non-cached versions for immediate updates when needed
+def create_page_preview_html_immediate(cards: List[Dict[str, str]], page_num: int,
+                           card_size: float, gap: float, margin: float,
+                           font_hanzi: int, font_pinyin: int, font_english: int,
+                           page_size: str = "A4", hanzi_font: str = DEFAULT_HANZI_FONT,
+                           background_color: str = DEFAULT_BACKGROUND_COLOR,
+                           rows: int = 3, cols: int = 3, auto_fill: bool = True) -> str:
+    """Non-cached version for immediate preview updates."""
+    return create_page_preview_html(cards, page_num, card_size, gap, margin,
+                                   font_hanzi, font_pinyin, font_english,
+                                   page_size, hanzi_font, background_color,
+                                   rows, cols, auto_fill)
+
+
+def create_simple_grid_html_immediate(cards: List[Dict[str, str]], hanzi_font: str = DEFAULT_HANZI_FONT,
+                           background_color: str = DEFAULT_BACKGROUND_COLOR, rows: int = 3, cols: int = 3,
+                           font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
+                           card_size: float = 5.5, auto_fill: bool = True) -> str:
+    """Non-cached version for immediate preview updates."""
+    return create_simple_grid_html(cards, hanzi_font, background_color, rows, cols,
+                                   font_hanzi, font_pinyin, font_english, card_size, auto_fill)
+
+
+def clear_preview_cache() -> None:
+    """Clear all preview-related caches to force regeneration."""
+    try:
+        cached_create_page_preview_html.clear()
+        cached_create_simple_grid_html.clear()
+    except Exception:
+        # Cache clearing might fail if functions haven't been called yet
+        pass
 
 
 def create_preview_html(cards: List[Dict[str, str]], max_cards: int = 9) -> str:

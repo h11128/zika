@@ -186,3 +186,13 @@ small_*.pptx
 ml-report.txt
 lint-report.*
 analysis-report.*
+
+# Playwright test files
+tests/playwright-ts/test-results/
+tests/playwright-ts/playwright-report/
+tests/playwright-ts/playwright/.cache/
+tests/playwright-ts/node_modules/
+
+
+# Temporary test files
+test_card_size_fix.py

@@ -10,6 +10,6 @@ def test_cached_create_page_preview_html(tmp_path):
 
 def test_cached_create_simple_grid_html():
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
-    html = cached_create_simple_grid_html(cards, "SimHei", "#fff", 2, 2)
+    html = cached_create_simple_grid_html(cards, "SimHei", "#fff", 2, 2, 48, 18, 14, 5.5, True)
     assert "simple-grid" in html
 

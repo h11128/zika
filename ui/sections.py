@@ -69,6 +69,7 @@ def render_input_section() -> List[Dict[str, str]]:
         }
 
         selected_template = st.selectbox("选择模板", list(templates.keys()), key="template_select")
+        st.markdown('<span data-testid="select-template" style="display:none"></span>', unsafe_allow_html=True)
 
         # Determine default text from template selection
         default_text = templates[st.session_state.template_select]
@@ -101,6 +102,7 @@ def render_input_section() -> List[Dict[str, str]]:
                 placeholder="例如：你好 世界 学习 中文",
                 help="输入汉字，用空格分隔。支持单字、词语和短句。"
             )
+            st.markdown('<span data-testid="input-hanzi" style="display:none"></span>', unsafe_allow_html=True)
 
         with col_btn:
             st.write("")  # Add some spacing
@@ -115,6 +117,7 @@ def render_input_section() -> List[Dict[str, str]]:
             cards = parse_input_text(text_input)
 
     else:  # CSV upload
+        st.markdown('<span data-testid="csv-upload" style="display:none"></span>', unsafe_allow_html=True)
         uploaded_file = st.file_uploader("选择CSV文件", type=['csv'])
         if uploaded_file is not None:
             try:
@@ -149,18 +152,31 @@ def render_input_section() -> List[Dict[str, str]]:
 
 def render_options_section() -> Tuple[bool, bool, str, float]:
     """Render the options section and return option values."""
+
+    # Handle auto_fill disable request from button
+    if st.session_state.get('_disable_auto_fill_requested', False):
+        st.session_state.auto_fill = False
+        st.session_state._disable_auto_fill_requested = False
+        from services.cache import clear_preview_cache
+        clear_preview_cache()
+        if 'last_preview_params' in st.session_state:
+            del st.session_state.last_preview_params
+
     st.subheader("⚙️ 选项")
     col_opt1, col_opt2 = st.columns(2)
 
     with col_opt1:
         auto_pinyin = st.checkbox("自动生成拼音", value=True)
+        st.markdown('<span data-testid="toggle-auto-pinyin" style="display:none"></span>', unsafe_allow_html=True)
         auto_translate = st.checkbox("自动生成翻译", value=True)
+        st.markdown('<span data-testid="toggle-auto-translate" style="display:none"></span>', unsafe_allow_html=True)
         translate_order_display = st.selectbox(
             "翻译优先级",
-            ["本地优先", "Google优先", "仅本地", "仅Google", "混合模式"],
+            ["本地优先", "Google优先", "仅本地", "仅Google", "混合模式", "词典混合"],
             index=0,
             key="translate_order_select"
         )
+        st.markdown('<span data-testid="select-translate-priority" style="display:none"></span>', unsafe_allow_html=True)
         # Map display text to internal values used by processing layer and store in session
         order_map = {
             "本地优先": "local_first",
@@ -168,6 +184,7 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
             "仅本地": "local_only",
             "仅Google": "google_only",
             "混合模式": "mixed",
+            "词典混合": "dict_mixed",
         }
         new_order = order_map.get(translate_order_display, "local_first")
 
@@ -183,26 +200,112 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
             st.caption(f"🔄 当前模式: {translate_order_display}")
 
     with col_opt2:
+        # Store previous page size for change detection
+        prev_page_size = st.session_state.get('_prev_page_size', 'A4')
         page_size = st.selectbox("页面尺寸", ["A4", "Letter"], index=0)
-        card_size = st.slider("卡片大小 (cm)", 4.0, 8.0, 5.5, 0.1, key="card_size")
+
+        # Determine whether auto_fill is enabled (from session state)
+        is_auto_fill = bool(st.session_state.get('auto_fill', True))
+
+        # Helper to compute auto card size in cm based on current layout
+        def _compute_auto_card_size_cm(page_size_val: str) -> float:
+            if page_size_val == "A4":
+                page_w_cm, page_h_cm = 21.0, 29.7
+            else:  # Letter
+                page_w_cm, page_h_cm = 21.59, 27.94
+            margin_cm = float(st.session_state.get('margin_cm', 1.0))
+            gap_cm = float(st.session_state.get('gap_cm', 0.5))
+            rows = int(st.session_state.get('rows', 2))
+            cols = int(st.session_state.get('cols', 3))
+            avail_w = max(0.0, page_w_cm - 2 * margin_cm)
+            avail_h = max(0.0, page_h_cm - 2 * margin_cm)
+            size_w = (avail_w - max(0, cols - 1) * gap_cm) / max(1, cols)
+            size_h = (avail_h - max(0, rows - 1) * gap_cm) / max(1, rows)
+            return max(0.0, min(size_w, size_h))
+
+        if is_auto_fill:
+            # Auto-fill: show computed size and provide a toggle to switch to manual
+            auto_size_cm = _compute_auto_card_size_cm(page_size)
+            st.caption(f"自动填充已开启：卡片大小由布局计算 ≈ {auto_size_cm:.1f} cm")
+            if st.button("关闭自动填充以手动调整大小", key="disable_auto_fill_for_manual"):
+                # Use a flag to indicate the change, avoid direct session state modification
+                st.session_state._disable_auto_fill_requested = True
+                st.rerun()
+            card_size = auto_size_cm
+        else:
+            # Manual mode: show slider and auto-disable auto_fill when user adjusts
+            prev_card_size = float(st.session_state.get('_prev_card_size', st.session_state.get('card_size', 5.5)))
+            card_size = st.slider("卡片大小 (cm)", 4.0, 8.0, float(st.session_state.get('card_size', 5.5)), 0.1, key="card_size_slider")
+            # Store the card size for other parts of the app to use
+            if 'card_size' not in st.session_state or st.session_state.card_size != card_size:
+                st.session_state.card_size = card_size
+            if card_size != prev_card_size:
+                # Clear cache when card size changes
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
+                st.session_state._prev_card_size = card_size
+                # Note: Don't modify auto_fill here to avoid session state conflicts
+                # The auto_fill state should only be changed by the checkbox/button widgets
+
+        # Clear cache if page size changed
+        if page_size != prev_page_size:
+            from services.cache import clear_preview_cache
+            clear_preview_cache()
+            if 'last_preview_params' in st.session_state:
+                del st.session_state.last_preview_params
+            st.session_state._prev_page_size = page_size
 
     return auto_pinyin, auto_translate, page_size, card_size
 
 
-def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
+def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]: # returns (gap, margin, font_hanzi, font_pinyin, font_english, rows, cols)
     """Render the advanced options section and return advanced option values."""
     with st.expander("🔧 高级选项"):
         # Layout options
         col_layout1, col_layout2 = st.columns(2)
         with col_layout1:
+            # Store previous values for change detection (use different keys to avoid conflict)
+            prev_gap = st.session_state.get('_prev_gap', 0.5)
+            prev_margin = st.session_state.get('_prev_margin', 1.0)
+            prev_cols = st.session_state.get('_prev_cols', st.session_state.cols)
+            prev_rows = st.session_state.get('_prev_rows', st.session_state.rows)
+            prev_auto_fill = st.session_state.get('_prev_auto_fill', st.session_state.auto_fill)
+
             gap = st.slider("卡片间距 (cm)", 0.2, 1.0, 0.5, 0.1, key="gap_cm")
             margin = st.slider("页面边距 (cm)", 0.5, 2.0, 1.0, 0.1, key="margin_cm")
             cols = st.number_input("每行卡片数 (列)", min_value=1, max_value=10, value=st.session_state.cols, step=1)
             rows = st.number_input("每列卡片数 (行)", min_value=1, max_value=10, value=st.session_state.rows, step=1)
-            auto_fill = st.checkbox("自动填充（按边距与间距自动计算卡片大小）", value=st.session_state.auto_fill)
+            # Some unit tests patch st.checkbox without supporting **kwargs like key; be resilient
+            try:
+                auto_fill = st.checkbox("自动填充（按边距与间距自动计算卡片大小）", value=st.session_state.auto_fill, key="auto_fill_advanced")
+            except TypeError:
+                auto_fill = st.checkbox("自动填充（按边距与间距自动计算卡片大小）", value=st.session_state.auto_fill)
+
+            # Clear cache if any layout parameter changed
+            if (gap != prev_gap or margin != prev_margin or
+                cols != prev_cols or rows != prev_rows or auto_fill != prev_auto_fill):
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                # Force preview parameter reset
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
+                # Update the previous values for next comparison
+                st.session_state._prev_gap = gap
+                st.session_state._prev_margin = margin
+                st.session_state._prev_cols = cols
+                st.session_state._prev_rows = rows
+                st.session_state._prev_auto_fill = auto_fill
+
+                # If auto_fill state changed, trigger a rerun to update the main options UI
+                if auto_fill != prev_auto_fill:
+                    st.session_state.auto_fill = auto_fill
+                    st.rerun()
 
         with col_layout2:
             # Font selection for Chinese characters
+            prev_hanzi_font = st.session_state.get('_prev_hanzi_font', st.session_state.hanzi_font)
             hanzi_font = st.selectbox(
                 "汉字字体",
                 HANZI_FONT_OPTIONS,
@@ -210,43 +313,88 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, str]:
                 help="选择汉字显示字体，不同字体有不同的视觉效果"
             )
 
+            # Clear cache if font changed
+            if hanzi_font != prev_hanzi_font:
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                # Force preview parameter reset
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
+                # Update the previous value for next comparison
+                st.session_state._prev_hanzi_font = hanzi_font
+
             # Background color selection with visual color palette
             st.write("**卡片背景颜色:**")
 
             st.caption("快速选择颜色：点击下方色块选择背景色")
             render_color_palette(PRESET_COLORS)
 
-            # Show current & custom color in one row without additional columns nesting
+            # Custom color input - standard Streamlit color picker
+            st.write("**自定义颜色:**")
+            # Ensure accessible label ties to the picker; keep visible label text unchanged
+            custom_color = st.color_picker(
+                label="选择颜色",
+                value=st.session_state.background_color,
+                key="custom_color_picker"
+            )
+            # Invisible anchor for test stability; no visual impact
+            st.markdown('<span data-testid="color-picker-anchor" style="display:none"></span>', unsafe_allow_html=True)
+
+            # Show current color below the picker
+            st.write("当前颜色:")
             st.markdown(
-                f"<div style='display:flex;align-items:center;gap:12px;'>"
-                f"<div style='width:50px;height:30px;background-color:{st.session_state.background_color};"
-                f"border:1px solid #ccc;border-radius:4px;'></div>"
-                f"<span>当前颜色: {st.session_state.background_color}</span>"
-                f"</div>", 
+                f"<div style='width:100px;height:40px;background-color:{st.session_state.background_color};"
+                f"border:2px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;'>"
+                f"<span style='color:white;text-shadow:1px 1px 2px black;font-weight:bold;font-size:12px;'>"
+                f"{st.session_state.background_color}</span>"
+                f"</div>",
                 unsafe_allow_html=True
             )
 
-            # Custom color input
-            custom_color = st.color_picker("自定义颜色", value=st.session_state.background_color, key="custom_color_picker")
+            # Detect color change and update after display so picker is mounted this run
             if custom_color != st.session_state.background_color:
                 st.session_state.background_color = custom_color
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
                 st.rerun()
 
-        # Font size options
-        st.write("**字体大小:**")
-        col_font1, col_font2, col_font3 = st.columns(3)
-        with col_font1:
-            font_hanzi = st.slider("汉字", 20, 80, 48, 2, key="font_hanzi")
-        with col_font2:
-            font_pinyin = st.slider("拼音", 10, 40, 18, 1, key="font_pinyin")
-        with col_font3:
-            font_english = st.slider("英文", 8, 30, 14, 1, key="font_english")
+    # Font size options (moved outside the expander to avoid triple nesting)
+    st.write("**字体大小:**")
+    col_font1, col_font2, col_font3 = st.columns(3)
+    with col_font1:
+        font_hanzi = st.slider("汉字", 20, 80, 48, 2, key="font_hanzi")
+    with col_font2:
+        font_pinyin = st.slider("拼音", 10, 40, 18, 1, key="font_pinyin")
+    with col_font3:
+        font_english = st.slider("英文", 8, 30, 14, 1, key="font_english")
 
-        # Update session state
+        # Update session state and clear cache if values changed
+        layout_changed = (
+            st.session_state.get('rows') != rows or
+            st.session_state.get('cols') != cols or
+            st.session_state.get('auto_fill') != auto_fill
+        )
+
+        font_changed = (
+            st.session_state.get('font_hanzi') != font_hanzi or
+            st.session_state.get('font_pinyin') != font_pinyin or
+            st.session_state.get('font_english') != font_english
+        )
+
         st.session_state.rows = rows
         st.session_state.cols = cols
         st.session_state.auto_fill = auto_fill
         st.session_state.hanzi_font = hanzi_font
+
+        # Clear preview cache if layout or font parameters changed
+        if layout_changed or font_changed:
+            from services.cache import clear_preview_cache
+            clear_preview_cache()
+            # Force preview parameter reset
+            if 'last_preview_params' in st.session_state:
+                del st.session_state.last_preview_params
 
     return gap, margin, font_hanzi, font_pinyin, font_english, rows, cols
 
@@ -351,6 +499,12 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
                                 # Clear export data when cards are edited
                                 st.session_state.export_ready = {}
                                 st.session_state.export_data = {}
+                                # Clear preview cache when cards are edited
+                                from services.cache import clear_preview_cache
+                                clear_preview_cache()
+                                # Force preview parameter reset
+                                if 'last_preview_params' in st.session_state:
+                                    del st.session_state.last_preview_params
                                 st.rerun()
 
     else:

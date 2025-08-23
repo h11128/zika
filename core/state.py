@@ -76,10 +76,21 @@ def _validate_background_color() -> None:
         st.session_state.background_color = DEFAULT_BACKGROUND_COLOR
 
 
+# Internal safe getter to avoid KeyError in bare/unit test contexts
+_def_sentinel = object()
+
+def _ss_get(key: str, default=_def_sentinel):
+    try:
+        # getattr allows a default; SessionStateProxy raises AttributeError for missing keys
+        return getattr(st.session_state, key, default)
+    except Exception:
+        return default
+
 # Getter functions for clean access
 def get_dictionary():
     """Get the dictionary instance."""
-    return st.session_state.dictionary
+    val = _ss_get('dictionary', None)
+    return val
 
 
 def get_processed_cards() -> List[Dict[str, str]]:
@@ -93,19 +104,24 @@ def get_current_page() -> int:
 
 
 def get_layout_settings() -> Dict[str, Any]:
-    """Get current layout settings."""
+    """Get current layout settings. Safe for bare/unit-test contexts (defaults)."""
+    rows = _ss_get('rows', DEFAULT_ROWS)
+    cols = _ss_get('cols', DEFAULT_COLS)
+    auto_fill = _ss_get('auto_fill', DEFAULT_AUTO_FILL)
     return {
-        'rows': st.session_state.rows,
-        'cols': st.session_state.cols,
-        'auto_fill': st.session_state.auto_fill
+        'rows': rows if rows is not None else DEFAULT_ROWS,
+        'cols': cols if cols is not None else DEFAULT_COLS,
+        'auto_fill': bool(auto_fill) if isinstance(auto_fill, (bool, int)) else DEFAULT_AUTO_FILL,
     }
 
 
 def get_ui_preferences() -> Dict[str, str]:
-    """Get current UI preferences."""
+    """Get current UI preferences. Safe for bare/unit-test contexts (defaults)."""
+    hanzi_font = _ss_get('hanzi_font', DEFAULT_HANZI_FONT)
+    background_color = _ss_get('background_color', DEFAULT_BACKGROUND_COLOR)
     return {
-        'hanzi_font': st.session_state.hanzi_font,
-        'background_color': st.session_state.background_color
+        'hanzi_font': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
+        'background_color': background_color if background_color else DEFAULT_BACKGROUND_COLOR,
     }
 
 
@@ -143,8 +159,12 @@ def update_last_params(params: Dict[str, Any]) -> None:
 
 
 def check_params_changed(current_params: Dict[str, Any]) -> bool:
-    """Check if parameters have changed since last update."""
-    return st.session_state.last_params != current_params
+    """Check if parameters have changed since last update. Safe for missing state."""
+    last = _ss_get('last_params', {})
+    try:
+        return last != current_params
+    except Exception:
+        return True
 
 
 def clear_processed_cards() -> None:

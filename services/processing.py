@@ -7,7 +7,7 @@ import re
 import jieba
 from typing import List, Dict
 from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
-from .translation import translate_with_google, clean_english_text
+from .translation import translate_with_google, clean_english_text, translate_with_strategy
 
 
 
@@ -142,38 +142,7 @@ def generate_missing_data_ordered(cards: List[Dict[str, str]], auto_pinyin: bool
         # Translation
         if auto_translate and not processed_card.get('english'):
             hanzi = processed_card.get('hanzi', '')
-            translation = None
-
-            def try_local():
-                if dictionary is None:
-                    return None
-                try:
-                    t = dictionary.lookup_translation(hanzi)
-                    return clean_english_text(t) if t else None
-                except Exception:
-                    return None
-
-            def try_google():
-                t = translate_with_google(hanzi)
-                return t if t else None
-
-            if order == 'google_first':
-                translation = try_google() or try_local()
-            elif order == 'local_only':
-                translation = try_local()
-            elif order == 'google_only':
-                translation = try_google()
-            elif order == 'mixed':
-                # Combine both sources
-                local_trans = try_local()
-                google_trans = try_google()
-                if local_trans and google_trans and local_trans != google_trans:
-                    translation = f"{local_trans} | {google_trans}"
-                else:
-                    translation = local_trans or google_trans
-            else:  # local_first
-                translation = try_local() or try_google()
-
+            translation = translate_with_strategy(hanzi, dictionary, order)
             if translation:
                 processed_card['english'] = translation
 

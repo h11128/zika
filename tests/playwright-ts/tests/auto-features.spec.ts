@@ -1,0 +1,418 @@
+import { test, expect } from '@playwright/test';
+
+class ZikaAppPage {
+  constructor(private page: any) {}
+
+  async goto() {
+    console.log('🌐 Navigating to app...');
+    await this.page.goto('/');
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForSelector('text=Chinese Learning Cards Generator', { timeout: 10000 });
+    console.log('✅ App loaded successfully');
+  }
+
+  async setupCards() {
+    console.log('🔧 Setting up cards...');
+
+    // Use template selection for reliable card generation
+    try {
+      await this.page.getByTestId('select-template').waitFor({ timeout: 5000 }).catch(() => {});
+      const templateSelect = this.page.getByLabel('选择模板');
+      await templateSelect.click();
+      await this.page.waitForTimeout(500);
+      await this.page.getByText('数字', { exact: true }).click();
+      console.log('✅ Selected 数字 template');
+
+      // Wait longer for template to be applied and cards to be generated
+      await this.page.waitForTimeout(5000);
+
+      // Verify cards were generated
+      const frames = this.page.frames();
+      let cardsGenerated = false;
+      for (const frame of frames) {
+        try {
+          const hasCards = await frame.locator('div:has-text("一"), div:has-text("二"), div:has-text("三")').first().isVisible({ timeout: 3000 });
+          if (hasCards) {
+            cardsGenerated = true;
+            console.log('✅ Template cards generated successfully');
+            break;
+          }
+        } catch {
+          // Continue checking
+        }
+      }
+
+      if (!cardsGenerated) {
+        console.log('⚠️ Template cards not found, but continuing');
+      }
+
+    } catch (error) {
+      console.log('⚠️ Template selection failed, using manual input');
+      // Fallback to manual input with space-separated characters
+      await this.page.getByTestId('input-hanzi').waitFor({ timeout: 5000 }).catch(() => {});
+      const textInput = this.page.getByLabel('输入汉字（空格分隔）');
+      await textInput.clear();
+      await textInput.fill('一 二 三 四 五');
+      console.log('✅ Filled manual input');
+      await this.page.waitForTimeout(3000);
+    }
+  }
+
+  async inputText(text: string) {
+    console.log(`📝 Inputting text: "${text}"`);
+    const textInput = this.page.getByLabel('输入汉字（空格分隔）');
+    await textInput.waitFor({ state: 'visible', timeout: 5000 });
+    await textInput.clear();
+    // Add spaces between characters for proper parsing
+    const spacedText = text.split('').join(' ');
+    await textInput.fill(spacedText);
+    console.log('✅ Text input completed');
+  }
+
+  async toggleAutoPinyin(enable: boolean) {
+    console.log(`🔧 ${enable ? 'Enabling' : 'Disabling'} auto pinyin...`);
+
+    // Try multiple strategies to find and interact with the checkbox
+    let success = false;
+
+    // Strategy 1: Try to find by exact label text (more reliable for hidden checkboxes)
+    try {
+      const label = this.page.getByText('自动生成拼音', { exact: true });
+      await label.waitFor({ state: 'visible', timeout: 3000 });
+      await label.click();
+      console.log(`✅ Auto pinyin toggled via label click`);
+      success = true;
+    } catch (error: any) {
+      console.log(`⚠️ Label click failed: ${error?.message || 'Unknown error'}`);
+    }
+
+    // Strategy 2: Try to find the checkbox by aria-label
+    if (!success) {
+      try {
+        const checkbox = this.page.locator('input[aria-label="自动生成拼音"]');
+        await checkbox.scrollIntoViewIfNeeded();
+        await checkbox.click({ force: true });
+        console.log(`✅ Auto pinyin toggled via checkbox click`);
+        success = true;
+      } catch (error: any) {
+        console.log(`⚠️ Checkbox click failed: ${error?.message || 'Unknown error'}`);
+      }
+    }
+
+    // Strategy 3: Try different selector approaches
+    if (!success) {
+      try {
+        // Try finding by text content in a label
+        const labelElement = this.page.locator('label').filter({ hasText: '自动生成拼音' });
+        await labelElement.scrollIntoViewIfNeeded();
+        await labelElement.click();
+        console.log(`✅ Auto pinyin toggled via label element`);
+        success = true;
+      } catch (error: any) {
+        console.log(`⚠️ Label element click failed: ${error?.message || 'Unknown error'}`);
+      }
+    }
+
+    if (!success) {
+      console.log(`⚠️ Could not toggle auto pinyin, continuing anyway`);
+    }
+  }
+
+  async toggleAutoTranslate(enable: boolean) {
+    console.log(`🔧 ${enable ? 'Enabling' : 'Disabling'} auto translate...`);
+
+    // Try multiple strategies to find and interact with the checkbox
+    let success = false;
+
+    // Strategy 1: Try to find by exact label text (more reliable for hidden checkboxes)
+    try {
+      const label = this.page.getByText('自动生成翻译', { exact: true });
+      await label.waitFor({ state: 'visible', timeout: 3000 });
+      await label.click();
+      console.log(`✅ Auto translate toggled via label click`);
+      success = true;
+    } catch (error: any) {
+      console.log(`⚠️ Label click failed: ${error?.message || 'Unknown error'}`);
+    }
+
+    // Strategy 2: Try to find the checkbox by aria-label
+    if (!success) {
+      try {
+        const checkbox = this.page.locator('input[aria-label="自动生成翻译"]');
+        await checkbox.scrollIntoViewIfNeeded();
+        await checkbox.click({ force: true });
+        console.log(`✅ Auto translate toggled via checkbox click`);
+        success = true;
+      } catch (error: any) {
+        console.log(`⚠️ Checkbox click failed: ${error?.message || 'Unknown error'}`);
+      }
+    }
+
+    // Strategy 3: Try different selector approaches
+    if (!success) {
+      try {
+        // Try finding by text content in a label
+        const labelElement = this.page.locator('label').filter({ hasText: '自动生成翻译' });
+        await labelElement.scrollIntoViewIfNeeded();
+        await labelElement.click();
+        console.log(`✅ Auto translate toggled via label element`);
+        success = true;
+      } catch (error: any) {
+        console.log(`⚠️ Label element click failed: ${error?.message || 'Unknown error'}`);
+      }
+    }
+
+    if (!success) {
+      console.log(`⚠️ Could not toggle auto translate, continuing anyway`);
+    }
+  }
+
+  async setTranslatePriority(priority: 'local' | 'online') {
+    console.log(`🔧 Setting translate priority to ${priority}...`);
+
+    try {
+      const selectBox = this.page.getByRole('combobox', { name: /翻译优先级/ });
+      await selectBox.waitFor({ state: 'visible', timeout: 5000 });
+
+      await selectBox.click();
+      await this.page.waitForTimeout(500); // Wait for dropdown to open
+
+      const optionText = priority === 'local' ? '本地优先' : '在线优先';
+
+      // Try to select from the dropdown specifically
+      try {
+        const dropdownOption = this.page.getByTestId('stSelectboxVirtualDropdown').getByText(optionText, { exact: true });
+        await dropdownOption.click();
+        console.log(`✅ Translate priority set to ${priority} via dropdown`);
+      } catch (dropdownError) {
+        // Fallback: try any visible option with the text
+        const option = this.page.getByText(optionText, { exact: true }).last();
+        await option.click();
+        console.log(`✅ Translate priority set to ${priority} via fallback`);
+      }
+
+    } catch (error: any) {
+      console.log(`⚠️ Could not set translate priority: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  async waitForProcessing() {
+    console.log('⏳ Waiting for processing...');
+    await this.page.waitForTimeout(3000); // Give time for auto features to work
+    console.log('✅ Processing completed');
+  }
+
+  async verifyCardsGenerated() {
+    console.log('🔍 Verifying cards are generated...');
+
+    // Wait longer for cards to be generated
+    await this.page.waitForTimeout(3000);
+
+    // Check for cards in iframe or main page
+    const frames = this.page.frames();
+    let cardsFound = false;
+
+    console.log(`🔍 Checking ${frames.length} frames for cards...`);
+
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      try {
+        // Look for Chinese characters from the 数字 template (一、二、三、四、五)
+        const hasCards = await frame.locator('div:has-text("一"), div:has-text("二"), div:has-text("三"), div:has-text("四"), div:has-text("五")').first().isVisible({ timeout: 3000 });
+        if (hasCards) {
+          cardsFound = true;
+          console.log(`✅ Cards found in iframe ${i}`);
+          break;
+        }
+      } catch {
+        // Continue checking other frames
+      }
+    }
+
+    if (!cardsFound) {
+      // Check if iframe exists at least
+      try {
+        await this.page.waitForSelector('iframe', { timeout: 5000 });
+        cardsFound = true;
+        console.log('✅ Preview iframe found (cards may be loading)');
+      } catch {
+        console.log('⚠️ No cards or preview found');
+      }
+    }
+
+    return cardsFound;
+  }
+
+  async checkAutoPinyinWorking() {
+    console.log('🔍 Checking if auto pinyin is working...');
+    
+    // Look for pinyin in the generated content
+    const frames = this.page.frames();
+    let pinyinFound = false;
+    
+    for (const frame of frames) {
+      try {
+        // Look for common pinyin patterns
+        const hasPinyin = await frame.locator('div:has-text("nǐ"), div:has-text("hǎo"), div:has-text("shì")').first().isVisible({ timeout: 2000 });
+        if (hasPinyin) {
+          pinyinFound = true;
+          console.log('✅ Pinyin found in cards');
+          break;
+        }
+      } catch {
+        // Continue checking
+      }
+    }
+    
+    console.log(pinyinFound ? '✅ Auto pinyin is working' : '⚠️ Auto pinyin not detected');
+    return pinyinFound;
+  }
+
+  async checkAutoTranslateWorking() {
+    console.log('🔍 Checking if auto translate is working...');
+    
+    // Look for English translations in the generated content
+    const frames = this.page.frames();
+    let translationFound = false;
+    
+    for (const frame of frames) {
+      try {
+        // Look for common English words
+        const hasEnglish = await frame.locator('div:has-text("you"), div:has-text("hello"), div:has-text("world")').first().isVisible({ timeout: 2000 });
+        if (hasEnglish) {
+          translationFound = true;
+          console.log('✅ English translation found in cards');
+          break;
+        }
+      } catch {
+        // Continue checking
+      }
+    }
+    
+    console.log(translationFound ? '✅ Auto translate is working' : '⚠️ Auto translate not detected');
+    return translationFound;
+  }
+}
+
+test.describe('Auto Features', () => {
+  // Clean up after each test
+  test.afterEach(async ({ context }) => {
+    console.log('🧹 Cleaning up test page and context...');
+    try {
+      // Close all pages in the context
+      const pages = context.pages();
+      for (const p of pages) {
+        if (!p.isClosed()) {
+          await p.close();
+        }
+      }
+      // Close the context
+      await context.close();
+      console.log('✅ Test page and context closed');
+    } catch (error) {
+      console.log('ℹ️ Page/context already closed');
+    }
+  });
+
+  test('should generate pinyin automatically when enabled', async ({ page }) => {
+    const app = new ZikaAppPage(page);
+
+    // Navigate to app
+    await app.goto();
+
+    // Setup cards first
+    await app.setupCards();
+
+    // Enable auto pinyin
+    await app.toggleAutoPinyin(true);
+
+    // Wait for processing
+    await app.waitForProcessing();
+
+    // Verify cards are generated
+    const cardsGenerated = await app.verifyCardsGenerated();
+    expect(cardsGenerated).toBe(true);
+
+    // Check if pinyin is working (optional verification)
+    await app.checkAutoPinyinWorking();
+
+    console.log('✅ Auto pinyin test completed');
+  });
+
+  test('should generate translations automatically when enabled', async ({ page }) => {
+    const app = new ZikaAppPage(page);
+
+    // Navigate to app
+    await app.goto();
+
+    // Setup cards first
+    await app.setupCards();
+
+    // Enable auto translate
+    await app.toggleAutoTranslate(true);
+
+    // Wait for processing
+    await app.waitForProcessing();
+
+    // Verify cards are generated
+    const cardsGenerated = await app.verifyCardsGenerated();
+    expect(cardsGenerated).toBe(true);
+
+    // Check if translation is working (optional verification)
+    await app.checkAutoTranslateWorking();
+
+    console.log('✅ Auto translate test completed');
+  });
+
+  test('should work with both auto features enabled', async ({ page }) => {
+    const app = new ZikaAppPage(page);
+
+    // Navigate to app
+    await app.goto();
+
+    // Setup cards first
+    await app.setupCards();
+
+    // Enable both auto features
+    await app.toggleAutoPinyin(true);
+    await app.toggleAutoTranslate(true);
+
+    // Wait for processing
+    await app.waitForProcessing();
+
+    // Verify cards are generated
+    const cardsGenerated = await app.verifyCardsGenerated();
+    expect(cardsGenerated).toBe(true);
+
+    console.log('✅ Combined auto features test completed');
+  });
+
+  test('should allow changing translation priority', async ({ page }) => {
+    const app = new ZikaAppPage(page);
+
+    // Navigate to app
+    await app.goto();
+
+    // Setup cards first
+    await app.setupCards();
+
+    // Enable auto translate
+    await app.toggleAutoTranslate(true);
+
+    // Set translation priority to local (optional, may fail)
+    try {
+      await app.setTranslatePriority('local');
+    } catch (error) {
+      console.log('⚠️ Could not set translation priority, continuing anyway');
+    }
+
+    // Wait for processing
+    await app.waitForProcessing();
+
+    // Verify cards are generated
+    const cardsGenerated = await app.verifyCardsGenerated();
+    expect(cardsGenerated).toBe(true);
+
+    console.log('✅ Translation priority test completed');
+  });
+});

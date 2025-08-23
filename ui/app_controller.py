@@ -19,7 +19,7 @@ from ui.sections import (
     render_preview_column_header, render_preview_content_legacy
 )
 from core.config import AppConfig, create_config_from_params
-from ui.styles import apply_global_styles, render_sticky_wrapper_end
+from ui.styles import apply_global_styles, render_sticky_wrapper_start, render_sticky_wrapper_end
 
 
 class AppController:
@@ -142,11 +142,23 @@ class AppController:
                                 'pinyin': new_pinyin,
                                 'english': new_english
                             }
+                            # Clear preview cache when cards are edited
+                            from services.cache import clear_preview_cache
+                            clear_preview_cache()
+                            # Force preview parameter reset
+                            if 'last_preview_params' in st.session_state:
+                                del st.session_state.last_preview_params
     
 
     
     def render_right_column_content(self, left_params):
         """Render the right column with preview and editing using high-level functions."""
+        # Start sticky wrapper for right column content
+        try:
+            render_sticky_wrapper_start()
+        except Exception:
+            pass
+
         # Get preview parameters
         preview_params = render_preview_column_header()
 
@@ -175,8 +187,12 @@ class AppController:
         else:
             render_preview_content_legacy([], preview_params, left_params)
 
-        render_sticky_wrapper_end()
-    
+        # End sticky wrapper for right column content
+        try:
+            render_sticky_wrapper_end()
+        except Exception:
+            pass
+
     def run_main_flow(self):
         """Execute the main application flow using high-level rendering functions with error handling."""
         try:
