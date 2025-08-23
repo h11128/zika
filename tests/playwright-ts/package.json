@@ -11,7 +11,7 @@
     "test:ui": "npm run cleanup && playwright test --ui",
     "test:record": "npm run cleanup && playwright test --headed --video=on --screenshot=on",
     "test:safe": "npm run cleanup && playwright test --workers=1",
-    "test:ci": "npm run cleanup && cross-env CI=true playwright test --workers=1 --reporter=junit",
+    "test:ci": "npm run cleanup && cross-env CI=true playwright test --workers=1 --reporter=list,junit,html",
     "test:emergency-cleanup": "npm run cleanup && playwright test && npm run force-cleanup",
     "show-report": "playwright show-report",
     "install": "playwright install"
