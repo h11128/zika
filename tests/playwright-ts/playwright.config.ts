@@ -14,7 +14,12 @@ export default defineConfig({
   /* Reduce parallel workers to prevent too many browser instances */
   workers: process.env.CI ? 1 : 3, // Reduced from default to 3 workers
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
+  reporter: process.env.CI ? [
+    ['list'],
+    ['junit', { outputFile: 'test-results/results.xml' }],
+    ['html', { open: 'never' }],
+    ['github'] // GitHub Actions annotations for failures
+  ] : [
     ['list'],
     ['junit', { outputFile: 'test-results/results.xml' }],
     ['html', { open: 'never' }]

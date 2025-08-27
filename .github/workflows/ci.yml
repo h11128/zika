@@ -111,10 +111,10 @@ jobs:
       run: |
         cd tests/playwright-ts
         # Chromium critical smoke
-        npm run test:ci -- --project=chromium --grep "@critical"
+        npm run test:ci -- --project=chromium --grep "@critical" --reporter=list,github
         # Cross-browser smoke on key scenarios (Firefox/WebKit)
-        npm run test:ci -- --project=firefox --grep "Interleaved Layout|Complex Custom Color"
-        npm run test:ci -- --project=webkit --grep "Interleaved Layout|Complex Custom Color"
+        npm run test:ci -- --project=firefox --grep "Interleaved Layout|Complex Custom Color" --reporter=list,github
+        npm run test:ci -- --project=webkit --grep "Interleaved Layout|Complex Custom Color" --reporter=list,github
       env:
         CI: true
 
@@ -123,10 +123,10 @@ jobs:
       run: |
         cd tests/playwright-ts
         # Full chromium run
-        npm run test:ci -- --project=chromium
+        npm run test:ci -- --project=chromium --reporter=list,github
         # Cross-browser key scenarios
-        npm run test:ci -- --project=firefox --grep "Interleaved Layout|Complex Custom Color"
-        npm run test:ci -- --project=webkit --grep "Interleaved Layout|Complex Custom Color"
+        npm run test:ci -- --project=firefox --grep "Interleaved Layout|Complex Custom Color" --reporter=list,github
+        npm run test:ci -- --project=webkit --grep "Interleaved Layout|Complex Custom Color" --reporter=list,github
       env:
         CI: true
 
@@ -135,22 +135,37 @@ jobs:
       run: |
         cd tests/playwright-ts
         # Chromium full + stress
-        npm run test:ci -- --project=chromium
-        npm run test:ci -- --project=chromium --grep "@stress"
+        npm run test:ci -- --project=chromium --reporter=list,github
+        npm run test:ci -- --project=chromium --grep "@stress" --reporter=list,github
         # Cross-browser key scenarios
-        npm run test:ci -- --project=firefox --grep "Interleaved Layout|Complex Custom Color"
-        npm run test:ci -- --project=webkit --grep "Interleaved Layout|Complex Custom Color"
+        npm run test:ci -- --project=firefox --grep "Interleaved Layout|Complex Custom Color" --reporter=list,github
+        npm run test:ci -- --project=webkit --grep "Interleaved Layout|Complex Custom Color" --reporter=list,github
       env:
         CI: true
+
+    - name: Show test failure summary
+      if: failure()
+      run: |
+        cd tests/playwright-ts
+        echo "=== E2E TEST FAILURE SUMMARY ==="
+        if [ -f "test-results/results.xml" ]; then
+          echo "Parsing JUnit results for failed tests..."
+          # Extract failed test names and errors from JUnit XML
+          grep -A 5 -B 1 '<failure\|<error' test-results/results.xml || echo "No detailed failure info found in JUnit XML"
+        fi
+        echo ""
+        echo "=== FAILED TEST FILES ==="
+        find test-results -name "*.txt" -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || echo "No test result files found"
+        echo ""
+        echo "=== RECENT LOGS ==="
+        find test-results -name "*.log" -exec echo "--- {} ---" \; -exec tail -20 {} \; 2>/dev/null || echo "No log files found"
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: e2e-test-results
-        path: |
-          tests/playwright-ts/test-results/
-          tests/playwright-ts/playwright-report/
+        path: tests/playwright-ts/test-results/
         retention-days: 7
 
     - name: Upload test report

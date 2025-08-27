@@ -120,8 +120,24 @@ export class ZikaAppPage {
 
   async expandAdvancedOptions(): Promise<void> {
     const advanced = this.page.getByText('🔧 高级选项', { exact: true });
-    await advanced.click().catch(() => {});
-    await this.page.waitForTimeout(500);
+
+    // Quick check if advanced options are already expanded
+    const autoFillElement = this.page.getByText('自动填充', { exact: false });
+    const isExpanded = await autoFillElement.isVisible().catch(() => false);
+
+    if (!isExpanded) {
+      // Click to expand
+      await advanced.click({ timeout: 1000 }).catch(() => {});
+
+      // ✅ EVENT-DRIVEN: Wait for auto-fill element to actually appear
+      try {
+        await autoFillElement.waitFor({ state: 'visible', timeout: 1500 });
+      } catch {
+        // Single retry if expansion failed
+        await advanced.click({ timeout: 1000 }).catch(() => {});
+        await autoFillElement.waitFor({ state: 'visible', timeout: 1000 }).catch(() => {});
+      }
+    }
   }
 
   async switchPreviewMode(modeLabel: '📄 完整页面' | '🔲 简单网格'): Promise<void> {
@@ -129,6 +145,63 @@ export class ZikaAppPage {
     await selector.click().catch(() => {});
     await this.page.getByText(modeLabel, { exact: true }).click();
     await this.page.waitForTimeout(1000);
+  }
+
+  async switchPreviewModeFast(modeLabel: '📄 完整页面' | '🔲 简单网格'): Promise<void> {
+    // Try direct text click first (most reliable in our app)
+    try {
+      const option = this.page.getByText(modeLabel, { exact: true });
+      await option.scrollIntoViewIfNeeded().catch(() => {});
+      await option.click({ timeout: 3000 }).catch(async () => {
+        await option.click({ force: true });
+      });
+    } catch {
+      // Fallback: open the group and click option
+      const selector = this.page.getByLabel('预览模式', { exact: true }).or(this.page.getByText('预览模式'));
+      await selector.click().catch(() => {});
+      const option = this.page.getByText(modeLabel, { exact: true });
+      await option.scrollIntoViewIfNeeded().catch(() => {});
+      await option.click({ timeout: 3000 }).catch(async () => {
+        // Fallback: radio inputs
+        const radios = await this.page.locator('input[type="radio"]').all();
+        for (const radio of radios) {
+          const parent = radio.locator('..');
+          const text = (await parent.textContent()) || '';
+          if (text.includes('简单网格') && modeLabel.includes('简单')) {
+            await radio.click({ force: true });
+            break;
+          }
+          if (text.includes('完整页面') && modeLabel.includes('完整')) {
+            await radio.click({ force: true });
+            break;
+          }
+        }
+      });
+    }
+
+    // ✅ EVENT-DRIVEN: Wait for preview iframe/content to be ready instead of hardcoded timeout
+    try {
+      const iframe = this.page.locator('iframe').first();
+      await iframe.waitFor({ state: 'attached', timeout: 3000 });
+
+      if (modeLabel === '📄 完整页面') {
+        await iframe.waitFor({ state: 'visible', timeout: 2000 });
+      } else {
+        // Simple grid: wait for a card to appear inside the iframe
+        const gridCard = this.page.frameLocator('iframe').first().locator('.simple-grid .simple-card').first();
+        await gridCard.waitFor({ state: 'visible', timeout: 4000 });
+      }
+    } catch {
+      // Fallback: scan frames briefly to ensure content exists
+      const deadline = Date.now() + 2500;
+      while (Date.now() < deadline) {
+        for (const frame of this.page.frames()) {
+          const card = frame.locator(modeLabel === '📄 完整页面' ? '.page-grid .page-card' : '.simple-grid .simple-card').first();
+          if (await card.isVisible().catch(() => false)) return;
+        }
+        await this.page.waitForTimeout(150);
+      }
+    }
   }
 
   async setRowsCols(rows: number, cols: number): Promise<void> {
