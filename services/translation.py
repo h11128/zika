@@ -8,6 +8,8 @@ Translation utilities for the app.
 Environment:
   GOOGLE_TRANSLATE_API_KEY: API key for Google Translate v2. If not set, Google
   fallback is skipped gracefully.
+  GOOGLE_TRANSLATE_SOURCE_LANG: Source language code for Google Translate (default: 'zh' for Chinese).
+  Set this to override the default source language detection.
 """
 from __future__ import annotations
 
@@ -100,12 +102,15 @@ def translate_with_google(text: str, api_key: Optional[str] = None, timeout: int
     if not api_key:
         return None
 
+    # Get configurable source language, defaulting to Chinese
+    source_lang = os.getenv("GOOGLE_TRANSLATE_SOURCE_LANG", "zh")
+
     try:
         url = f"https://translation.googleapis.com/language/translate/v2?key={api_key}"
         payload = {
             "q": text,
+            "source": source_lang,  # Explicitly specify source language to avoid auto-detection issues
             "target": "en",
-            # Let Google auto-detect source; specifying zh may hurt if input isn't zh
             "format": "text",
         }
         data = json.dumps(payload).encode("utf-8")

@@ -46,12 +46,12 @@ def run_all_tests():
 def run_new_tests():
     """Run only new tests."""
     new_test_files = [
-        "tests/test_config_objects.py",
-        "tests/test_app_controller.py", 
-        "tests/test_refactored_preview.py",
-        "tests/test_error_handling.py"
+        "tests/unit/test_config_objects.py",
+        "tests/unit/test_app_controller.py",
+        "tests/ui/test_refactored_preview.py",
+        "tests/unit/test_error_handling.py"
     ]
-    
+
     cmd = f"python -m pytest {' '.join(new_test_files)} -v"
     return run_command(cmd, "Running New Tests Only")
 
@@ -112,8 +112,11 @@ def run_ci_tests():
 
 def run_specific_test(test_file):
     """Run a specific test file."""
+    # Handle both old and new path formats
+    if not test_file.startswith("tests/"):
+        test_file = f"tests/unit/{test_file}"
     return run_command(
-        f"python -m pytest tests/{test_file} -v",
+        f"python -m pytest {test_file} -v",
         f"Running {test_file}"
     )
 
@@ -121,7 +124,7 @@ def run_specific_test(test_file):
 def run_quick_check():
     """Run a quick smoke test."""
     return run_command(
-        "python -m pytest tests/test_config_objects.py tests/test_app_controller.py -v",
+        "python -m pytest tests/unit/test_config_objects.py tests/unit/test_app_controller.py -v",
         "Quick Smoke Test"
     )
 
