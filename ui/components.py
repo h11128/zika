@@ -126,7 +126,7 @@ def render_preview_section(processed_cards: List[Dict[str, str]], preview_mode: 
     )
 
     if preview_mode == "📄 完整页面":
-        # Debug: Print parameters being passed to preview
+        # Debug: Print parameters when debug mode is enabled
         if st.session_state.get('debug_preview', False):
             st.write(f"🔍 Preview params: card_size={card_size}, auto_fill={auto_fill}, rows={rows}, cols={cols}")
 
