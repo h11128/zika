@@ -148,9 +148,7 @@ jobs:
       if: failure()
       with:
         name: e2e-test-results
-        path: |
-          tests/playwright-ts/test-results/
-          tests/playwright-ts/playwright-report/
+        path: tests/playwright-ts/test-results/
         retention-days: 7
 
     - name: Upload test report
