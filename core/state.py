@@ -35,7 +35,11 @@ def initialize_session_state() -> None:
         st.session_state.current_page = 0
     if 'last_params' not in st.session_state:
         st.session_state.last_params = {}
-    
+
+    # Preview mode default (used in param tracking and UI)
+    if 'preview_mode' not in st.session_state:
+        st.session_state.preview_mode = "📄 完整页面"
+
     # Card data
     if 'processed_cards' not in st.session_state:
         st.session_state.processed_cards = []
@@ -53,10 +57,13 @@ def initialize_session_state() -> None:
         st.session_state.hanzi_font = DEFAULT_HANZI_FONT
     if 'background_color' not in st.session_state:
         st.session_state.background_color = DEFAULT_BACKGROUND_COLOR
-    
+    # Text processing UI options
+    if 'preserve_duplicates' not in st.session_state:
+        st.session_state.preserve_duplicates = False
+
     # Validate background color
     _validate_background_color()
-    
+
     # Layout settings
     if 'rows' not in st.session_state:
         st.session_state.rows = DEFAULT_ROWS
@@ -225,8 +232,10 @@ def get_export_data(format_type: str) -> Dict[str, Any]:
 # Enhanced parameter management functions
 def get_all_ui_params(card_size: float, gap: float, margin: float, page_size: str,
                      font_hanzi: int, font_pinyin: int, font_english: int,
-                     processed_cards: List[Dict[str, str]]) -> Dict[str, Any]:
-    """Get all UI parameters for change detection in a unified way."""
+                     processed_cards: List[Dict[str, str]], preview_mode: str = None) -> Dict[str, Any]:
+    """Get all UI parameters for change detection in a unified way.
+    Including preview_mode helps ensure cache/preview update when switching modes.
+    """
     layout = get_layout_settings()
     prefs = get_ui_preferences()
 
@@ -243,7 +252,8 @@ def get_all_ui_params(card_size: float, gap: float, margin: float, page_size: st
         'rows': layout['rows'],
         'cols': layout['cols'],
         'auto_fill': layout['auto_fill'],
-        'total_cards': len(processed_cards)
+        'total_cards': len(processed_cards),
+        'preview_mode': preview_mode or _ss_get('preview_mode', None)
     }
 
 

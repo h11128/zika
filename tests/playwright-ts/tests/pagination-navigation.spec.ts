@@ -77,11 +77,11 @@ test.describe('Pagination Navigation', () => {
     const pageInfo = await app.getPageInfo();
     expect(pageInfo.total).toBeGreaterThan(1);
 
-    // Verify navigation buttons exist
-    const firstPageButton = app.page.getByText('⏮️ 首页');
-    const prevPageButton = app.page.getByText('◀️ 上页');
-    const nextPageButton = app.page.getByText('▶️ 下页');
-    const lastPageButton = app.page.getByText('⏭️ 末页');
+    // Verify navigation buttons exist (use role to avoid strict mode conflicts)
+    const firstPageButton = app.page.getByRole('button', { name: '⏮️ 首页' }).last();
+    const prevPageButton = app.page.getByRole('button', { name: '◀️ 上页' }).last();
+    const nextPageButton = app.page.getByRole('button', { name: '▶️ 下页' }).last();
+    const lastPageButton = app.page.getByRole('button', { name: '⏭️ 末页' }).last();
 
     await expect(firstPageButton).toBeVisible();
     await expect(prevPageButton).toBeVisible();
@@ -98,8 +98,8 @@ test.describe('Pagination Navigation', () => {
     const pageInfo = await app.getPageInfo();
     expect(pageInfo.total).toBeGreaterThan(1);
 
-    // Verify page selector exists
-    const pageSelector = app.page.getByLabel('页码');
+    // Verify page selector exists (disambiguate from 编辑页码)
+    const pageSelector = app.page.getByRole('combobox', { name: / 页码$/ }).last();
     await expect(pageSelector).toBeVisible();
 
     // Verify it shows some page information

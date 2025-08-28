@@ -53,11 +53,12 @@ def render_input_section() -> List[Dict[str, str]]:
     input_method = st.radio(
         "选择输入方式",
         ["手动输入", "上传CSV文件"],
-        horizontal=True
+        horizontal=True,
+        key="input_method"
     )
 
     cards = []
-    
+
     if input_method == "手动输入":
         # Template selection
         templates = {
@@ -88,7 +89,27 @@ def render_input_section() -> List[Dict[str, str]]:
         # Apply pending segmentation BEFORE widget instantiation
         if st.session_state.get('apply_segmentation', False):
             if st.session_state.input_text.strip():
-                st.session_state.input_text = auto_segment_text(st.session_state.input_text.strip())
+                # Use click-time snapshot (do NOT persist it to checkbox state).
+                # Snapshot should only influence this computation call.
+                preserve_snapshot = st.session_state.pop('pending_preserve_duplicates', st.session_state.get('preserve_duplicates', False))
+                preserve_duplicates = bool(preserve_snapshot)
+                original_text = st.session_state.input_text.strip()
+                new_text = auto_segment_text(original_text, preserve_duplicates=preserve_duplicates)
+                # Only update preview-related caches if the text actually changed
+                if new_text != original_text:
+                    st.session_state.input_text = new_text
+                    # Invalidate preview caches so the preview reliably reflects new tokens
+                    try:
+                        from services.cache import clear_preview_cache
+                        clear_preview_cache()
+                    except Exception:
+                        pass
+                    # Force preview param recalculation on next render
+                    if 'last_preview_params' in st.session_state:
+                        del st.session_state.last_preview_params
+                else:
+                    # No change: keep caches/params intact to avoid unnecessary preview refresh
+                    st.session_state.input_text = original_text
             st.session_state.apply_segmentation = False
 
         # Create columns for text area and button
@@ -104,10 +125,26 @@ def render_input_section() -> List[Dict[str, str]]:
             )
             st.markdown('<span data-testid="input-hanzi" style="display:none"></span>', unsafe_allow_html=True)
 
+            # 智能分词选项（提前渲染，确保在按钮触发的 rerun 前就完成状态绑定）
+            preserve_duplicates = st.checkbox(
+                "保留重复词",
+                key="preserve_duplicates",
+                help="勾选后智能分词将保留重复的词汇，不勾选则自动去重"
+            )
+            # Debug marker to observe state in E2E without affecting layout
+            st.markdown(
+                f'<span data-testid="dbg-preserve-duplicates" style="display:none">{int(st.session_state.get("preserve_duplicates", False))}</span>',
+                unsafe_allow_html=True
+            )
+
         with col_btn:
             st.write("")  # Add some spacing
             st.write("")  # Add some spacing
+
             if st.button("🔄 智能分词", use_container_width=True, help="对输入文本进行智能分词"):
+                # Capture checkbox state at click time to avoid race conditions
+                st.session_state.pending_preserve_duplicates = st.session_state.get('preserve_duplicates', False)
+                # Trigger apply on next run; the apply step will read and persist the snapshot
                 st.session_state.apply_segmentation = True
                 st.rerun()
 
@@ -124,13 +161,13 @@ def render_input_section() -> List[Dict[str, str]]:
                 # Read CSV
                 stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
                 df = pd.read_csv(stringio)
-                
+
                 # Validate columns
                 required_cols = ['hanzi']
                 if not all(col in df.columns for col in required_cols):
                     st.error(f"CSV文件必须包含以下列: {', '.join(required_cols)}")
                     return []
-                
+
                 # Convert to cards format
                 for _, row in df.iterrows():
                     cards.append({
@@ -138,9 +175,9 @@ def render_input_section() -> List[Dict[str, str]]:
                         'pinyin': str(row.get('pinyin', '')),
                         'english': str(row.get('english', ''))
                     })
-                
+
                 st.success(f"成功读取 {len(cards)} 张卡片")
-                
+
             except Exception as e:
                 st.error(f"读取CSV文件时出错: {e}")
                 return []
@@ -260,6 +297,164 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
     return auto_pinyin, auto_translate, page_size, card_size
 
 
+def render_improved_card_editor(processed_cards: List[Dict[str, str]]) -> None:
+    """Render an improved card editor that can handle large numbers of cards."""
+    total_cards = len(processed_cards)
+
+    # Initialize edit page state
+    if 'edit_page' not in st.session_state:
+        st.session_state.edit_page = 0
+
+    # Configuration for editing
+    max_tabs_per_page = 8  # Reasonable number of tabs per page
+    total_edit_pages = (total_cards + max_tabs_per_page - 1) // max_tabs_per_page
+
+    # Edit mode selection
+    st.write("**编辑模式选择:**")
+    edit_mode = st.radio(
+        "选择编辑方式",
+        ["分页编辑", "搜索编辑"],
+        horizontal=True,
+        help="分页编辑：按页编辑卡片；搜索编辑：搜索特定卡片进行编辑"
+    )
+
+    if edit_mode == "分页编辑":
+        render_paginated_editor(processed_cards, max_tabs_per_page, total_edit_pages)
+    else:
+        render_search_editor(processed_cards)
+
+
+def render_paginated_editor(processed_cards: List[Dict[str, str]], max_tabs_per_page: int, total_edit_pages: int) -> None:
+    """Render paginated card editor."""
+    total_cards = len(processed_cards)
+
+    # Edit page navigation
+    if total_edit_pages > 1:
+        st.write(f"**编辑分页导航** (总计 {total_cards} 张卡片，分为 {total_edit_pages} 页)")
+
+        col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns([1, 1, 2, 1, 1])
+
+        with col_nav1:
+            if st.button("⏮️ 首页", disabled=st.session_state.edit_page <= 0, use_container_width=True, key="edit_first"):
+                st.session_state.edit_page = 0
+                st.rerun()
+
+        with col_nav2:
+            if st.button("◀️ 上页", disabled=st.session_state.edit_page <= 0, use_container_width=True, key="edit_prev"):
+                st.session_state.edit_page = max(0, st.session_state.edit_page - 1)
+                st.rerun()
+
+        with col_nav3:
+            new_edit_page = st.selectbox(
+                "编辑页码",
+                options=list(range(total_edit_pages)),
+                index=st.session_state.edit_page,
+                format_func=lambda x: f"第 {x+1} 页 / 共 {total_edit_pages} 页",
+                key="edit_page_selector"
+            )
+            if new_edit_page != st.session_state.edit_page:
+                st.session_state.edit_page = new_edit_page
+                st.rerun()
+
+        with col_nav4:
+            if st.button("▶️ 下页", disabled=st.session_state.edit_page >= total_edit_pages - 1, use_container_width=True, key="edit_next"):
+                st.session_state.edit_page = min(total_edit_pages - 1, st.session_state.edit_page + 1)
+                st.rerun()
+
+        with col_nav5:
+            if st.button("⏭️ 末页", disabled=st.session_state.edit_page >= total_edit_pages - 1, use_container_width=True, key="edit_last"):
+                st.session_state.edit_page = total_edit_pages - 1
+                st.rerun()
+
+    # Get cards for current edit page
+    start_idx = st.session_state.edit_page * max_tabs_per_page
+    end_idx = min(start_idx + max_tabs_per_page, total_cards)
+    current_edit_cards = processed_cards[start_idx:end_idx]
+
+    st.write(f"**编辑第 {st.session_state.edit_page + 1} 页卡片** (卡片 {start_idx + 1} - {end_idx})")
+
+    if current_edit_cards:
+        tabs = st.tabs([f"卡片 {start_idx + i + 1}: {card['hanzi']}" for i, card in enumerate(current_edit_cards)])
+
+        for i, (tab, card) in enumerate(zip(tabs, current_edit_cards)):
+            with tab:
+                actual_idx = start_idx + i
+                render_single_card_editor(card, actual_idx)
+
+
+def render_search_editor(processed_cards: List[Dict[str, str]]) -> None:
+    """Render search-based card editor."""
+    st.write("**搜索编辑**")
+
+    # Search input
+    search_term = st.text_input(
+        "搜索卡片",
+        placeholder="输入汉字、拼音或英文来搜索卡片",
+        help="支持模糊搜索，输入任意内容来查找匹配的卡片"
+    )
+
+    if search_term:
+        # Find matching cards
+        matching_cards = []
+        for i, card in enumerate(processed_cards):
+            if (search_term.lower() in card['hanzi'].lower() or
+                search_term.lower() in card['pinyin'].lower() or
+                search_term.lower() in card['english'].lower()):
+                matching_cards.append((i, card))
+
+        if matching_cards:
+            st.write(f"找到 {len(matching_cards)} 张匹配的卡片:")
+
+            # Limit search results to avoid too many tabs
+            max_search_results = 10
+            displayed_cards = matching_cards[:max_search_results]
+
+            if len(matching_cards) > max_search_results:
+                st.warning(f"搜索结果过多，只显示前 {max_search_results} 张卡片。请使用更具体的搜索词。")
+
+            tabs = st.tabs([f"卡片 {idx + 1}: {card['hanzi']}" for idx, card in displayed_cards])
+
+            for tab, (actual_idx, card) in zip(tabs, displayed_cards):
+                with tab:
+                    render_single_card_editor(card, actual_idx)
+        else:
+            st.info("没有找到匹配的卡片，请尝试其他搜索词。")
+    else:
+        st.info("请输入搜索词来查找要编辑的卡片。")
+
+
+
+def render_single_card_editor(card: Dict[str, str], actual_idx: int) -> None:
+    """Render editor for a single card."""
+    col_e1, col_e2, col_e3 = st.columns(3)
+
+    with col_e1:
+        new_hanzi = st.text_input("汉字", value=card['hanzi'], key=f"edit_hanzi_{actual_idx}")
+    with col_e2:
+        new_pinyin = st.text_input("拼音", value=card['pinyin'], key=f"edit_pinyin_{actual_idx}")
+    with col_e3:
+        new_english = st.text_input("英文", value=card['english'], key=f"edit_english_{actual_idx}")
+
+    # Update button for this card
+    if st.button(f"更新卡片 {actual_idx + 1}", key=f"update_card_{actual_idx}"):
+        st.session_state.processed_cards[actual_idx] = {
+            'hanzi': new_hanzi,
+            'pinyin': new_pinyin,
+            'english': new_english
+        }
+        # Clear export data when cards are edited
+        st.session_state.export_ready = {}
+        st.session_state.export_data = {}
+        # Clear preview cache when cards are edited
+        from services.cache import clear_preview_cache
+        clear_preview_cache()
+        # Force preview parameter reset
+        if 'last_preview_params' in st.session_state:
+            del st.session_state.last_preview_params
+        st.success(f"卡片 {actual_idx + 1} 已更新！")
+        st.rerun()
+
+
 def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]: # returns (gap, margin, font_hanzi, font_pinyin, font_english, rows, cols)
     """Render the advanced options section and return advanced option values."""
     with st.expander("🔧 高级选项"):
@@ -331,14 +526,35 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]: #
 
             # Custom color input - standard Streamlit color picker
             st.write("**自定义颜色:**")
-            # Ensure accessible label ties to the picker; keep visible label text unchanged
-            custom_color = st.color_picker(
-                label="选择颜色",
+            # Add a container to make the color picker more visible
+            with st.container():
+                custom_color = st.color_picker(
+                    label="选择颜色",
+                    value=st.session_state.background_color,
+                    key="custom_color_picker",
+                    help="点击选择自定义背景颜色",
+                    label_visibility="visible",
+                )
+                # Visible anchors for test stability and backward compatibility
+                st.markdown('<div data-testid="custom-color-picker" style="margin-top: 5px;"></div>', unsafe_allow_html=True)
+                st.markdown('<div data-testid="color-picker-anchor" style="display:block"></div>', unsafe_allow_html=True)
+
+
+            # 允许直接输入十六进制颜色值，便于精确测试与高级用户输入
+            hex_input = st.text_input(
+                "自定义颜色代码",
                 value=st.session_state.background_color,
-                key="custom_color_picker"
+                key="custom_color_hex",
+                help="输入 #RRGGBB 或 #RGB 手动设置背景颜色"
             )
-            # Invisible anchor for test stability; no visual impact
-            st.markdown('<span data-testid="color-picker-anchor" style="display:none"></span>', unsafe_allow_html=True)
+            if isinstance(hex_input, str) and hex_input.startswith('#') and len(hex_input) in (4, 7) \
+                and hex_input != st.session_state.background_color:
+                st.session_state.background_color = hex_input
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
+                st.rerun()
 
             # Show current color below the picker
             st.write("当前颜色:")
@@ -399,6 +615,28 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]: #
     return gap, margin, font_hanzi, font_pinyin, font_english, rows, cols
 
 
+
+def _effective_preview_params_from_state(passed: dict) -> dict:
+    """Return effective preview params using session_state as source of truth.
+    Any value missing in session_state falls back to the passed value.
+    """
+    ss = st.session_state
+    return {
+        'card_size': ss.get('card_size', passed.get('card_size')),
+        'gap': ss.get('gap_cm', passed.get('gap')),
+        'margin': ss.get('margin_cm', passed.get('margin')),
+        'font_hanzi': ss.get('font_hanzi', passed.get('font_hanzi')),
+        'font_pinyin': ss.get('font_pinyin', passed.get('font_pinyin')),
+        'font_english': ss.get('font_english', passed.get('font_english')),
+        'page_size': ss.get('page_size', passed.get('page_size')),
+        'hanzi_font': ss.get('hanzi_font', passed.get('hanzi_font')),
+        'background_color': ss.get('background_color', passed.get('background_color')),
+        'rows': ss.get('rows', passed.get('rows')),
+        'cols': ss.get('cols', passed.get('cols')),
+        'auto_fill': ss.get('auto_fill', passed.get('auto_fill')),
+    }
+
+
 def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
                                  card_size: float, gap: float, margin: float,
                                  font_hanzi: int, font_pinyin: int, font_english: int,
@@ -415,27 +653,57 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
         horizontal=True,
         help="完整页面：按实际打印布局预览；简单网格：快速查看卡片内容"
     )
+    # Persist preview mode in session for consistent param tracking
+    st.session_state.preview_mode = preview_mode
+
+    # Build effective params using session_state as the source of truth
+    passed = {
+        'card_size': card_size,
+        'gap': gap,
+        'margin': margin,
+        'font_hanzi': font_hanzi,
+        'font_pinyin': font_pinyin,
+        'font_english': font_english,
+        'page_size': page_size,
+        'hanzi_font': hanzi_font,
+        'background_color': background_color,
+        'rows': rows,
+        'cols': cols,
+        'auto_fill': auto_fill,
+    }
+    eff = _effective_preview_params_from_state(passed)
+    card_size, gap, margin = eff['card_size'], eff['gap'], eff['margin']
+    font_hanzi, font_pinyin, font_english = eff['font_hanzi'], eff['font_pinyin'], eff['font_english']
+    page_size, hanzi_font, background_color = eff['page_size'], eff['hanzi_font'], eff['background_color']
+    rows, cols, auto_fill = eff['rows'], eff['cols'], eff['auto_fill']
 
     if processed_cards:
         # Calculate total pages (rows x cols per page)
         cards_per_page = max(1, rows * cols)
         total_pages = max(1, (len(processed_cards) + cards_per_page - 1) // cards_per_page)
 
+        # Use session_state values as source of truth for fonts to avoid accidental resets
+        effective_font_hanzi = st.session_state.get('font_hanzi', font_hanzi)
+        effective_font_pinyin = st.session_state.get('font_pinyin', font_pinyin)
+        effective_font_english = st.session_state.get('font_english', font_english)
+
         # Check if parameters changed (reset to first page if they did)
         current_params = {
             'card_size': card_size,
             'gap': gap,
             'margin': margin,
-            'font_hanzi': font_hanzi,
-            'font_pinyin': font_pinyin,
-            'font_english': font_english,
+            'font_hanzi': effective_font_hanzi,
+            'font_pinyin': effective_font_pinyin,
+            'font_english': effective_font_english,
             'page_size': page_size,
             'hanzi_font': hanzi_font,
             'background_color': background_color,
             'rows': rows,
             'cols': cols,
             'auto_fill': auto_fill,
-            'total_cards': len(processed_cards)
+            'total_cards': len(processed_cards),
+            # Include preview mode to ensure state resets and cache invalidation on mode change
+            'preview_mode': preview_mode,
         }
 
         if st.session_state.last_params != current_params:
@@ -456,7 +724,7 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
         render_preview_section(
             processed_cards, preview_mode,
             card_size, gap, margin,
-            font_hanzi, font_pinyin, font_english,
+            effective_font_hanzi, effective_font_pinyin, effective_font_english,
             page_size, hanzi_font, background_color,
             rows, cols, auto_fill
         )
@@ -466,46 +734,8 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
 
         # Card editing section
         if len(processed_cards) > 0:
-            with st.expander("✏️ 编辑当前页卡片", expanded=False):
-                st.write(f"编辑第 {st.session_state.current_page + 1} 页的卡片:")
-
-                # Get cards for current page
-                start_idx = st.session_state.current_page * cards_per_page
-                end_idx = min(start_idx + cards_per_page, len(processed_cards))
-                current_page_cards = processed_cards[start_idx:end_idx]
-
-                if current_page_cards:
-                    tabs = st.tabs([f"卡片 {start_idx + i + 1}: {card['hanzi']}" for i, card in enumerate(current_page_cards)])
-
-                    for i, (tab, card) in enumerate(zip(tabs, current_page_cards)):
-                        with tab:
-                            col_e1, col_e2, col_e3 = st.columns(3)
-
-                            actual_idx = start_idx + i
-                            with col_e1:
-                                new_hanzi = st.text_input("汉字", value=card['hanzi'], key=f"edit_hanzi_{actual_idx}")
-                            with col_e2:
-                                new_pinyin = st.text_input("拼音", value=card['pinyin'], key=f"edit_pinyin_{actual_idx}")
-                            with col_e3:
-                                new_english = st.text_input("英文", value=card['english'], key=f"edit_english_{actual_idx}")
-
-                            # Update button for this card
-                            if st.button(f"更新卡片 {actual_idx + 1}", key=f"update_card_{actual_idx}"):
-                                st.session_state.processed_cards[actual_idx] = {
-                                    'hanzi': new_hanzi,
-                                    'pinyin': new_pinyin,
-                                    'english': new_english
-                                }
-                                # Clear export data when cards are edited
-                                st.session_state.export_ready = {}
-                                st.session_state.export_data = {}
-                                # Clear preview cache when cards are edited
-                                from services.cache import clear_preview_cache
-                                clear_preview_cache()
-                                # Force preview parameter reset
-                                if 'last_preview_params' in st.session_state:
-                                    del st.session_state.last_preview_params
-                                st.rerun()
+            with st.expander("✏️ 编辑卡片", expanded=False):
+                render_improved_card_editor(processed_cards)
 
     else:
         # Show empty state
@@ -650,6 +880,8 @@ def render_preview_column_header():
         horizontal=True,
         help="完整页面：按实际打印布局预览；简单网格：快速查看卡片内容"
     )
+    # Persist preview mode for parameter tracking across components
+    st.session_state.preview_mode = preview_mode
 
     return {
         'hanzi_font': hanzi_font,

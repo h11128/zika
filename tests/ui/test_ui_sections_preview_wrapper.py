@@ -40,10 +40,16 @@ class DummySt:
     def text_input(self, *a, **k): return ""
     def button(self, *a, **k): return False
     def write(self, *a, **k): pass
+    def info(self, *a, **k): pass
+    def warning(self, *a, **k): pass
+    def caption(self, *a, **k): pass
+    def checkbox(self, label, value=True, **k): return value
+    def color_picker(self, label, value=None, **k): return value
     class _Exp:
         def __enter__(self): return self
         def __exit__(self, a,b,c): return False
     def expander(self, *a, **k): return DummySt._Exp()
+    def container(self, *a, **k): return DummySt._Exp()
 
     class components:
         class v1:

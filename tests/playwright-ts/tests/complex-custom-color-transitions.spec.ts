@@ -16,10 +16,10 @@ test.describe('Complex Custom Color Transitions @priority1', () => {
 
     // Ensure color control is present
     await app.expandAdvancedOptions();
-    const colorLabel = app.page.getByText('选择颜色', { exact: true });
-    await expect(colorLabel).toBeVisible({ timeout: 10000 });
+    // Prefer test-id anchor for robustness across themes
     const anchor = app.page.locator('[data-testid="color-picker-anchor"]');
     await expect(anchor).toHaveCount(1, { timeout: 10000 });
+    // Label might render twice (wrapper + component); avoid strict getByText here
 
     // 1) Select a preset color from palette (if available)
     const preset1 = await app.selectPresetColorFromPalette(2);

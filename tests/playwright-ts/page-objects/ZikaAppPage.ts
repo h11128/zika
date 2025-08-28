@@ -138,6 +138,17 @@ export class ZikaAppPage {
         await autoFillElement.waitFor({ state: 'visible', timeout: 1000 }).catch(() => {});
       }
     }
+
+    // Scroll to make sure color picker area is visible
+    try {
+      const colorSection = this.page.locator('text=卡片背景颜色').first();
+      if (await colorSection.isVisible({ timeout: 2000 })) {
+        await colorSection.scrollIntoViewIfNeeded();
+        await this.page.waitForTimeout(1000);
+      }
+    } catch (e) {
+      // Continue if scrolling fails
+    }
   }
 
   async switchPreviewMode(modeLabel: '📄 完整页面' | '🔲 简单网格'): Promise<void> {
@@ -228,8 +239,7 @@ export class ZikaAppPage {
 
   async selectCustomColorOrVerifyDisplay(hex: string): Promise<void> {
     await this.expandAdvancedOptions();
-    const colorLabel = this.page.getByText('选择颜色', { exact: true });
-    await expect(colorLabel).toBeVisible({ timeout: 5000 });
+    // Prefer stable test-id anchor; label text may have multiple instances across wrappers
     const anchor = this.page.locator('[data-testid="color-picker-anchor"]');
     await expect(anchor).toHaveCount(1, { timeout: 5000 });
 
@@ -237,10 +247,42 @@ export class ZikaAppPage {
     if (await nativeInput.count() > 0) {
       await nativeInput.fill(hex);
       await this.page.waitForTimeout(1000);
-    } else {
-      // Fall back to verifying current color display presence later in tests
-      console.log('ℹ️ Native color input not present; will verify display & preview');
+      return;
     }
+
+    // Fallback 1: hex text input we added for precise E2E
+    const hexInput = this.page.getByLabel('自定义颜色代码', { exact: true });
+    if (await hexInput.count() > 0) {
+      try {
+        await hexInput.scrollIntoViewIfNeeded().catch(() => {});
+        await this.page.waitForTimeout(100);
+        await hexInput.fill(hex, { timeout: 1000 });
+      } catch {
+        try {
+          await hexInput.fill(hex, { force: true, timeout: 500 });
+        } catch {
+          // Fallback: set value via DOM and dispatch events
+          const handle = await hexInput.elementHandle();
+          if (handle) {
+            await this.page.evaluate((args) => {
+              const [el, value] = args as any[];
+              (el as any).value = value;
+              (el as any).dispatchEvent(new Event('input', { bubbles: true }));
+              (el as any).dispatchEvent(new Event('change', { bubbles: true }));
+            }, [handle, hex]);
+          }
+        }
+      }
+      await this.page.waitForTimeout(1000);
+      return;
+    }
+
+    // Fallback 2: try clicking palette (best-effort)
+    try {
+      await this.selectPresetColorFromPalette(0);
+    } catch {}
+
+    console.log('ℹ️ No direct color input found; will verify preview visually');
   }
 
   async verifyPreviewUpdated(): Promise<boolean> {
@@ -248,6 +290,61 @@ export class ZikaAppPage {
     // Implementation is in the lower part of this class
     return await this.findCardsInAnyFrameOrPage();
   }
+
+  private hexToRgbString(hex: string): string {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!m) return hex;
+    const r = parseInt(m[1], 16);
+    const g = parseInt(m[2], 16);
+    const b = parseInt(m[3], 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  private firstCardLocatorForMode(mode: 'page' | 'grid') {
+    const selector = mode === 'page' ? '.page-grid .page-card' : '.simple-grid .simple-card';
+    // Prefer scanning frames to find the one that actually hosts preview content
+    for (const frame of this.page.frames()) {
+      const loc = frame.locator(selector).first();
+      // Return the first locator; visibility will be checked by callers
+      if (loc) return loc;
+    }
+    // Fallback to first iframe
+    const iframe = this.page.frameLocator('iframe').first();
+    return iframe.locator(selector).first();
+  }
+
+  async getCardBackgroundColor(mode: 'page' | 'grid'): Promise<string> {
+    const selector = mode === 'page' ? '.page-grid .page-card' : '.simple-grid .simple-card';
+
+    // Try multiple frames with retries to handle rerenders
+    const deadline = Date.now() + 8000;
+    let lastError: any = null;
+    while (Date.now() < deadline) {
+      for (const frame of this.page.frames()) {
+        const loc = frame.locator(selector).first();
+        try {
+          await loc.waitFor({ state: 'visible', timeout: 500 });
+          const color = await loc.evaluate(el => (globalThis as any).getComputedStyle(el as any).backgroundColor);
+          return color;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+      await this.page.waitForTimeout(150);
+    }
+    // If all retries fail, throw the last error for context
+    throw lastError || new Error('Card element not found for background color extraction');
+  }
+
+  async expectCardBackgroundHex(hex: string, mode: 'page' | 'grid'): Promise<void> {
+    const expectedRgb = this.hexToRgbString(hex);
+    const bg = await this.getCardBackgroundColor(mode);
+    // Accept rgb or rgba with alpha 1
+    if (!(bg.includes(expectedRgb) || bg.replace('rgba', 'rgb').includes(expectedRgb))) {
+      throw new Error(`Background mismatch. Expected ~${expectedRgb}, got ${bg}`);
+    }
+  }
+
 
   async findCardsInAnyFrameOrPage(): Promise<boolean> {
     // Wait for potential rerender
@@ -308,6 +405,17 @@ export class ZikaAppPage {
     } catch (e) {
       console.log(`⚠️ Could not explicitly select CSV upload method: ${e}`);
     }
+  }
+
+  async waitForCurrentColorDisplay(hex: string, timeoutMs = 4000): Promise<boolean> {
+    const hexLower = hex.toLowerCase();
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const cur = (await this.getCurrentColorFromDisplay())?.toLowerCase();
+      if (cur === hexLower) return true;
+      await this.page.waitForTimeout(200);
+    }
+    return false;
   }
 
   async reloadAndWait(): Promise<void> {
@@ -644,7 +752,7 @@ export class ZikaAppPage {
 
   async navigateFirstPage(): Promise<void> {
     console.log('⏮️ Navigating to first page...');
-    const firstPageButton = this.page.getByText('⏮️ 首页');
+    const firstPageButton = this.page.getByRole('button', { name: '⏮️ 首页' }).last();
     await firstPageButton.click();
     await this.page.waitForTimeout(1000);
     console.log('✅ Navigated to first page');
@@ -652,7 +760,7 @@ export class ZikaAppPage {
 
   async navigateLastPage(): Promise<void> {
     console.log('⏭️ Navigating to last page...');
-    const lastPageButton = this.page.getByText('⏭️ 末页');
+    const lastPageButton = this.page.getByRole('button', { name: '⏭️ 末页' }).last();
     await lastPageButton.click();
     await this.page.waitForTimeout(1000);
     console.log('✅ Navigated to last page');
@@ -660,7 +768,7 @@ export class ZikaAppPage {
 
   async navigateNextPage(): Promise<void> {
     console.log('▶️ Navigating to next page...');
-    const nextPageButton = this.page.getByText('▶️ 下页');
+    const nextPageButton = this.page.getByRole('button', { name: '▶️ 下页' }).last();
     await nextPageButton.click();
     await this.page.waitForTimeout(1000);
     console.log('✅ Navigated to next page');
@@ -668,7 +776,7 @@ export class ZikaAppPage {
 
   async navigatePreviousPage(): Promise<void> {
     console.log('◀️ Navigating to previous page...');
-    const prevPageButton = this.page.getByText('◀️ 上页');
+    const prevPageButton = this.page.getByRole('button', { name: '◀️ 上页' }).last();
     await prevPageButton.click();
     await this.page.waitForTimeout(1000);
     console.log('✅ Navigated to previous page');

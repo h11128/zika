@@ -36,13 +36,13 @@ export default defineConfig({
     baseURL: process.env.BASE_URL || 'http://localhost:8504',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: (process.env.TRACE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on-first-retry',
 
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
 
-    /* Record video on failure */
-    video: 'retain-on-failure',
+    /* Record video (default retain-on-failure; override with VIDEO=on/off) */
+    video: (process.env.VIDEO as 'on' | 'off' | 'retain-on-failure') || 'retain-on-failure',
 
     /* Global timeout for each action */
     actionTimeout: 30000, // Increased from 15s
