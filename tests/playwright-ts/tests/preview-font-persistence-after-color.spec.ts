@@ -4,7 +4,7 @@ import { ZikaAppPage } from '../page-objects/ZikaAppPage';
 // This E2E verifies that changing color does not reset preview font size
 // Uses event-driven waits via ZikaAppPage helpers per repo conventions
 
-test('preview font persistence after color change', async ({ page }) => {
+test('@critical preview font persistence after color change', async ({ page }) => {
   const app = new ZikaAppPage(page);
   await app.goto();
   await app.setupCards();

@@ -73,6 +73,22 @@ class TestPreviewFontAndColorConsistency:
         assert abs(size_en - 14*pt_to_px) < 0.5
 
 
+    def test_simple_grid_font_size_matches_pt_to_px_for_custom_values(self):
+        # Verify non-default sizes 26/12/14 are converted properly in simple grid
+        test_cards = [{'hanzi': '字', 'pinyin': 'zì', 'english': 'zi'}]
+        html = create_simple_grid_html_immediate(
+            test_cards, 'SimHei', '#ffffff', 1, 1,
+            26, 12, 14, 5.5, False
+        )
+        size_hanzi = float(re.findall(r'\.simple-hanzi[^}]*font-size:\s*(\d+(?:\.\d+)?)px', html)[0])
+        size_pinyin = float(re.findall(r'\.simple-pinyin[^}]*font-size:\s*(\d+(?:\.\d+)?)px', html)[0])
+        size_en = float(re.findall(r'\.simple-english[^}]*font-size:\s*(\d+(?:\.\d+)?)px', html)[0])
+        pt_to_px = 96/72
+        assert abs(size_hanzi - 26*pt_to_px) < 0.5
+        assert abs(size_pinyin - 12*pt_to_px) < 0.5
+        assert abs(size_en - 14*pt_to_px) < 0.5
+
+
 class TestSimpleGridResponsiveLayout:
     def test_simple_grid_responsive_columns(self):
         test_cards = [{'hanzi': f'字{i}', 'pinyin': f'zì{i}', 'english': f'word{i}'} for i in range(12)]

@@ -33,7 +33,7 @@ test.describe('Pagination Navigation', () => {
     }
   });
 
-  test('should display correct page information for multi-page content', async () => {
+  test('should display correct page information for multi-page content @critical', async () => {
     console.log('🧪 Testing multi-page content display...');
 
     // Get initial page info
@@ -71,7 +71,7 @@ test.describe('Pagination Navigation', () => {
     console.log('✅ Content consistency test completed');
   });
 
-  test('should display navigation buttons when multiple pages exist', async () => {
+  test('should display navigation buttons when multiple pages exist @critical', async () => {
     console.log('🧪 Testing navigation button presence...');
 
     const pageInfo = await app.getPageInfo();

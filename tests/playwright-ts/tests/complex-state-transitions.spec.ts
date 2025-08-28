@@ -129,7 +129,7 @@ test.describe('Complex State Transition Tests', () => {
     }
   });
 
-  test('should handle complete color selection cycle correctly', async () => {
+  test('should handle complete color selection cycle correctly @critical', async () => {
     console.log('🧪 Testing complete color selection cycle...');
     
     await app.goto();
