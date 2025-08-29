@@ -731,7 +731,80 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
                                  font_hanzi: int, font_pinyin: int, font_english: int,
                                  page_size: str, hanzi_font: str, background_color: str,
                                  rows: int, cols: int, auto_fill: bool) -> None:
-    """Render the complete preview section with mode selection and navigation."""
+    """
+    Render the complete preview section with mode selection and navigation.
+
+    DEPRECATED: This function delegates to the new unified preview pipeline.
+    Use render_preview_content_unified() with AppConfig instead.
+    """
+    # Check if new preview pipeline is enabled
+    try:
+        from core.feature_flags import use_new_preview_pipeline
+        from services.preview_types import convert_legacy_params_to_preview_params
+        from ui.preview_controller import get_preview_controller
+
+        if use_new_preview_pipeline():
+            # Convert legacy parameters to new format
+            preview_params = convert_legacy_params_to_preview_params(
+                card_size=card_size, gap=gap, margin=margin, page_size=page_size,
+                font_hanzi=font_hanzi, font_pinyin=font_pinyin, font_english=font_english,
+                hanzi_font=hanzi_font, background_color=background_color,
+                preview_mode=st.session_state.get('preview_mode', '📄 完整页面'),
+                rows=rows, cols=cols, auto_fill=auto_fill
+            )
+
+            # Create mock AppConfig for new pipeline
+            from dataclasses import dataclass
+            
+            @dataclass
+            class MockLayoutConfig:
+                rows: int
+                cols: int
+                auto_fill: bool
+                card_size: float
+                gap: float
+                margin: float
+                page_size: str
+                font_hanzi: int
+                font_pinyin: int
+                font_english: int
+            
+            @dataclass
+            class MockUIConfig:
+                hanzi_font: str
+                background_color: str
+                preview_mode: str
+            
+            @dataclass
+            class MockAppConfig:
+                layout: MockLayoutConfig
+                ui: MockUIConfig
+            
+            mock_config = MockAppConfig(
+                layout=MockLayoutConfig(
+                    rows=preview_params.layout.rows,
+                    cols=preview_params.layout.cols,
+                    auto_fill=preview_params.layout.auto_fill,
+                    card_size=preview_params.layout.card_size_cm,
+                    gap=preview_params.layout.gap_cm,
+                    margin=preview_params.layout.margin_cm,
+                    page_size=preview_params.layout.page_size,
+                    font_hanzi=preview_params.typography.font_hanzi_pt,
+                    font_pinyin=preview_params.typography.font_pinyin_pt,
+                    font_english=preview_params.typography.font_english_pt,
+                ),
+                ui=MockUIConfig(
+                    hanzi_font=preview_params.typography.hanzi_font,
+                    background_color=preview_params.visual.background_color,
+                    preview_mode=preview_params.visual.preview_mode,
+                )
+            )
+            controller = get_preview_controller()
+            controller.render_preview_content_v2(processed_cards, mock_config)
+            return
+    except ImportError:
+        # Fall back to legacy implementation
+        pass
     st.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
     st.header("👀 预览")
 
@@ -1043,6 +1116,19 @@ def render_preview_content(processed_cards: List[Dict[str, str]],
     Returns:
         Tuple[int, int]: (cards_per_page, total_pages)
     """
+    # Check if new preview pipeline is enabled
+    try:
+        from core.feature_flags import use_new_preview_pipeline
+        from ui.preview_controller import render_preview_content_unified
+
+        if use_new_preview_pipeline():
+            # Use new unified preview pipeline
+            return render_preview_content_unified(processed_cards, config)
+    except ImportError:
+        # Fall back to legacy if new modules not available
+        pass
+
+    # Legacy implementation
     # Validate inputs
     processed_cards, config = _validate_preview_inputs(processed_cards, config)
 
