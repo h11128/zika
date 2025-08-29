@@ -115,3 +115,262 @@ class TestSimpleGridResponsiveLayout:
         container_patterns = [r'max-width:\s*(\d+)px', r'width:\s*100%', r'overflow:\s*hidden', r'overflow-x:\s*auto']
         assert any(re.search(p, html) for p in container_patterns)
 
+
+# Additional coverage tests for layout_pdf.py
+def test_pdf_card_generator_unsupported_page_size():
+    """Test that unsupported page size raises ValueError."""
+    from src.layout_pdf import PDFCardGenerator
+    with pytest.raises(ValueError, match="Unsupported page size"):
+        PDFCardGenerator(
+            page_size="INVALID",
+            card_size_cm=5.5,
+            gap_cm=0.5,
+            margin_cm=1.0,
+            rows=2,
+            cols=3,
+            auto_fill=False
+        )
+
+
+def test_pdf_card_generator_manual_card_size():
+    """Test manual card size calculation (auto_fill=False)."""
+    from src.layout_pdf import PDFCardGenerator
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=6.0,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=2,
+        cols=3,
+        auto_fill=False
+    )
+    # Should use manual card size
+    expected_size = 6.0 * 28.35  # cm to points conversion
+    assert abs(generator.card_size - expected_size) < 1.0
+
+
+def test_pdf_card_generator_letter_page_size():
+    """Test Letter page size initialization."""
+    from src.layout_pdf import PDFCardGenerator
+    from reportlab.lib.pagesizes import letter
+
+    generator = PDFCardGenerator(
+        page_size="LETTER",
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=2,
+        cols=3,
+        auto_fill=True
+    )
+
+    # Letter size is different from A4
+    assert generator.page_width == letter[0]
+    assert generator.page_height == letter[1]
+
+
+def test_pdf_card_generator_zero_rows_cols():
+    """Test handling of zero rows or cols in auto_fill mode."""
+    from src.layout_pdf import PDFCardGenerator
+
+    # Test with zero cols
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=2,
+        cols=0,  # Zero cols
+        auto_fill=True
+    )
+    assert generator.card_size >= 0
+
+    # Test with zero rows
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=0,  # Zero rows
+        cols=3,
+        auto_fill=True
+    )
+    assert generator.card_size >= 0
+
+
+# Additional high-priority tests for src/layout_pdf.py core business logic
+def test_pdf_card_generator_grid_scaling():
+    """Test grid scaling when cards exceed page bounds."""
+    from src.layout_pdf import PDFCardGenerator
+
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=15.0,  # Very large cards that will exceed bounds
+        gap_cm=2.0,
+        margin_cm=1.0,
+        rows=3,
+        cols=3,
+        auto_fill=False
+    )
+
+    # Grid should be scaled down to fit within page bounds
+    assert generator.card_size < 15.0 * 28.35  # Should be smaller than original
+    # The grid scaling should ensure it fits within available space
+    available_width = generator.page_width - 2 * generator.margin
+    available_height = generator.page_height - 2 * generator.margin
+    # Just check that scaling occurred (card size was reduced)
+    assert generator.card_size < 15.0 * 28.35
+
+
+def test_pdf_card_generator_font_registration_paths():
+    """Test font registration with different font paths and types."""
+    from src.layout_pdf import PDFCardGenerator
+    from unittest.mock import patch
+
+    with patch('src.layout_pdf.os.path.exists') as mock_exists, \
+         patch('src.layout_pdf.pdfmetrics.registerFont') as mock_register:
+
+        # Test successful font registration
+        mock_exists.return_value = True
+        mock_register.return_value = None
+
+        generator = PDFCardGenerator(
+            page_size="A4",
+            card_size_cm=5.5,
+            gap_cm=0.5,
+            margin_cm=1.0,
+            rows=2,
+            cols=3,
+            auto_fill=True
+        )
+
+        # Should attempt to register fonts (the method tries multiple font paths)
+        assert mock_register.call_count >= 1
+        # Should have font names set (either registered or fallback)
+        assert generator.chinese_font is not None
+        assert generator.pinyin_font is not None
+
+
+def test_pdf_card_generator_draw_card_text():
+    """Test card text drawing functionality."""
+    from src.layout_pdf import PDFCardGenerator
+    from unittest.mock import MagicMock, patch
+
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=2,
+        cols=3,
+        auto_fill=True
+    )
+
+    # Mock canvas
+    mock_canvas = MagicMock()
+    mock_canvas.stringWidth.return_value = 50
+
+    # Test card with all fields
+    card = {
+        'hanzi': '你好',
+        'pinyin': 'ni3 hao3',
+        'english': 'hello'
+    }
+
+    # This should not raise an error and should draw all text elements
+    generator._draw_card_text(mock_canvas, card, 100, 100, 48, 18, 14)
+
+    # Should have called drawString for each text element
+    assert mock_canvas.drawString.call_count >= 3  # At least hanzi, pinyin, english
+
+
+def test_pdf_card_generator_add_single_card():
+    """Test adding a single card with all text elements."""
+    from src.layout_pdf import PDFCardGenerator
+    from unittest.mock import MagicMock, patch
+
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=2,
+        cols=3,
+        auto_fill=True
+    )
+
+    # Mock canvas
+    mock_canvas = MagicMock()
+    mock_canvas.stringWidth.return_value = 50
+
+    # Test card with all fields
+    card = {
+        'hanzi': '你好',
+        'pinyin': 'ni3 hao3',
+        'english': 'hello'
+    }
+
+    # Should not raise an error - test the border and text drawing methods separately
+    generator._draw_card_border(mock_canvas, 0, 0)
+    generator._draw_card_text(mock_canvas, card, 0, 0, 48, 18, 14)
+
+    # Should have drawn border and text
+    assert mock_canvas.rect.called  # Border
+    assert mock_canvas.drawString.call_count >= 3  # At least hanzi, pinyin, english
+
+
+def test_pdf_card_generator_empty_text_handling():
+    """Test handling of empty text fields in cards."""
+    from src.layout_pdf import PDFCardGenerator
+    from unittest.mock import MagicMock
+
+    generator = PDFCardGenerator(
+        page_size="A4",
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        rows=2,
+        cols=3,
+        auto_fill=True
+    )
+
+    # Mock canvas
+    mock_canvas = MagicMock()
+    mock_canvas.stringWidth.return_value = 50
+
+    # Test card with empty fields
+    card = {
+        'hanzi': '你好',
+        'pinyin': '',  # Empty pinyin
+        'english': ''  # Empty english
+    }
+
+    # Should handle empty fields gracefully without errors
+    generator._draw_card_text(mock_canvas, card, 0, 0, 48, 18, 14)
+
+    # Should still draw hanzi (at least one drawString call)
+    assert mock_canvas.drawString.called
+
+
+def test_pdf_card_generator_font_fallback():
+    """Test font fallback when no specific fonts are found."""
+    from src.layout_pdf import PDFCardGenerator
+    from unittest.mock import patch
+
+    with patch('src.layout_pdf.os.path.exists') as mock_exists:
+        mock_exists.return_value = False  # No fonts found
+
+        generator = PDFCardGenerator(
+            page_size="A4",
+            card_size_cm=5.5,
+            gap_cm=0.5,
+            margin_cm=1.0,
+            rows=2,
+            cols=3,
+            auto_fill=True
+        )
+
+        # Should fall back to default fonts
+        assert generator.chinese_font == "Helvetica"
+        assert generator.pinyin_font == "Helvetica"
+

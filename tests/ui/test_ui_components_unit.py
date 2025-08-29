@@ -42,6 +42,9 @@ class DummySt:
     def info(self, *a, **k):
         pass
 
+    def write(self, *a, **k):
+        pass
+
     def selectbox(self, label, options, index=0, format_func=None, key=None):
         # Return index by default; render_color_palette fallback passes preset options
         return index if isinstance(index, int) else 0
@@ -137,3 +140,24 @@ def test_render_preview_section_modes(monkeypatch):
     # Simple grid mode
     uc.render_preview_section(cards, "🔲 简单网格", 5.5, 0.5, 1.0, 48, 18, 14, "A4", "SimHei", "#fff", 2, 2, True)
 
+
+
+
+def test_render_preview_section_debug_mode(monkeypatch):
+    st = setup_dummy_st(monkeypatch)
+    st.session_state.current_page = 0
+    # Enable debug
+    st.session_state.debug_preview = True
+
+    # Patch immediate and cached creators (immediate should be used when params changed)
+    monkeypatch.setattr(uc, "cached_create_page_preview_html", lambda *a, **k: "<html>page</html>")
+    monkeypatch.setattr(uc, "cached_create_simple_grid_html", lambda *a, **k: "<html>grid</html>")
+    monkeypatch.setattr("services.cache.create_page_preview_html_immediate", lambda *a, **k: "<html>debug</html>")
+
+    # Make params appear changed to force immediate path
+    monkeypatch.setattr("core.state.get_all_ui_params", lambda *a, **k: {"dummy": 1})
+    monkeypatch.setattr("core.state.check_params_changed", lambda *a, **k: True)
+
+    cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
+    uc.render_preview_section(cards, "📄 完整页面", 5.5, 0.5, 1.0, 48, 18, 14, "A4", "SimHei", "#fff", 2, 2, True)
+    # If no exception raised, and our patches were used, it's OK. Debug writes are no-ops in DummySt.
