@@ -57,7 +57,7 @@ test.describe('Export Functionality', () => {
     console.log('✅ PPTX export test completed');
   });
 
-  test('should export cards to PDF and verify download', async () => {
+  test('should export cards to PDF and verify download @critical', async () => {
     console.log('🧪 Testing PDF export and download...');
     
     // Export to PDF

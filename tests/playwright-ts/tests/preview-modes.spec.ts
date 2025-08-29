@@ -277,7 +277,7 @@ test.describe('Preview Modes', () => {
     }
   });
 
-  test('should switch from full page to simple grid mode', async ({ page }) => {
+  test('should switch from full page to simple grid mode @critical', async ({ page }) => {
     const app = new ZikaAppPage(page);
     
     // Setup
@@ -307,7 +307,7 @@ test.describe('Preview Modes', () => {
     console.log('✅ Full page to simple grid switch test completed');
   });
 
-  test('should switch from simple grid to full page mode', async ({ page }) => {
+  test('should switch from simple grid to full page mode @critical', async ({ page }) => {
     const app = new ZikaAppPage(page);
     
     // Setup

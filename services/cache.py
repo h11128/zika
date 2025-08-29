@@ -76,6 +76,10 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
     # Scale factor for web display (make it fit in reasonable space)
     scale_factor = min(600 / page_width_px, 800 / page_height_px, 1.0)
 
+    # Convert point (pt) sizes to CSS pixels and scale with page scale_factor so
+    # that preview matches PDF/PPT (which use point sizes)
+    PT_TO_PX = 96 / 72  # 1pt = 1/72in; CSS px at 96 DPI → 96/72 px per pt
+
     html = f"""
     <style>
     .page-container {{
@@ -116,7 +120,7 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
         opacity: 0.3;
     }}
     .page-hanzi {{
-        font-size: {font_hanzi * scale_factor * 0.8}px;
+        font-size: {font_hanzi * PT_TO_PX * scale_factor}px;
         font-weight: bold;
         margin-bottom: {max(2, font_hanzi * 0.1) * scale_factor}px;
         color: #000;
@@ -124,7 +128,7 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
         line-height: 1.1;
     }}
     .page-pinyin {{
-        font-size: {font_pinyin * scale_factor * 0.8}px;
+        font-size: {font_pinyin * PT_TO_PX * scale_factor}px;
         font-style: italic;
         margin-bottom: {max(2, font_pinyin * 0.1) * scale_factor}px;
         color: #333;
@@ -132,7 +136,7 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
         line-height: 1.2;
     }}
     .page-english {{
-        font-size: {font_english * scale_factor * 0.8}px;
+        font-size: {font_english * PT_TO_PX * scale_factor}px;
         text-align: center;
         color: #555;
         line-height: 1.2;
@@ -191,6 +195,9 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
         return "<div style='text-align: center; color: #666; padding: 50px;'>输入汉字以查看预览</div>"
 
     # Calculate card size in pixels (similar to full page preview)
+    # Use pt→px conversion so fonts align with export sizing
+    PT_TO_PX = 96 / 72
+
     if auto_fill:
         # For simple grid, use responsive sizing
         card_size_px = "auto"
@@ -201,37 +208,69 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
         card_size_px = card_size * 10 * mm_to_px  # cm to mm to px
         card_width = f"{card_size_px}px"
 
+    # Calculate responsive grid layout
+    mm_to_px = 3.78
+    card_size_px_calc = card_size * 10 * mm_to_px
+    gap_px = 15
+    theoretical_width = cols * card_size_px_calc + (cols - 1) * gap_px
+
+    if auto_fill:
+        # Auto-fill mode: use responsive columns that fit the container
+        grid_columns = f"repeat(auto-fit, minmax(150px, 1fr))"
+        container_max_width = "100%"
+        card_width_css = "100%"  # Cards fill their grid cells
+        card_height_css = "auto"
+        card_size_css = card_size_px_calc  # Keep original size for aspect ratio
+    elif theoretical_width > 900:
+        # Use responsive design when content would overflow
+        min_card_size = max(120, card_size_px_calc * 0.7)  # Minimum readable size
+        grid_columns = f"repeat(auto-fit, minmax({min_card_size}px, 1fr))"
+        container_max_width = "100%"
+        card_width_css = "100%"  # Cards fill their grid cells
+        card_height_css = "auto"
+        card_size_css = min_card_size  # Use minimum size for responsive cards
+    else:
+        # Use fixed layout when it fits
+        grid_columns = f"repeat({cols}, {card_width})"
+        container_max_width = "900px"
+        card_width_css = card_width
+        card_height_css = card_width
+        card_size_css = card_size_px_calc
+
     simple_html = f"""
     <style>
     .simple-grid {{
         display: grid;
-        grid-template-columns: repeat({cols}, {card_width});
+        grid-template-columns: {grid_columns};
         gap: 15px;
-        max-width: 900px;
+        max-width: {container_max_width};
         margin: 0 auto;
         padding: 20px;
         justify-content: center;
+        overflow: hidden;
     }}
     .simple-card {{
         border: 2px solid #333;
-        {"aspect-ratio: 1;" if auto_fill else f"width: {card_size_px}px; height: {card_size_px}px;"}
+        {f"width: {card_width_css}; height: {card_height_css}; aspect-ratio: 1;" if card_width_css == "100%" else f"width: {card_size_px}px; height: {card_size_px}px;"}
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: {max(10, card_size_px * 0.1 if not auto_fill else 15)}px;
+        padding: {max(10, card_size_css * 0.1)}px;
         background: {background_color};
         font-family: '{hanzi_font}', 'Microsoft YaHei', 'SimSun', sans-serif;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         box-sizing: border-box;
+        min-height: 120px;
+        max-width: 100%;
     }}
     .simple-card.empty {{
         border-style: dashed;
         opacity: 0.3;
     }}
     .simple-hanzi {{
-        font-size: {font_hanzi}px;
+        font-size: {font_hanzi * PT_TO_PX}px;
         font-weight: bold;
         margin-bottom: max(6px, {font_hanzi * 0.2}px);
         color: #000;
@@ -239,7 +278,7 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
         text-align: center;
     }}
     .simple-pinyin {{
-        font-size: {font_pinyin}px;
+        font-size: {font_pinyin * PT_TO_PX}px;
         font-style: italic;
         margin-bottom: max(4px, {font_pinyin * 0.2}px);
         color: #333;
@@ -247,7 +286,7 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
         text-align: center;
     }}
     .simple-english {{
-        font-size: {font_english}px;
+        font-size: {font_english * PT_TO_PX}px;
         text-align: center;
         color: #555;
         line-height: 1.2;

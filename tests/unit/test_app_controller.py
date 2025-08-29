@@ -182,6 +182,127 @@ class TestAppController:
                     
                     mock_set_page.assert_called_with(0)  # Should reset to page 0
 
+    def test_app_controller_setup(self, mock_streamlit, mock_dependencies):
+        """Test AppController setup method."""
+        controller = AppController()
+        # Should initialize without errors
+        assert controller is not None
+
+    def test_app_controller_render_header(self, mock_streamlit, mock_dependencies):
+        """Test AppController header rendering."""
+        controller = AppController()
+        controller.render_header()
+
+        # Should call streamlit title and markdown
+        st.title.assert_called_with("🀄 Chinese Learning Cards Generator")
+        assert st.markdown.call_count >= 2
+
+    def test_app_controller_should_reprocess_cards(self, mock_streamlit, mock_dependencies):
+        """Test should_reprocess_cards method."""
+        with patch('ui.app_controller.get_processed_cards') as mock_get_cards:
+            mock_get_cards.return_value = []
+
+            controller = AppController()
+            cards = [{'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'}]
+            result = controller.should_reprocess_cards(cards, 'test_source')
+
+            # Should return boolean
+            assert isinstance(result, bool)
+
+    def test_app_controller_process_cards_if_needed_with_translation_order(self, mock_streamlit, mock_dependencies):
+        """Test process_cards_if_needed with different translation orders."""
+        with patch('ui.app_controller.generate_missing_data_ordered') as mock_ordered, \
+             patch('ui.app_controller.generate_missing_data') as mock_regular, \
+             patch('ui.app_controller.get_dictionary') as mock_dict, \
+             patch('ui.app_controller.set_processed_cards') as mock_set:
+
+            mock_ordered.return_value = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
+            mock_regular.return_value = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
+            mock_dict.return_value = {}
+
+            controller = AppController()
+            cards = [{'hanzi': '你好', 'pinyin': '', 'english': ''}]
+
+            # Test with API-first translation order
+            result = controller.process_cards_if_needed(cards, True, True, 'api_first')
+
+            # Should use ordered generation
+            mock_ordered.assert_called_once()
+            assert len(result) == 1
+
+    def test_app_controller_process_cards_if_needed_error_handling(self, mock_streamlit, mock_dependencies):
+        """Test process_cards_if_needed error handling."""
+        with patch('ui.app_controller.generate_missing_data') as mock_generate:
+            mock_generate.side_effect = Exception("Processing error")
+
+            controller = AppController()
+            cards = [{'hanzi': '你好', 'pinyin': '', 'english': ''}]
+
+            result = controller.process_cards_if_needed(cards, True, True, 'local_first')
+
+            # Should handle error gracefully and return original cards
+            assert len(result) == 1
+            assert result[0]['hanzi'] == '你好'
+            st.error.assert_called()
+
+    def test_app_controller_calculate_pagination(self, mock_streamlit, mock_dependencies):
+        """Test pagination calculation."""
+        with patch('ui.app_controller.get_current_page') as mock_get_page, \
+             patch('ui.app_controller.set_current_page') as mock_set_page:
+
+            mock_get_page.return_value = 5  # Out of range page
+
+            controller = AppController()
+            cards = [{'hanzi': f'字{i}', 'pinyin': f'zi{i}', 'english': f'word{i}'} for i in range(10)]
+            layout = {'rows': 2, 'cols': 3}  # 6 cards per page
+
+            cards_per_page, total_pages = controller.calculate_pagination(cards, layout)
+
+            # Should calculate correct pagination
+            assert cards_per_page == 6
+            assert total_pages == 2  # 10 cards / 6 per page = 2 pages
+            # Should reset page to 0 when out of range
+            mock_set_page.assert_called_with(0)
+
+    def test_app_controller_render_card_editor_empty(self, mock_streamlit, mock_dependencies):
+        """Test card editor with empty cards."""
+        controller = AppController()
+
+        # Should handle empty cards gracefully
+        controller.render_card_editor([], 6)
+
+        # Should not crash or show editor
+
+    def test_app_controller_render_card_editor_with_cards(self, mock_streamlit, mock_dependencies):
+        """Test card editor with actual cards."""
+        with patch('ui.app_controller.render_improved_card_editor') as mock_editor:
+            controller = AppController()
+            cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
+
+            controller.render_card_editor(cards, 6)
+
+            # Should call the improved editor
+            mock_editor.assert_called_once_with(cards)
+
+    def test_app_controller_process_cards_if_needed_local_first_fallback(self, mock_streamlit, mock_dependencies):
+        """Test process_cards_if_needed with local_first translation order fallback."""
+        with patch('ui.app_controller.generate_missing_data') as mock_regular, \
+             patch('ui.app_controller.get_dictionary') as mock_dict, \
+             patch('ui.app_controller.set_processed_cards') as mock_set:
+
+            mock_regular.return_value = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
+            mock_dict.return_value = {}
+
+            controller = AppController()
+            cards = [{'hanzi': '你好', 'pinyin': '', 'english': ''}]
+
+            # Test with local_first (should use regular generation)
+            result = controller.process_cards_if_needed(cards, True, True, 'local_first')
+
+            # Should use regular generation for local_first
+            mock_regular.assert_called_once()
+            assert len(result) == 1
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

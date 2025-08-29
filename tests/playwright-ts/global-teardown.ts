@@ -18,21 +18,26 @@ async function globalTeardown() {
     // We only clean up artifacts and temporary files
 
     // 2. Clean up test artifacts
+    const keep = process.env.KEEP_ARTIFACTS === '1';
     console.log('🗑️ Cleaning up test artifacts...');
-    const artifactDirs = [
-      'test-results',
-      'playwright-report',
-      'playwright/.cache'
-    ];
+    if (keep) {
+      console.log('🔒 KEEP_ARTIFACTS=1 set; skipping artifact cleanup');
+    } else {
+      const artifactDirs = [
+        'test-results',
+        'playwright-report',
+        'playwright/.cache'
+      ];
 
-    for (const dir of artifactDirs) {
-      const dirPath = path.join(__dirname, dir);
-      if (fs.existsSync(dirPath)) {
-        try {
-          fs.rmSync(dirPath, { recursive: true, force: true });
-          console.log(`✅ Removed ${dir}`);
-        } catch (error) {
-          console.log(`⚠️ Could not remove ${dir}: ${error instanceof Error ? error.message : String(error)}`);
+      for (const dir of artifactDirs) {
+        const dirPath = path.join(__dirname, dir);
+        if (fs.existsSync(dirPath)) {
+          try {
+            fs.rmSync(dirPath, { recursive: true, force: true });
+            console.log(`✅ Removed ${dir}`);
+          } catch (error) {
+            console.log(`⚠️ Could not remove ${dir}: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
       }
     }

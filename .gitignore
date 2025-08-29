@@ -192,7 +192,8 @@ tests/playwright-ts/test-results/
 tests/playwright-ts/playwright-report/
 tests/playwright-ts/playwright/.cache/
 tests/playwright-ts/node_modules/
-
+# Ignore Playwright screenshots and artifacts
+tests/playwright-ts/**/*.png
 
 # Temporary test files
 test_card_size_fix.py

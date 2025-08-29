@@ -115,7 +115,8 @@ def render_preview_section(processed_cards: List[Dict[str, str]], preview_mode: 
     current_params = get_all_ui_params(
         card_size, gap, margin, page_size,
         font_hanzi, font_pinyin, font_english,
-        processed_cards
+        processed_cards,
+        preview_mode
     )
 
     # Use immediate rendering if parameters changed recently or if this is a fresh session

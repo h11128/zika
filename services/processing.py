@@ -30,8 +30,16 @@ def parse_input_text(text: str) -> List[Dict[str, str]]:
     return cards
 
 
-def auto_segment_text(text: str) -> str:
-    """Automatically segment Chinese text into words/characters."""
+def auto_segment_text(text: str, preserve_duplicates: bool = False) -> str:
+    """Automatically segment Chinese text into words/characters.
+
+    Args:
+        text: Input Chinese text to segment
+        preserve_duplicates: If True, keep duplicate words; if False, remove duplicates (default)
+
+    Returns:
+        Segmented text with words separated by spaces
+    """
     if not text.strip():
         return ""
 
@@ -68,15 +76,20 @@ def auto_segment_text(text: str) -> str:
                     else:
                         final_segments.append(segment[i])
 
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_segments = []
-    for segment in final_segments:
-        if segment not in seen:
-            seen.add(segment)
-            unique_segments.append(segment)
+    # Handle duplicates based on preserve_duplicates parameter
+    if preserve_duplicates:
+        # Keep all segments including duplicates
+        result_segments = final_segments
+    else:
+        # Remove duplicates while preserving order (original behavior)
+        seen = set()
+        result_segments = []
+        for segment in final_segments:
+            if segment not in seen:
+                seen.add(segment)
+                result_segments.append(segment)
 
-    return " ".join(unique_segments)
+    return " ".join(result_segments)
 
 
 def generate_missing_data(cards: List[Dict[str, str]], auto_pinyin: bool, auto_translate: bool, dictionary=None) -> List[Dict[str, str]]:

@@ -46,6 +46,13 @@ class DummySt:
         pass
     def info(self, *a, **k):
         pass
+    def warning(self, *a, **k):
+        pass
+    def checkbox(self, label, value=True, **kwargs):
+        # Return provided default and set session state if key exists
+        if 'key' in kwargs and kwargs['key']:
+            self.session_state[kwargs['key']] = value
+        return value
     def rerun(self):
         pass
 
@@ -67,6 +74,12 @@ class DummySt:
         # Do nothing; assume session_state already has key
         pass
 
+    def text_input(self, label, value="", key=None, help=None):
+        # Return the provided value and mirror into session_state when key is provided
+        if key:
+            self.session_state[key] = value
+        return value
+
     def button(self, *a, **k):
         return False
 
@@ -81,6 +94,9 @@ class DummySt:
         return [Ctx() for _ in range(n)]
 
     def expander(self, *a, **k):
+        return Ctx()
+
+    def container(self, *a, **k):
         return Ctx()
 
 

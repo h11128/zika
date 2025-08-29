@@ -129,7 +129,7 @@ test.describe('Complex State Transition Tests', () => {
     }
   });
 
-  test('should handle complete color selection cycle correctly', async () => {
+  test('should handle complete color selection cycle correctly @critical', async () => {
     console.log('🧪 Testing complete color selection cycle...');
     
     await app.goto();
@@ -225,10 +225,10 @@ test.describe('Complex State Transition Tests', () => {
     
     // Perform rapid state changes
     console.log('📋 Performing rapid state transitions...');
-    
+
     const disableButton = app.page.getByText('关闭自动填充以手动调整大小');
     const cardSizeSlider = app.page.getByLabel('卡片大小 (cm)', { exact: true });
-    const autoFillCheckbox = app.page.locator('input[type="checkbox"]').first();
+    const autoFillCheckbox = app.page.getByRole('checkbox', { name: /自动填充/ });
     
     // Rapid sequence: disable → adjust → enable → disable → enable
     for (let i = 0; i < 2; i++) {
@@ -249,11 +249,13 @@ test.describe('Complex State Transition Tests', () => {
         await app.page.waitForTimeout(500);
       }
       
-      // Re-enable auto-fill
-      const checkboxExists = await autoFillCheckbox.count() > 0;
-      if (checkboxExists) {
+      // Re-enable auto-fill (expander may collapse after rerun; ensure expanded)
+      await app.expandAdvancedOptions();
+      const checkboxVisible = await autoFillCheckbox.isVisible().catch(() => false);
+      if (checkboxVisible) {
         const isChecked = await autoFillCheckbox.isChecked();
         if (!isChecked) {
+          await autoFillCheckbox.scrollIntoViewIfNeeded().catch(() => {});
           await autoFillCheckbox.click();
           await app.page.waitForTimeout(1000);
         }

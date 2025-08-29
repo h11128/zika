@@ -16,7 +16,8 @@ from core.state import (
 from ui.components import render_page_navigation, render_preview_section, render_page_info
 from ui.sections import (
     render_sidebar, render_export_section, render_left_column,
-    render_preview_column_header, render_preview_content_legacy
+    render_preview_column_header, render_preview_content_legacy,
+    render_improved_card_editor
 )
 from core.config import AppConfig, create_config_from_params
 from ui.styles import apply_global_styles, render_sticky_wrapper_start, render_sticky_wrapper_end
@@ -112,42 +113,9 @@ class AppController:
         if not processed_cards:
             return
             
-        with st.expander("✏️ 编辑当前页卡片", expanded=False):
-            current_page = get_current_page()
-            st.write(f"编辑第 {current_page + 1} 页的卡片:")
-
-            start_idx = current_page * cards_per_page
-            end_idx = min(start_idx + cards_per_page, len(processed_cards))
-            current_page_cards = processed_cards[start_idx:end_idx]
-
-            if current_page_cards:
-                tabs = st.tabs([f"卡片 {start_idx + i + 1}: {card['hanzi']}" for i, card in enumerate(current_page_cards)])
-
-                for i, (tab, card) in enumerate(zip(tabs, current_page_cards)):
-                    with tab:
-                        col_e1, col_e2, col_e3 = st.columns(3)
-                        actual_idx = start_idx + i
-                        
-                        with col_e1:
-                            new_hanzi = st.text_input("汉字", value=card['hanzi'], key=f"hanzi_{actual_idx}")
-                        with col_e2:
-                            new_pinyin = st.text_input("拼音", value=card['pinyin'], key=f"pinyin_{actual_idx}")
-                        with col_e3:
-                            new_english = st.text_input("英文", value=card['english'], key=f"english_{actual_idx}")
-
-                        # Update card if values changed
-                        if (new_hanzi, new_pinyin, new_english) != (card['hanzi'], card['pinyin'], card['english']):
-                            processed_cards[actual_idx] = {
-                                'hanzi': new_hanzi,
-                                'pinyin': new_pinyin,
-                                'english': new_english
-                            }
-                            # Clear preview cache when cards are edited
-                            from services.cache import clear_preview_cache
-                            clear_preview_cache()
-                            # Force preview parameter reset
-                            if 'last_preview_params' in st.session_state:
-                                del st.session_state.last_preview_params
+        with st.expander("✏️ 编辑卡片", expanded=False):
+            # Use the improved editor supporting pagination/search
+            render_improved_card_editor(processed_cards)
     
 
     
@@ -173,7 +141,8 @@ class AppController:
                 current_params = get_all_ui_params(
                     left_params['card_size'], left_params['gap'], left_params['margin'],
                     left_params['page_size'], left_params['font_hanzi'], left_params['font_pinyin'],
-                    left_params['font_english'], processed_cards
+                    left_params['font_english'], processed_cards,
+                    preview_params.get('preview_mode') if isinstance(preview_params, dict) else None
                 )
                 handle_param_changes(current_params)
             except Exception as e:
