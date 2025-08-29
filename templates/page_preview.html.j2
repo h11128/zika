@@ -1,0 +1,71 @@
+<style>
+.page-container {
+  width: {{ M.page_width_px * M.scale_factor }}px;
+  height: {{ M.page_height_px * M.scale_factor }}px;
+  background: white;
+  border: 1px solid #ccc;
+  margin: 0 auto;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transform-origin: top center;
+  overflow: hidden;
+}
+.page-grid {
+  position: absolute;
+  left: {{ M.start_x * M.scale_factor }}px;
+  top: {{ M.start_y * M.scale_factor }}px;
+  width: {{ M.grid_width * M.scale_factor }}px;
+  height: {{ M.grid_height * M.scale_factor }}px;
+  display: grid;
+  grid-template-columns: repeat({{ ctx.cols }}, {{ M.card_size_px * M.scale_factor }}px);
+  grid-template-rows: repeat({{ ctx.rows }}, {{ M.card_size_px * M.scale_factor }}px);
+  gap: {{ M.gap_px * M.scale_factor }}px;
+}
+.page-card {
+  border: 2px solid #333;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: {{ ctx.background_color }};
+  font-family: '{{ ctx.hanzi_font }}', 'Microsoft YaHei', 'SimSun', sans-serif;
+  padding: {{ card_box.padding_px }}px;
+  box-sizing: border-box;
+}
+.page-card.empty { border-style: dashed; opacity: 0.3; }
+.page-hanzi {
+  font-size: {{ font.hanzi_px }}px;
+  font-weight: bold;
+  margin-bottom: {{ font.hanzi_margin_px }}px;
+  color: #000; text-align: center; line-height: 1.1;
+}
+.page-pinyin {
+  font-size: {{ font.pinyin_px }}px;
+  font-style: italic;
+  margin-bottom: {{ font.pinyin_margin_px }}px;
+  color: #333; text-align: center; line-height: 1.2;
+}
+.page-english {
+  font-size: {{ font.english_px }}px;
+  text-align: center; color: #555; line-height: 1.2;
+  word-wrap: break-word; overflow-wrap: break-word;
+}
+.page-info { position: absolute; bottom: 10px; right: 15px; font-size: 12px; color: #999; font-family: Arial, sans-serif; }
+</style>
+<div class="page-container">
+  <div class="page-grid">
+    {% for card in page_cards %}
+      {% if card is not none %}
+      <div class="page-card">
+        <div class="page-hanzi">{{ card.hanzi }}</div>
+        <div class="page-pinyin">{{ card.pinyin }}</div>
+        <div class="page-english">{{ card.english }}</div>
+      </div>
+      {% else %}
+      <div class="page-card empty"></div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="page-info">第 {{ ctx.page_num + 1 }} 页</div>
+</div>
+

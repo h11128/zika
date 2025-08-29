@@ -1,0 +1,40 @@
+<style>
+.simple-grid {
+  display: grid;
+  grid-template-columns: {{ params.grid_columns }};
+  gap: {{ params.gap_px }}px;
+  max-width: {{ params.container_max_width }};
+  margin: 0 auto;
+  padding: 20px;
+  justify-content: center;
+  overflow: hidden;
+}
+.simple-card {
+  border: 2px solid #333;
+  width: 100%; height: auto; aspect-ratio: 1;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: {{ card_box.padding_px }}px;
+  background: {{ ctx.background_color }};
+  font-family: '{{ ctx.hanzi_font }}', 'Microsoft YaHei', 'SimSun', sans-serif;
+  border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-sizing: border-box; min-height: 120px; max-width: 100%;
+}
+.simple-card.empty { border-style: dashed; opacity: 0.3; }
+.simple-hanzi { font-size: {{ font.hanzi_px }}px; font-weight: bold; margin-bottom: {{ [6, font.hanzi_px*0.2]|max }}px; color:#000; line-height:1.1; text-align:center; }
+.simple-pinyin { font-size: {{ font.pinyin_px }}px; font-style: italic; margin-bottom: {{ [4, font.pinyin_px*0.2]|max }}px; color:#333; line-height:1.2; text-align:center; }
+.simple-english { font-size: {{ font.english_px }}px; text-align:center; color:#555; line-height:1.2; word-wrap:break-word; overflow-wrap:break-word; }
+</style>
+<div class="simple-grid">
+  {% for card in grid_cards %}
+    {% if card is not none %}
+    <div class="simple-card">
+      <div class="simple-hanzi">{{ card.hanzi }}</div>
+      <div class="simple-pinyin">{{ card.pinyin }}</div>
+      <div class="simple-english">{{ card.english }}</div>
+    </div>
+    {% else %}
+    <div class="simple-card empty"></div>
+    {% endif %}
+  {% endfor %}
+</div>
+

@@ -18,6 +18,28 @@ from services.processing import parse_input_text, auto_segment_text
 from services.cache import create_preview_html
 from ui.components import render_color_palette, render_page_navigation, render_preview_section, render_page_info
 
+# Import error boundaries for UI protection
+try:
+    from ui.error_boundaries import (
+        with_error_boundary, preview_boundary, editor_boundary,
+        sidebar_boundary, safe_call
+    )
+    ERROR_BOUNDARIES_AVAILABLE = True
+except ImportError:
+    ERROR_BOUNDARIES_AVAILABLE = False
+    # Fallback decorators that do nothing
+    def with_error_boundary(component_name: str, fallback_ui=None):
+        def decorator(func):
+            return func
+        return decorator
+
+    preview_boundary = lambda func: func
+    editor_boundary = lambda func: func
+    sidebar_boundary = lambda func: func
+
+    def safe_call(func, *args, component_name: str = "unknown", **kwargs):
+        return func(*args, **kwargs)
+
 
 def render_sidebar() -> None:
     """Render the sidebar with statistics, export history, and quick links."""
@@ -45,6 +67,7 @@ def render_sidebar() -> None:
         st.markdown("- [使用教程](https://github.com)")
 
 
+@with_error_boundary("input_section")
 def render_input_section() -> List[Dict[str, str]]:
     """Render the input section and return parsed cards."""
     st.header("📝 输入")
@@ -97,16 +120,34 @@ def render_input_section() -> List[Dict[str, str]]:
                 new_text = auto_segment_text(original_text, preserve_duplicates=preserve_duplicates)
                 # Only update preview-related caches if the text actually changed
                 if new_text != original_text:
-                    st.session_state.input_text = new_text
-                    # Invalidate preview caches so the preview reliably reflects new tokens
+                    # Use state service for centralized state management
                     try:
-                        from services.cache import clear_preview_cache
-                        clear_preview_cache()
-                    except Exception:
-                        pass
-                    # Force preview param recalculation on next render
-                    if 'last_preview_params' in st.session_state:
-                        del st.session_state.last_preview_params
+                        from core.feature_flags import use_state_service
+                        from ui.state import set_option, invalidate_preview_cache
+
+                        if use_state_service():
+                            set_option('input_text', new_text)
+                            invalidate_preview_cache("segmentation applied")
+                        else:
+                            # Fallback to legacy approach
+                            st.session_state.input_text = new_text
+                            try:
+                                from services.cache import clear_preview_cache
+                                clear_preview_cache()
+                            except Exception:
+                                pass
+                            if 'last_preview_params' in st.session_state:
+                                del st.session_state.last_preview_params
+                    except ImportError:
+                        # Fallback if new modules not available
+                        st.session_state.input_text = new_text
+                        try:
+                            from services.cache import clear_preview_cache
+                            clear_preview_cache()
+                        except Exception:
+                            pass
+                        if 'last_preview_params' in st.session_state:
+                            del st.session_state.last_preview_params
                 else:
                     # No change: keep caches/params intact to avoid unnecessary preview refresh
                     st.session_state.input_text = original_text
@@ -442,15 +483,31 @@ def render_single_card_editor(card: Dict[str, str], actual_idx: int) -> None:
             'pinyin': new_pinyin,
             'english': new_english
         }
-        # Clear export data when cards are edited
-        st.session_state.export_ready = {}
-        st.session_state.export_data = {}
-        # Clear preview cache when cards are edited
-        from services.cache import clear_preview_cache
-        clear_preview_cache()
-        # Force preview parameter reset
-        if 'last_preview_params' in st.session_state:
-            del st.session_state.last_preview_params
+
+        # Use state service for centralized invalidation
+        try:
+            from core.feature_flags import use_state_service
+            from ui.state import invalidate_preview_cache
+
+            if use_state_service():
+                invalidate_preview_cache("card edited")
+            else:
+                # Fallback to legacy approach
+                st.session_state.export_ready = {}
+                st.session_state.export_data = {}
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
+        except ImportError:
+            # Fallback if new modules not available
+            st.session_state.export_ready = {}
+            st.session_state.export_data = {}
+            from services.cache import clear_preview_cache
+            clear_preview_cache()
+            if 'last_preview_params' in st.session_state:
+                del st.session_state.last_preview_params
+
         st.success(f"卡片 {actual_idx + 1} 已更新！")
         st.rerun()
 
@@ -599,18 +656,49 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]: #
             st.session_state.get('font_english') != font_english
         )
 
-        st.session_state.rows = rows
-        st.session_state.cols = cols
-        st.session_state.auto_fill = auto_fill
-        st.session_state.hanzi_font = hanzi_font
+        # Use state service for batch updates
+        try:
+            from core.feature_flags import use_state_service
+            from ui.state import set_options_batch, invalidate_preview_cache
 
-        # Clear preview cache if layout or font parameters changed
-        if layout_changed or font_changed:
-            from services.cache import clear_preview_cache
-            clear_preview_cache()
-            # Force preview parameter reset
-            if 'last_preview_params' in st.session_state:
-                del st.session_state.last_preview_params
+            if use_state_service():
+                changes = {
+                    'rows': rows,
+                    'cols': cols,
+                    'auto_fill': auto_fill,
+                    'hanzi_font': hanzi_font
+                }
+                changeset = set_options_batch(changes)
+
+                # Invalidate if layout or style changed
+                if changeset.affects_layout or changeset.affects_style:
+                    invalidate_preview_cache("layout/font changed")
+            else:
+                # Fallback to legacy approach
+                st.session_state.rows = rows
+                st.session_state.cols = cols
+                st.session_state.auto_fill = auto_fill
+                st.session_state.hanzi_font = hanzi_font
+
+                # Clear preview cache if layout or font parameters changed
+                if layout_changed or font_changed:
+                    from services.cache import clear_preview_cache
+                    clear_preview_cache()
+                    # Force preview parameter reset
+                    if 'last_preview_params' in st.session_state:
+                        del st.session_state.last_preview_params
+        except ImportError:
+            # Fallback if new modules not available
+            st.session_state.rows = rows
+            st.session_state.cols = cols
+            st.session_state.auto_fill = auto_fill
+            st.session_state.hanzi_font = hanzi_font
+
+            if layout_changed or font_changed:
+                from services.cache import clear_preview_cache
+                clear_preview_cache()
+                if 'last_preview_params' in st.session_state:
+                    del st.session_state.last_preview_params
 
     return gap, margin, font_hanzi, font_pinyin, font_english, rows, cols
 
@@ -637,6 +725,7 @@ def _effective_preview_params_from_state(passed: dict) -> dict:
     }
 
 
+@with_error_boundary("preview_section")
 def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
                                  card_size: float, gap: float, margin: float,
                                  font_hanzi: int, font_pinyin: int, font_english: int,
@@ -746,6 +835,7 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
     st.markdown('</div>', unsafe_allow_html=True)
 
 
+@with_error_boundary("export_section")
 def render_export_section(processed_cards: List[Dict[str, str]]) -> None:
     """Render the export section with download buttons."""
     if not processed_cards:
@@ -940,6 +1030,7 @@ def _render_empty_preview() -> None:
         st.error(f"预览渲染错误: {e}")
 
 
+@with_error_boundary("preview_content")
 def render_preview_content(processed_cards: List[Dict[str, str]],
                           config: AppConfig) -> Tuple[int, int]:
     """
