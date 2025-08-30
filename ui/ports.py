@@ -610,6 +610,7 @@ def get_ui_adapter() -> UIAdapter:
         if get_feature_flag('use_fake_adapter', False):
             _ui_adapter = FakeAdapter()
         else:
+            from ui.adapters.streamlit_adapter import StreamlitAdapter
             _ui_adapter = StreamlitAdapter()
 
     return _ui_adapter

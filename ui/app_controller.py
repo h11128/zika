@@ -14,11 +14,22 @@ from core.state import (
     clear_processed_cards, get_dictionary, get_all_ui_params, handle_param_changes
 )
 from ui.components import render_page_navigation, render_preview_section, render_page_info
-from ui.sections import (
-    render_sidebar, render_export_section, render_left_column,
-    render_preview_column_header, render_preview_content_legacy,
-    render_improved_card_editor
-)
+# Use unified sections if available
+from core.feature_flags import get_feature_flag
+
+if get_feature_flag('unified_sections', True):
+    from ui.sections_unified import (
+        render_sidebar, render_export_section, render_left_column,
+        render_preview_column_header
+    )
+    # These functions are not in unified yet, keep from original
+    from ui.sections import render_preview_content_legacy, render_improved_card_editor
+else:
+    from ui.sections import (
+        render_sidebar, render_export_section, render_left_column,
+        render_preview_column_header, render_preview_content_legacy,
+        render_improved_card_editor
+    )
 from core.config import AppConfig, create_config_from_params
 from ui.styles import apply_global_styles, render_sticky_wrapper_start, render_sticky_wrapper_end
 
@@ -148,13 +159,63 @@ class AppController:
             except Exception as e:
                 st.error(f"参数处理错误: {e}")
 
-            # Render preview content using legacy function for now
-            cards_per_page, total_pages = render_preview_content_legacy(processed_cards, preview_params, left_params)
+            # Use SINGLE unified preview entry point
+            try:
+                from ui.preview_controller import render_preview_content_unified
+                from services.preview_types import AppConfig
+
+                # Build unified config - SINGLE configuration format
+                config = AppConfig(
+                    card_size_cm=left_params.get('card_size', 5.5),
+                    gap_cm=left_params.get('gap', 0.5),
+                    margin_cm=left_params.get('margin', 1.0),
+                    page_size=left_params.get('page_size', 'A4'),
+                    font_hanzi=left_params.get('font_hanzi', 48),
+                    font_pinyin=left_params.get('font_pinyin', 18),
+                    font_english=left_params.get('font_english', 14),
+                    hanzi_font=preview_params.get('hanzi_font', 'SimHei'),
+                    background_color=preview_params.get('background_color', '#ffffff'),
+                    rows=left_params.get('rows', 2),
+                    cols=left_params.get('cols', 3),
+                    auto_fill=left_params.get('auto_fill', True)
+                )
+
+                # SINGLE entry point for ALL preview rendering
+                cards_per_page, total_pages = render_preview_content_unified(processed_cards, config)
+
+            except ImportError:
+                # Emergency fallback only
+                from ui.sections import render_preview_content_legacy
+                cards_per_page, total_pages = render_preview_content_legacy(processed_cards, preview_params, left_params)
 
             # Render card editor
             self.render_card_editor(processed_cards, cards_per_page)
         else:
-            render_preview_content_legacy([], preview_params, left_params)
+            # Render empty preview
+            try:
+                from ui.preview import render_preview_unified
+                from core.feature_flags import use_new_preview_pipeline
+
+                if use_new_preview_pipeline():
+                    config = {
+                        'card_size': left_params.get('card_size', 5.5),
+                        'gap': left_params.get('gap', 0.5),
+                        'margin': left_params.get('margin', 1.0),
+                        'font_hanzi': left_params.get('font_hanzi', 48),
+                        'font_pinyin': left_params.get('font_pinyin', 18),
+                        'font_english': left_params.get('font_english', 14),
+                        'page_size': left_params.get('page_size', 'A4'),
+                        'hanzi_font': left_params.get('hanzi_font', 'SimHei'),
+                        'background_color': left_params.get('background_color', '#ffffff'),
+                        'rows': left_params.get('rows', 2),
+                        'cols': left_params.get('cols', 3),
+                        'auto_fill': left_params.get('auto_fill', True)
+                    }
+                    render_preview_unified([], config)
+                else:
+                    render_preview_content_legacy([], preview_params, left_params)
+            except ImportError:
+                render_preview_content_legacy([], preview_params, left_params)
 
         # End sticky wrapper for right column content
         try:

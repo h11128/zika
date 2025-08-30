@@ -4,17 +4,25 @@ Centralizes preview rendering logic with digest-driven invalidation.
 """
 
 from typing import List, Dict, Any, Tuple, Optional
-import streamlit as st
 
 from core.config import AppConfig
 from core.feature_flags import use_new_preview_pipeline, use_cache_v2
-from ui.state import (
-    compute_preview_params_digest, get_session_generation,
-    compute_layout_digest, compute_style_digest
-)
+# Import from the state.py file directly to avoid conflicts with ui/state package
+import importlib.util
+import os
+spec = importlib.util.spec_from_file_location("ui_state_module", os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui", "state.py"))
+ui_state_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ui_state_module)
+
+compute_preview_params_digest = ui_state_module.compute_preview_params_digest
+get_session_generation = ui_state_module.get_session_generation
+compute_layout_digest = ui_state_module.compute_layout_digest
+compute_style_digest = ui_state_module.compute_style_digest
 from services.preview_types import PreviewParams, convert_app_config_to_preview_params
 from services.layout import paginate, PaginateInfo
 from ui.error_boundaries import with_error_boundary
+from ui.unified import get_unified_ui
+from ui.state_bridge import state_get, state_set
 
 
 class PreviewController:
@@ -85,9 +93,9 @@ class PreviewController:
     
     def _clamp_nav_index(self, total_pages: int) -> None:
         """Clamp navigation index to valid range."""
-        current_page = getattr(st.session_state, 'current_page', 0)
+        current_page = state_get('current_page', 0)
         if current_page >= total_pages:
-            st.session_state.current_page = max(0, total_pages - 1)
+            state_set('current_page', max(0, total_pages - 1))
     
     def _render_immediate(self, processed_cards: List[Dict[str, str]], 
                          params: PreviewParams, pagination: PaginateInfo) -> None:
@@ -118,28 +126,29 @@ class PreviewController:
         # Render page info
         render_page_info(processed_cards, pagination.cards_per_page, pagination.total_pages)
     
-    def _render_preview_section_v2(self, processed_cards: List[Dict[str, str]], 
+    def _render_preview_section_v2(self, processed_cards: List[Dict[str, str]],
                                   params: PreviewParams, pagination: PaginateInfo,
                                   use_cache: bool) -> None:
         """Render the preview section with v2 pipeline."""
-        current_page = getattr(st.session_state, 'current_page', 0)
-        
+        current_page = state_get('current_page', 0)
+        ui = get_unified_ui()
+
         if params.visual.preview_mode == '📄 完整页面':
             # Full page preview
             html = self._create_page_preview_html_v2(
                 processed_cards, current_page, params, use_cache
             )
-            st.components.v1.html(html, height=850)
+            ui.html(html, height=850)
         else:
             # Simple grid preview
             start_idx = current_page * pagination.cards_per_page
             end_idx = min(start_idx + pagination.cards_per_page, len(processed_cards))
             current_page_cards = processed_cards[start_idx:end_idx]
-            
+
             html = self._create_simple_grid_html_v2(
                 current_page_cards, params, use_cache
             )
-            st.components.v1.html(html, height=650)
+            ui.html(html, height=650)
     
     def _create_page_preview_html_v2(self, processed_cards: List[Dict[str, str]], 
                                     page_num: int, params: PreviewParams,
@@ -168,15 +177,43 @@ class PreviewController:
         else:
             return self._create_simple_grid_html_immediate(processed_cards, params)
     
-    def _create_page_preview_html_immediate(self, processed_cards: List[Dict[str, str]], 
+    def _create_page_preview_html_immediate(self, processed_cards: List[Dict[str, str]],
                                           page_num: int, params: PreviewParams) -> str:
-        """Create page preview HTML immediately."""
-        # Import legacy function and convert parameters
+        """Create page preview HTML immediately using shared render core."""
+        # Try to use shared render core if available
+        from core.feature_flags import get_feature_flag
+
+        if get_feature_flag('shared_render_core', True):
+            try:
+                from services.render_core import render_cards_unified
+                from services.preview_types import convert_preview_params_to_render_options
+
+                # Convert to render options
+                render_options = convert_preview_params_to_render_options(params)
+
+                # Get cards for current page
+                cards_per_page = params.layout.rows * params.layout.cols
+                start_idx = page_num * cards_per_page
+                end_idx = min(start_idx + cards_per_page, len(processed_cards))
+                page_cards = processed_cards[start_idx:end_idx]
+
+                # Use unified rendering
+                result = render_cards_unified(page_cards, render_options, output_format='html')
+
+                if result.success:
+                    return result.content
+
+            except Exception as e:
+                # Fall back to legacy implementation
+                import logging
+                logging.warning(f"Shared render core failed for page preview, falling back: {e}")
+
+        # Legacy implementation fallback
         from services.cache import create_page_preview_html
         from services.preview_types import extract_legacy_params
-        
+
         legacy_params = extract_legacy_params(params)
-        
+
         return create_page_preview_html(
             processed_cards, page_num,
             legacy_params['card_size'], legacy_params['gap'], legacy_params['margin'],
@@ -185,15 +222,37 @@ class PreviewController:
             legacy_params['rows'], legacy_params['cols'], legacy_params['auto_fill']
         )
     
-    def _create_simple_grid_html_immediate(self, processed_cards: List[Dict[str, str]], 
+    def _create_simple_grid_html_immediate(self, processed_cards: List[Dict[str, str]],
                                          params: PreviewParams) -> str:
-        """Create simple grid HTML immediately."""
-        # Import legacy function and convert parameters
+        """Create simple grid HTML immediately using shared render core."""
+        # Try to use shared render core if available
+        from core.feature_flags import get_feature_flag
+
+        if get_feature_flag('shared_render_core', True):
+            try:
+                from services.render_core import render_cards_unified
+                from services.preview_types import convert_preview_params_to_render_options
+
+                # Convert to render options
+                render_options = convert_preview_params_to_render_options(params)
+
+                # Use unified rendering
+                result = render_cards_unified(processed_cards, render_options, output_format='html')
+
+                if result.success:
+                    return result.content
+
+            except Exception as e:
+                # Fall back to legacy implementation
+                import logging
+                logging.warning(f"Shared render core failed for simple grid, falling back: {e}")
+
+        # Legacy implementation fallback
         from services.cache import create_simple_grid_html
         from services.preview_types import extract_legacy_params
-        
+
         legacy_params = extract_legacy_params(params)
-        
+
         return create_simple_grid_html(
             processed_cards, legacy_params['hanzi_font'], legacy_params['background_color'],
             legacy_params['rows'], legacy_params['cols'],
@@ -203,11 +262,12 @@ class PreviewController:
     
     def _render_empty_preview(self) -> None:
         """Render preview for empty cards case."""
+        ui = get_unified_ui()
         try:
             from services.cache import create_preview_html
-            st.components.v1.html(create_preview_html([]), height=650)
+            ui.html(create_preview_html([]), height=650)
         except Exception as e:
-            st.error(f"预览渲染错误: {e}")
+            ui.error(f"预览渲染错误: {e}")
     
     def _render_legacy(self, processed_cards: List[Dict[str, str]], 
                       config: AppConfig) -> Tuple[int, int]:

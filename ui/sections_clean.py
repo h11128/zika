@@ -196,16 +196,9 @@ def render_preview_column_header():
 
 def render_improved_card_editor(processed_cards: List[Dict[str, str]]) -> None:
     """Render an improved card editor that can handle large numbers of cards."""
-    from core.feature_flags import get_feature_flag
-
-    # Use unified editor if available
-    if get_feature_flag('unified_sections', False):
-        from ui.editor_unified import render_improved_card_editor_unified
-        render_improved_card_editor_unified(processed_cards)
-    else:
-        # Delegate to editor module
-        from ui.editor import render_improved_card_editor as render_editor
-        render_editor(processed_cards)
+    # Delegate to editor module
+    from ui.editor import render_improved_card_editor as render_editor
+    render_editor(processed_cards)
 
 
 def render_preview_content_legacy(processed_cards: List[Dict[str, str]], config) -> Tuple[int, int]:

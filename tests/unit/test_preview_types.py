@@ -355,3 +355,169 @@ class TestConversionFunctions:
         # Should not raise any exceptions
         validated = validate_preview_params(params)
         assert validated == params
+
+
+class TestDataclassDeterministicBehavior:
+    """Test deterministic hashing and JSON serialization for cache_v2 compatibility."""
+
+    def test_layout_options_deterministic_hash(self):
+        """Test that LayoutOptions produces deterministic hashes."""
+        layout1 = LayoutOptions(
+            rows=3, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        layout2 = LayoutOptions(
+            rows=3, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        # Identical dataclasses should have same hash
+        assert hash(layout1) == hash(layout2)
+
+        # Different values should have different hashes
+        layout3 = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        assert hash(layout1) != hash(layout3)
+
+    def test_typography_deterministic_hash(self):
+        """Test that Typography produces deterministic hashes."""
+        typo1 = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        typo2 = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        # Identical dataclasses should have same hash
+        assert hash(typo1) == hash(typo2)
+
+        # Different values should have different hashes
+        typo3 = Typography(
+            font_hanzi_pt=36, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        assert hash(typo1) != hash(typo3)
+
+    def test_visual_options_deterministic_hash(self):
+        """Test that VisualOptions produces deterministic hashes."""
+        visual1 = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        visual2 = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        # Identical dataclasses should have same hash
+        assert hash(visual1) == hash(visual2)
+
+        # Different values should have different hashes
+        visual3 = VisualOptions(
+            background_color='#f0f0f0',
+            preview_mode='📄 完整页面'
+        )
+
+        assert hash(visual1) != hash(visual3)
+
+    def test_preview_params_deterministic_hash(self):
+        """Test that PreviewParams produces deterministic hashes."""
+        layout = LayoutOptions(
+            rows=3, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        params1 = PreviewParams(layout=layout, typography=typography, visual=visual)
+        params2 = PreviewParams(layout=layout, typography=typography, visual=visual)
+
+        # Identical dataclasses should have same hash
+        assert hash(params1) == hash(params2)
+
+    def test_json_serialization_deterministic(self):
+        """Test that JSON serialization is deterministic and reversible."""
+        layout = LayoutOptions(
+            rows=3, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        params = PreviewParams(layout=layout, typography=typography, visual=visual)
+
+        # Test JSON serialization
+        json_str1 = params.to_json()
+        json_str2 = params.to_json()
+
+        # Should be deterministic (same JSON string)
+        assert json_str1 == json_str2
+
+        # Test round-trip serialization
+        params_restored = PreviewParams.from_json(json_str1)
+        assert params_restored == params
+
+        # Restored object should also produce same JSON
+        json_str3 = params_restored.to_json()
+        assert json_str1 == json_str3
+
+    def test_dataclass_equality_semantics(self):
+        """Test that dataclass equality works correctly for caching."""
+        layout1 = LayoutOptions(
+            rows=3, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        layout2 = LayoutOptions(
+            rows=3, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        layout3 = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        # Test equality
+        assert layout1 == layout2
+        assert layout1 != layout3
+
+        # Test that equal objects have same hash (required for dict keys)
+        assert hash(layout1) == hash(layout2)
+
+        # Test that they can be used as dict keys
+        cache_dict = {layout1: "value1"}
+        assert cache_dict[layout2] == "value1"  # Should work since layout1 == layout2

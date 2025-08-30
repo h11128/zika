@@ -6,12 +6,18 @@ Single write barrier with rules, batching, digests, invalidation, and persistenc
 import json
 import hashlib
 import uuid
+import logging
 from typing import Dict, Any, List, Optional, Set, Union
 from dataclasses import dataclass, field
 from datetime import datetime
 import streamlit as st
 
 from core.feature_flags import use_state_service
+from core.version import get_code_version
+from core.field_migration import resolve_field_value
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,25 +36,150 @@ class SessionGeneration:
     """Session generation tracking for cache isolation."""
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = field(default_factory=datetime.utcnow)
-
-
-# Global session generation (persists across reruns within same browser session)
-_session_generation: Optional[SessionGeneration] = None
+    last_accessed: datetime = field(default_factory=datetime.utcnow)
+    rerun_count: int = 0
+    is_new_session: bool = True
 
 
 def get_session_generation() -> str:
-    """Get current session generation ID."""
-    global _session_generation
-    if _session_generation is None:
-        _session_generation = SessionGeneration()
-    return _session_generation.id
+    """
+    Get current session generation ID with proper lifecycle management.
+
+    Session generation lifecycle:
+    - Create: Generated on first access in a new session
+    - Persist: Maintained across reruns within the same browser session
+    - Reset: On page reload or new session start
+
+    Returns:
+        Session generation ID string
+    """
+    # Use Streamlit session state to persist across reruns
+    if 'session_generation_data' not in st.session_state:
+        # New session - create session generation
+        session_gen = SessionGeneration()
+        st.session_state.session_generation_data = {
+            'id': session_gen.id,
+            'created_at': session_gen.created_at.isoformat(),
+            'last_accessed': session_gen.last_accessed.isoformat(),
+            'rerun_count': 0,
+            'is_new_session': True
+        }
+        logger.info(f"Created new session generation: {session_gen.id}")
+    else:
+        # Existing session - update access time and rerun count
+        session_data = st.session_state.session_generation_data
+        session_data['last_accessed'] = datetime.utcnow().isoformat()
+        session_data['rerun_count'] += 1
+        session_data['is_new_session'] = False
+
+        # Log session activity (debug level to avoid spam)
+        logger.debug(f"Session generation accessed: {session_data['id']}, rerun #{session_data['rerun_count']}")
+
+    return st.session_state.session_generation_data['id']
 
 
 def reset_session_generation() -> str:
-    """Reset session generation (for new sessions)."""
-    global _session_generation
-    _session_generation = SessionGeneration()
-    return _session_generation.id
+    """
+    Reset session generation (for new sessions or explicit reset).
+
+    Returns:
+        New session generation ID
+    """
+    session_gen = SessionGeneration()
+    st.session_state.session_generation_data = {
+        'id': session_gen.id,
+        'created_at': session_gen.created_at.isoformat(),
+        'last_accessed': session_gen.last_accessed.isoformat(),
+        'rerun_count': 0,
+        'is_new_session': True
+    }
+
+    logger.info(f"Reset session generation: {session_gen.id}")
+    return session_gen.id
+
+
+def get_session_generation_info() -> Dict[str, Any]:
+    """
+    Get detailed session generation information for debugging.
+
+    Returns:
+        Dictionary with session generation details
+    """
+    if 'session_generation_data' not in st.session_state:
+        # Initialize if not exists
+        get_session_generation()
+
+    session_data = st.session_state.session_generation_data.copy()
+
+    # Add computed fields
+    created_at = datetime.fromisoformat(session_data['created_at'])
+    last_accessed = datetime.fromisoformat(session_data['last_accessed'])
+    session_data['session_duration_seconds'] = (last_accessed - created_at).total_seconds()
+    session_data['is_active'] = (datetime.utcnow() - last_accessed).total_seconds() < 300  # 5 minutes
+
+    return session_data
+
+
+def validate_session_generation_lifecycle() -> Dict[str, Any]:
+    """
+    Validate session generation lifecycle and return status.
+
+    Returns:
+        Dictionary with validation results
+    """
+    validation_result = {
+        'is_valid': True,
+        'errors': [],
+        'warnings': [],
+        'session_info': {}
+    }
+
+    try:
+        # Check if session generation exists
+        if 'session_generation_data' not in st.session_state:
+            validation_result['warnings'].append("No session generation found, will be created on next access")
+            return validation_result
+
+        session_data = st.session_state.session_generation_data
+        validation_result['session_info'] = session_data.copy()
+
+        # Validate session ID format
+        session_id = session_data.get('id', '')
+        if not session_id or len(session_id) < 10:
+            validation_result['is_valid'] = False
+            validation_result['errors'].append(f"Invalid session ID format: {session_id}")
+
+        # Validate timestamps
+        try:
+            created_at = datetime.fromisoformat(session_data['created_at'])
+            last_accessed = datetime.fromisoformat(session_data['last_accessed'])
+
+            if last_accessed < created_at:
+                validation_result['is_valid'] = False
+                validation_result['errors'].append("Last accessed time is before created time")
+
+            # Check for reasonable session duration (not more than 24 hours)
+            duration = (datetime.utcnow() - created_at).total_seconds()
+            if duration > 86400:  # 24 hours
+                validation_result['warnings'].append(f"Session duration is very long: {duration/3600:.1f} hours")
+
+        except ValueError as e:
+            validation_result['is_valid'] = False
+            validation_result['errors'].append(f"Invalid timestamp format: {e}")
+
+        # Validate rerun count
+        rerun_count = session_data.get('rerun_count', 0)
+        if rerun_count < 0:
+            validation_result['is_valid'] = False
+            validation_result['errors'].append(f"Invalid rerun count: {rerun_count}")
+        elif rerun_count > 10000:
+            validation_result['warnings'].append(f"Very high rerun count: {rerun_count}")
+
+    except Exception as e:
+        validation_result['is_valid'] = False
+        validation_result['errors'].append(f"Validation error: {e}")
+
+    return validation_result
 
 
 class StateService:
@@ -122,7 +253,20 @@ class StateService:
         return changeset
     
     def invalidate_preview_cache(self, reason: str = "") -> None:
-        """Invalidate preview cache and export buffers."""
+        """Invalidate preview cache through centralized cache manager."""
+        try:
+            from ui.cache_manager import get_cache_manager
+            cache_manager = get_cache_manager()
+            cache_manager.invalidate_preview_cache(
+                reason=reason or "State service invalidation",
+                triggered_by=f"session_{get_session_generation()}"
+            )
+        except ImportError:
+            # Fallback to legacy implementation
+            self._legacy_invalidate_preview_cache(reason)
+
+    def _legacy_invalidate_preview_cache(self, reason: str = "") -> None:
+        """Legacy preview cache invalidation (fallback)."""
         # Clear preview-related session state
         if hasattr(st.session_state, 'export_ready'):
             st.session_state.export_ready = {}
@@ -328,14 +472,15 @@ def compute_processing_digest() -> str:
 
 def compute_layout_digest() -> str:
     """Compute digest for layout domain."""
-    # Support both old and new field names for backward compatibility
-    gap_cm = getattr(st.session_state, 'gap_cm', None)
-    if gap_cm is None:
-        gap_cm = getattr(st.session_state, 'gap', 0.5)
+    # Use field migration system for backward compatibility
+    session_data = {
+        attr: getattr(st.session_state, attr, None)
+        for attr in ['gap', 'gap_cm', 'margin', 'margin_cm', 'rows', 'cols', 'page_size', 'auto_fill', 'card_size']
+        if hasattr(st.session_state, attr)
+    }
 
-    margin_cm = getattr(st.session_state, 'margin_cm', None)
-    if margin_cm is None:
-        margin_cm = getattr(st.session_state, 'margin', 1.0)
+    gap_cm = resolve_field_value(session_data, 'gap_cm', 0.5)
+    margin_cm = resolve_field_value(session_data, 'margin_cm', 1.0)
 
     layout_data = {
         'rows': getattr(st.session_state, 'rows', 2),
@@ -381,18 +526,19 @@ def compute_export_key(export_params: Dict[str, Any], cards_count: int, content_
     """Compute stable export cache key."""
     # Schema version for cache invalidation
     EXPORT_SCHEMA_VERSION = "v1.0.0"
-    
+
     export_data = {
         'params': normalize_for_digest(export_params),
         'cards_count': cards_count,
         'schema_version': EXPORT_SCHEMA_VERSION,
+        'code_version': get_code_version(),
         'session_generation': get_session_generation(),
     }
-    
+
     # Include content version signal if provided (for P5 implementation)
     if content_version_signal:
         export_data['content_version_signal'] = content_version_signal
-    
+
     return stable_digest(export_data)
 
 # Convenience functions for state access
@@ -407,5 +553,10 @@ def set_options_batch(changes: Dict[str, Any]) -> ChangeSet:
 
 
 def invalidate_preview_cache(reason: str = "") -> None:
-    """Invalidate preview cache through the state service."""
-    get_state_service().invalidate_preview_cache(reason)
+    """Invalidate preview cache through centralized cache manager."""
+    try:
+        from ui.cache_manager import invalidate_preview_cache as cache_invalidate
+        cache_invalidate(reason, "ui.state.convenience_function")
+    except ImportError:
+        # Fallback to state service
+        get_state_service().invalidate_preview_cache(reason)

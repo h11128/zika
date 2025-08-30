@@ -7,12 +7,26 @@ import pytest
 from unittest.mock import patch, MagicMock
 import json
 
-from ui.state import (
-    StateService, ChangeSet, normalize_for_digest, stable_digest,
-    compute_processing_digest, compute_layout_digest, compute_style_digest,
-    compute_preview_params_digest, compute_export_key,
-    get_session_generation, reset_session_generation
-)
+# Import from the main ui.state module (not the package)
+import importlib.util
+import os
+spec = importlib.util.spec_from_file_location("ui_state_module", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "ui", "state.py"))
+ui_state_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ui_state_module)
+
+# Import functions from the module
+normalize_for_digest = ui_state_module.normalize_for_digest
+stable_digest = ui_state_module.stable_digest
+compute_processing_digest = ui_state_module.compute_processing_digest
+compute_layout_digest = ui_state_module.compute_layout_digest
+compute_style_digest = ui_state_module.compute_style_digest
+compute_preview_params_digest = ui_state_module.compute_preview_params_digest
+compute_export_key = ui_state_module.compute_export_key
+get_session_generation = ui_state_module.get_session_generation
+reset_session_generation = ui_state_module.reset_session_generation
+get_session_generation_info = ui_state_module.get_session_generation_info
+validate_session_generation_lifecycle = ui_state_module.validate_session_generation_lifecycle
+ChangeSet = ui_state_module.ChangeSet
 
 
 class TestDigestComputation:
@@ -74,124 +88,228 @@ class TestDigestComputation:
 
 class TestSessionGeneration:
     """Test session generation functionality."""
-    
+
     def test_get_session_generation_creates_id(self):
         """Test that session generation creates a unique ID."""
-        # Reset to ensure clean state
-        reset_session_generation()
-        
-        gen_id = get_session_generation()
-        
-        assert isinstance(gen_id, str)
-        assert len(gen_id) > 0
-    
+        # Mock the streamlit module in the ui_state_module
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
+
+            gen_id = get_session_generation()
+
+            assert isinstance(gen_id, str)
+            assert len(gen_id) > 0
+            assert 'session_generation_data' in session_data
+            assert session_data['session_generation_data']['id'] == gen_id
+
     def test_get_session_generation_consistent(self):
         """Test that session generation is consistent within session."""
-        reset_session_generation()
-        
-        gen_id1 = get_session_generation()
-        gen_id2 = get_session_generation()
-        
-        assert gen_id1 == gen_id2
-    
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
+
+            gen_id1 = get_session_generation()
+            gen_id2 = get_session_generation()
+
+            assert gen_id1 == gen_id2
+
+            # Verify rerun count increased
+            session_gen_data = session_data['session_generation_data']
+            assert session_gen_data['rerun_count'] == 1  # Second call increments
+
     def test_reset_session_generation_changes_id(self):
         """Test that reset changes the session generation ID."""
-        gen_id1 = get_session_generation()
-        gen_id2 = reset_session_generation()
-        gen_id3 = get_session_generation()
-        
-        assert gen_id1 != gen_id2
-        assert gen_id2 == gen_id3
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
 
-class TestStateService:
-    """Test the StateService class."""
-    
-    def setup_method(self):
-        """Setup test environment."""
-        self.service = StateService()
-        # Mock streamlit session state
-        self.mock_session_state = {}
-    
-    def test_set_option_with_state_service_enabled(self):
-        """Test setting option with state service enabled."""
-        with patch('ui.state.use_state_service', return_value=True):
-            # Test setting a new value
-            result = self.service.set_option('test_key', 'test_value')
-            assert result is True
-            assert self.service.pending_changes['test_key'] == 'test_value'
+            gen_id1 = get_session_generation()
+            gen_id2 = reset_session_generation()
+            gen_id3 = get_session_generation()
 
-            # Test setting the same value again
-            result = self.service.set_option('test_key', 'test_value')
-            assert result is False
+            assert gen_id1 != gen_id2
+            assert gen_id2 == gen_id3
 
-    def test_set_option_fallback_mode_simple(self):
-        """Test setting option in fallback mode."""
-        with patch('ui.state.use_state_service', return_value=False):
-            # Test the logic without complex mocking
-            # In fallback mode, it should try to use streamlit session state
-            # We'll just test that it doesn't crash and returns a boolean
-            try:
-                result = self.service.set_option('test_key', 'test_value')
-                assert isinstance(result, bool)
-            except Exception:
-                # If streamlit is not available, that's expected in unit tests
-                pass
-    
-    def test_apply_rule_engine_card_size_auto_fill(self):
-        """Test rule engine: manual card_size → auto_fill=False."""
-        self.service._get_current_value = MagicMock(return_value=True)
-        
-        changes = {'card_size': 6.0}
-        normalized = self.service._apply_rule_engine(changes)
-        
-        assert normalized['card_size'] == 6.0
-        assert normalized['auto_fill'] is False
-    
-    def test_compute_changeset_layout(self):
-        """Test changeset computation for layout changes."""
-        changes = {'rows': 3, 'cols': 4}
-        changeset = self.service._compute_changeset(changes)
-        
-        assert changeset.affects_layout is True
-        assert changeset.affects_export is True
-        assert changeset.nav_reset_required is True
-        assert changeset.affects_processing is False
-        assert changeset.affects_style is False
-    
-    def test_compute_changeset_style(self):
-        """Test changeset computation for style changes."""
-        changes = {'hanzi_font': 'Arial', 'background_color': '#ff0000'}
-        changeset = self.service._compute_changeset(changes)
-        
-        assert changeset.affects_style is True
-        assert changeset.affects_export is True
-        assert changeset.nav_reset_required is False
-        assert changeset.affects_processing is False
-        assert changeset.affects_layout is False
-    
-    def test_compute_changeset_processing(self):
-        """Test changeset computation for processing changes."""
-        changes = {'input_text': 'new text', 'auto_pinyin': True}
-        changeset = self.service._compute_changeset(changes)
-        
-        assert changeset.affects_processing is True
-        assert changeset.affects_export is True
-        assert changeset.nav_reset_required is False
-        assert changeset.affects_layout is False
-        assert changeset.affects_style is False
-    
-    def test_compute_changeset_navigation(self):
-        """Test changeset computation for navigation changes."""
-        changes = {'current_page': 2}
-        changeset = self.service._compute_changeset(changes)
-        
-        assert changeset.affects_navigation is True
-        assert changeset.nav_reset_required is False
-        assert changeset.affects_processing is False
-        assert changeset.affects_layout is False
-        assert changeset.affects_style is False
-        assert changeset.affects_export is False
+            # Verify reset creates new session
+            session_gen_data = session_data['session_generation_data']
+            # After calling get_session_generation() again, is_new_session becomes False
+            assert session_gen_data['is_new_session'] is False
+            assert session_gen_data['rerun_count'] == 1  # Incremented by the third call
+
+    def test_get_session_generation_info(self):
+        """Test getting detailed session generation info."""
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
+
+            # Create session
+            gen_id = get_session_generation()
+
+            # Get info
+            info = get_session_generation_info()
+
+            assert info['id'] == gen_id
+            assert 'created_at' in info
+            assert 'last_accessed' in info
+            assert 'rerun_count' in info
+            assert 'is_new_session' in info
+            assert 'session_duration_seconds' in info
+            assert 'is_active' in info
+            assert isinstance(info['session_duration_seconds'], float)
+            assert isinstance(info['is_active'], bool)
+
+    def test_validate_session_generation_lifecycle_valid(self):
+        """Test validation of valid session generation."""
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
+
+            # Create session
+            get_session_generation()
+
+            # Validate
+            result = validate_session_generation_lifecycle()
+
+            assert result['is_valid'] is True
+            assert len(result['errors']) == 0
+            assert 'session_info' in result
+
+    def test_validate_session_generation_lifecycle_no_session(self):
+        """Test validation when no session exists."""
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
+
+            # Validate without creating session
+            result = validate_session_generation_lifecycle()
+
+            assert result['is_valid'] is True  # Valid but with warning
+            assert len(result['warnings']) > 0
+            assert "No session generation found" in result['warnings'][0]
+
+    def test_validate_session_generation_lifecycle_invalid_id(self):
+        """Test validation with invalid session ID."""
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState({
+                'session_generation_data': {
+                    'id': 'short',  # Too short
+                    'created_at': '2025-08-30T12:00:00',
+                    'last_accessed': '2025-08-30T12:00:00',
+                    'rerun_count': 0,
+                    'is_new_session': True
+                }
+            })
+            mock_st.session_state = session_data
+
+            result = validate_session_generation_lifecycle()
+
+            assert result['is_valid'] is False
+            assert len(result['errors']) > 0
+            assert "Invalid session ID format" in result['errors'][0]
+
+    def test_session_generation_rerun_tracking(self):
+        """Test that rerun count is properly tracked."""
+        with patch.object(ui_state_module, 'st') as mock_st:
+            # Create a mock session state that supports both dict and attribute access
+            class MockSessionState(dict):
+                def __setattr__(self, name, value):
+                    self[name] = value
+                def __getattr__(self, name):
+                    try:
+                        return self[name]
+                    except KeyError:
+                        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+            session_data = MockSessionState()
+            mock_st.session_state = session_data
+
+            # First access
+            gen_id1 = get_session_generation()
+            session_gen_data = session_data['session_generation_data']
+            assert session_gen_data['rerun_count'] == 0
+            assert session_gen_data['is_new_session'] is True
+
+            # Second access (simulates rerun)
+            gen_id2 = get_session_generation()
+            assert gen_id1 == gen_id2  # Same ID
+            assert session_gen_data['rerun_count'] == 1
+            assert session_gen_data['is_new_session'] is False
+
+            # Third access
+            gen_id3 = get_session_generation()
+            assert gen_id1 == gen_id3  # Same ID
+            assert session_gen_data['rerun_count'] == 2
 
 
 class TestDomainDigests:

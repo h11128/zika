@@ -6,6 +6,7 @@ Provides type-safe, frozen dataclasses for preview rendering parameters.
 from dataclasses import dataclass
 from typing import Dict, Any
 import json
+from core.field_migration import resolve_field_value
 
 
 @dataclass(frozen=True)
@@ -37,14 +38,15 @@ class LayoutOptions:
     @classmethod
     def from_layout_config(cls, layout_config) -> 'LayoutOptions':
         """Create from LayoutConfig object."""
-        # Support both old and new field names
-        gap_cm = getattr(layout_config, 'gap_cm', None)
-        if gap_cm is None:
-            gap_cm = getattr(layout_config, 'gap', 0.5)
+        # Use field migration system for backward compatibility
+        config_data = {
+            attr: getattr(layout_config, attr, None)
+            for attr in ['gap', 'gap_cm', 'margin', 'margin_cm', 'rows', 'cols', 'auto_fill', 'card_size', 'page_size']
+            if hasattr(layout_config, attr)
+        }
 
-        margin_cm = getattr(layout_config, 'margin_cm', None)
-        if margin_cm is None:
-            margin_cm = getattr(layout_config, 'margin', 1.0)
+        gap_cm = resolve_field_value(config_data, 'gap_cm', 0.5)
+        margin_cm = resolve_field_value(config_data, 'margin_cm', 1.0)
 
         return cls(
             rows=layout_config.rows,
@@ -302,3 +304,36 @@ def extract_legacy_params(params: PreviewParams) -> Dict[str, Any]:
         'cols': params.layout.cols,
         'auto_fill': params.layout.auto_fill
     }
+
+
+def convert_preview_params_to_render_options(params: PreviewParams) -> 'RenderOptions':
+    """
+    Convert PreviewParams to RenderOptions for shared render core.
+
+    Args:
+        params: Preview parameters
+
+    Returns:
+        RenderOptions compatible with shared render core
+    """
+    from services.render_core import RenderOptions
+
+    return RenderOptions(
+        # Layout options
+        card_size_cm=params.layout.card_size_cm,
+        gap_cm=params.layout.gap_cm,
+        margin_cm=params.layout.margin_cm,
+        page_size=params.layout.page_size,
+        rows=params.layout.rows,
+        cols=params.layout.cols,
+        auto_fill=params.layout.auto_fill,
+
+        # Typography options
+        font_hanzi_pt=params.typography.font_hanzi_pt,
+        font_pinyin_pt=params.typography.font_pinyin_pt,
+        font_english_pt=params.typography.font_english_pt,
+        hanzi_font=params.typography.hanzi_font,
+
+        # Visual options
+        background_color=params.visual.background_color
+    )

@@ -87,7 +87,11 @@ def get_feature_flag(flag_name: str, default: Any = False) -> Any:
     if flag_name in _flag_state.cached_flags:
         return _flag_state.cached_flags[flag_name]
     
-    # Priority 5: Default
+    # Priority 5: Default flags
+    if flag_name in DEFAULT_FLAGS:
+        return DEFAULT_FLAGS[flag_name]
+
+    # Priority 6: Fallback default
     return default
 
 
@@ -220,12 +224,38 @@ def _parse_env_value(value: str) -> Union[bool, int, float, str]:
 
 # Default feature flags for the UI refactor
 DEFAULT_FLAGS = {
-    'new_preview_pipeline': False,
-    'ui_adapter': False,
-    'state_service': False,
-    'cache_v2': False,
-    'persistence': False,
-    'debug_panel': False,
+    # Core pipeline flags - enabling for Phase 6 fixes
+    'new_preview_pipeline': True,  # Enable unified preview pipeline
+    'ui_adapter': True,  # Enable UI adapter system
+    'state_service': True,  # Enable state service
+    'cache_v2': True,  # Enable improved caching
+    'persistence': True,  # Enable persistence system
+    'debug_panel': True,  # Enable debug panel for development
+    'ENABLE_DIGEST_DEBUG': False,  # Enable digest debug panel (development only)
+
+    # Modularization flags - enabling for Phase 6
+    'adapted_inputs': True,  # Enable adapted inputs
+    'adapted_options': True,  # Enable adapted options
+    'adapted_preview': True,  # Enable adapted preview
+    'adapted_editor': True,  # Enable adapted editor
+    'adapted_export': True,  # Enable adapted export
+    'adapted_sidebar': True,  # Enable adapted sidebar
+
+    # Table editor and browser storage
+    'table_editor': True,  # Enable table editor
+    'browser_storage': True,  # Enable browser storage
+    'browser_storage_js': True,  # Enable JS bridge
+    'storage_debug_panel': True,  # Enable storage debug panel
+
+    # Form semantics and debouncing
+    'form_semantics': True,   # Enable form semantics
+    'debouncing': True,       # Enable debouncing
+
+    # Shared render core
+    'shared_render_core': True,  # Enable shared rendering
+
+    # Unified sections
+    'unified_sections': True,  # Enable unified sections with zero direct calls
 }
 
 

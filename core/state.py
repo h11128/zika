@@ -124,6 +124,26 @@ def get_layout_settings() -> Dict[str, Any]:
 
 def get_ui_preferences() -> Dict[str, str]:
     """Get current UI preferences. Safe for bare/unit-test contexts (defaults)."""
+    # Check if we should use state service
+    from core.feature_flags import get_feature_flag
+
+    if get_feature_flag('state_service', False):
+        try:
+            from ui.state import get_state_service
+            state_service = get_state_service()
+
+            hanzi_font = state_service.get('hanzi_font', DEFAULT_HANZI_FONT)
+            background_color = state_service.get('background_color', DEFAULT_BACKGROUND_COLOR)
+
+            return {
+                'hanzi_font': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
+                'background_color': background_color if background_color else DEFAULT_BACKGROUND_COLOR,
+            }
+        except Exception:
+            # Fallback to session state
+            pass
+
+    # Legacy implementation
     hanzi_font = _ss_get('hanzi_font', DEFAULT_HANZI_FONT)
     background_color = _ss_get('background_color', DEFAULT_BACKGROUND_COLOR)
     return {
@@ -156,8 +176,13 @@ def set_current_page(page: int) -> None:
 
 def clear_export_data() -> None:
     """Clear export data when parameters change."""
-    st.session_state.export_ready = {}
-    st.session_state.export_data = {}
+    try:
+        from ui.cache_manager import invalidate_export_cache
+        invalidate_export_cache("Parameters changed", "core.state.clear_export_data")
+    except ImportError:
+        # Fallback to direct clearing
+        st.session_state.export_ready = {}
+        st.session_state.export_data = {}
 
 
 def update_last_params(params: Dict[str, Any]) -> None:

@@ -11,17 +11,24 @@ from dataclasses import dataclass, field, asdict
 import logging
 
 from core.feature_flags import get_feature_flag
+from core.field_migration import migrate_snapshot_data, get_field_with_alias
 from services.card_models import Card, CardCollection
 
 
 # Current snapshot version
-CURRENT_SNAPSHOT_VERSION = 2
+CURRENT_SNAPSHOT_VERSION = 3
 
-# Storage limits
+# Storage limits and quotas
 MAX_INPUT_TEXT_LENGTH = 10000  # 10K characters
 MAX_SNAPSHOT_SIZE_BYTES = 1024 * 1024  # 1MB
 MAX_EXPORT_HISTORY_RECORDS = 50
 EXPORT_HISTORY_RETENTION_DAYS = 30
+MAX_CARDS_PER_SNAPSHOT = 1000  # Prevent memory issues
+MAX_MIGRATION_RETRIES = 3  # Retry failed migrations
+
+# Migration safety settings
+ENABLE_MIGRATION_BACKUP = True
+MIGRATION_BACKUP_RETENTION_HOURS = 24
 
 
 @dataclass
@@ -87,9 +94,10 @@ class UserSnapshot:
     # History
     export_history: List[Dict[str, Any]]  # ExportRecord.to_dict() format
     total_cards_generated: int = 0
-    
+
     # Metadata
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    state_metadata: Dict[str, Any] = field(default_factory=dict)  # State management metadata
     
     def __post_init__(self):
         """Validate and normalize snapshot data."""
@@ -185,8 +193,15 @@ class UserSnapshot:
                 'cols': getattr(session_state, 'cols', 3),
                 'auto_fill': getattr(session_state, 'auto_fill', True),
                 'card_size': getattr(session_state, 'card_size', 5.5),
-                'gap': getattr(session_state, 'gap', 0.5),
-                'margin': getattr(session_state, 'margin', 1.0),
+                # Use canonical field names for new snapshots
+                'gap_cm': get_field_with_alias({
+                    'gap': getattr(session_state, 'gap', None),
+                    'gap_cm': getattr(session_state, 'gap_cm', None)
+                }, 'gap_cm', 0.5),
+                'margin_cm': get_field_with_alias({
+                    'margin': getattr(session_state, 'margin', None),
+                    'margin_cm': getattr(session_state, 'margin_cm', None)
+                }, 'margin_cm', 1.0),
                 'page_size': getattr(session_state, 'page_size', 'A4'),
             },
             typography={
@@ -203,7 +218,12 @@ class UserSnapshot:
                 'current_page': getattr(session_state, 'current_page', 0),
             },
             export_history=export_history,
-            total_cards_generated=getattr(session_state, 'total_cards_generated', 0)
+            total_cards_generated=getattr(session_state, 'total_cards_generated', 0),
+            state_metadata={
+                'last_digest': getattr(session_state, 'last_digest', None),
+                'cache_version': 1,
+                'feature_flags_snapshot': {}
+            }
         )
     
     def apply_to_session_state(self, session_state) -> None:
@@ -262,59 +282,242 @@ class UserSnapshot:
     def is_too_large(self) -> bool:
         """Check if snapshot exceeds size limit."""
         return self.estimate_size_bytes() > MAX_SNAPSHOT_SIZE_BYTES
+
+    def check_quota_violations(self) -> List[str]:
+        """Check for various quota violations and return list of issues."""
+        violations = []
+
+        # Check size limit
+        if self.is_too_large():
+            violations.append(f"Snapshot size {self.estimate_size_bytes()} bytes exceeds limit {MAX_SNAPSHOT_SIZE_BYTES}")
+
+        # Check input text length
+        if len(self.input_text) > MAX_INPUT_TEXT_LENGTH:
+            violations.append(f"Input text length {len(self.input_text)} exceeds limit {MAX_INPUT_TEXT_LENGTH}")
+
+        # Check cards count
+        if len(self.cards) > MAX_CARDS_PER_SNAPSHOT:
+            violations.append(f"Cards count {len(self.cards)} exceeds limit {MAX_CARDS_PER_SNAPSHOT}")
+
+        # Check export history count
+        if len(self.export_history) > MAX_EXPORT_HISTORY_RECORDS:
+            violations.append(f"Export history count {len(self.export_history)} exceeds limit {MAX_EXPORT_HISTORY_RECORDS}")
+
+        return violations
+
+    def is_quota_compliant(self) -> bool:
+        """Check if snapshot complies with all quotas."""
+        return len(self.check_quota_violations()) == 0
     
     def truncate_for_storage(self) -> 'UserSnapshot':
-        """Create truncated version that fits storage limits."""
-        if not self.is_too_large():
+        """Create truncated version that fits storage limits with intelligent prioritization."""
+        if self.is_quota_compliant():
             return self
-        
-        # Create copy with truncated data
-        truncated = UserSnapshot(
-            version=self.version,
-            created_at=self.created_at,
-            last_modified=datetime.now(timezone.utc).isoformat(),
-            input_text=self.input_text[:MAX_INPUT_TEXT_LENGTH // 2],  # Aggressive truncation
-            cards=self.cards[:100],  # Limit cards
-            options=self.options,
-            layout=self.layout,
-            typography=self.typography,
-            visual=self.visual,
-            preview=self.preview,
-            export_history=self.export_history[:10],  # Limit history
-            total_cards_generated=self.total_cards_generated,
-            session_id=self.session_id
-        )
-        
-        return truncated
+
+        violations = self.check_quota_violations()
+        logging.warning(f"Truncating snapshot due to quota violations: {violations}")
+
+        # Start with current data
+        truncated_data = {
+            'version': self.version,
+            'created_at': self.created_at,
+            'last_modified': datetime.now(timezone.utc).isoformat(),
+            'input_text': self.input_text,
+            'cards': self.cards.copy(),
+            'options': self.options,
+            'layout': self.layout,
+            'typography': self.typography,
+            'visual': self.visual,
+            'preview': self.preview,
+            'export_history': self.export_history.copy(),
+            'total_cards_generated': self.total_cards_generated,
+            'session_id': self.session_id
+        }
+
+        # Apply intelligent truncation strategies
+
+        # 1. Truncate input text if too long
+        if len(truncated_data['input_text']) > MAX_INPUT_TEXT_LENGTH:
+            truncated_data['input_text'] = truncated_data['input_text'][:MAX_INPUT_TEXT_LENGTH]
+            logging.info("Truncated input text to fit limits")
+
+        # 2. Limit cards count (keep most recent if they have timestamps)
+        if len(truncated_data['cards']) > MAX_CARDS_PER_SNAPSHOT:
+            # Try to sort by creation time if available
+            try:
+                sorted_cards = sorted(truncated_data['cards'],
+                                    key=lambda c: c.get('created_at', ''), reverse=True)
+                truncated_data['cards'] = sorted_cards[:MAX_CARDS_PER_SNAPSHOT]
+            except Exception:
+                # Fallback to simple truncation
+                truncated_data['cards'] = truncated_data['cards'][:MAX_CARDS_PER_SNAPSHOT]
+            logging.info(f"Truncated cards to {MAX_CARDS_PER_SNAPSHOT}")
+
+        # 3. Limit export history (keep most recent)
+        if len(truncated_data['export_history']) > MAX_EXPORT_HISTORY_RECORDS:
+            try:
+                sorted_history = sorted(truncated_data['export_history'],
+                                      key=lambda r: r.get('timestamp', ''), reverse=True)
+                truncated_data['export_history'] = sorted_history[:MAX_EXPORT_HISTORY_RECORDS]
+            except Exception:
+                truncated_data['export_history'] = truncated_data['export_history'][:MAX_EXPORT_HISTORY_RECORDS]
+            logging.info(f"Truncated export history to {MAX_EXPORT_HISTORY_RECORDS}")
+
+        # 4. If still too large, apply more aggressive truncation
+        temp_snapshot = UserSnapshot(**truncated_data)
+        if temp_snapshot.is_too_large():
+            # More aggressive input text truncation
+            truncated_data['input_text'] = truncated_data['input_text'][:MAX_INPUT_TEXT_LENGTH // 2]
+            # Reduce cards further
+            truncated_data['cards'] = truncated_data['cards'][:min(100, len(truncated_data['cards']))]
+            # Reduce export history further
+            truncated_data['export_history'] = truncated_data['export_history'][:10]
+            logging.warning("Applied aggressive truncation to meet size limits")
+
+        return UserSnapshot(**truncated_data)
 
 
 def migrate_snapshot(data: Dict[str, Any]) -> UserSnapshot:
     """
-    Migrate snapshot data to current version.
-    
+    Migrate snapshot data to current version with comprehensive error handling.
+
     Args:
         data: Raw snapshot data dictionary
-        
+
     Returns:
         UserSnapshot with current version
+
+    Raises:
+        ValueError: If migration fails after retries
     """
+    original_data = data.copy() if ENABLE_MIGRATION_BACKUP else None
     version = data.get('version', 1)
-    
+
     if version == CURRENT_SNAPSHOT_VERSION:
-        # Already current version
+        # Already current version, but still apply field migration
+        field_migration_result = migrate_snapshot_data(data)
+        if field_migration_result.migration_applied:
+            logging.info(f"Applied field migration to current version snapshot: {list(field_migration_result.migrated_fields.keys())}")
+            for warning in field_migration_result.warnings:
+                logging.warning(f"Field migration warning: {warning}")
+            for error in field_migration_result.errors:
+                logging.error(f"Field migration error: {error}")
         return UserSnapshot(**data)
-    
-    # Migration chain
+
+    if version > CURRENT_SNAPSHOT_VERSION:
+        logging.warning(f"Snapshot version {version} is newer than supported {CURRENT_SNAPSHOT_VERSION}")
+        # Try to load anyway, might be forward compatible
+        try:
+            return UserSnapshot(**data)
+        except Exception as e:
+            logging.error(f"Failed to load newer snapshot version: {e}")
+            raise ValueError(f"Unsupported snapshot version {version}")
+
+    # Perform migration chain with retry logic
+    for attempt in range(MAX_MIGRATION_RETRIES):
+        try:
+            migrated_data = _perform_migration_chain(data.copy(), version)
+            return UserSnapshot(**migrated_data)
+        except Exception as e:
+            logging.warning(f"Migration attempt {attempt + 1} failed: {e}")
+            if attempt == MAX_MIGRATION_RETRIES - 1:
+                # Final attempt failed, try emergency fallback
+                if original_data and ENABLE_MIGRATION_BACKUP:
+                    logging.error("All migration attempts failed, attempting emergency recovery")
+                    return _emergency_migration_fallback(original_data)
+                else:
+                    raise ValueError(f"Migration failed after {MAX_MIGRATION_RETRIES} attempts: {e}")
+
+    # Should never reach here
+    raise ValueError("Migration failed unexpectedly")
+
+
+def _perform_migration_chain(data: Dict[str, Any], from_version: int) -> Dict[str, Any]:
+    """
+    Perform the complete migration chain from given version to current.
+
+    Args:
+        data: Snapshot data to migrate
+        from_version: Starting version
+
+    Returns:
+        Migrated data at current version
+    """
+    current_data = data.copy()
+    version = from_version
+
+    # Migration chain - each step validates and transforms data
     if version == 1:
-        data = _migrate_v1_to_v2(data)
+        current_data = _migrate_v1_to_v2(current_data)
         version = 2
-    
+        logging.info("Migrated snapshot from v1 to v2")
+
+    if version == 2:
+        current_data = _migrate_v2_to_v3(current_data)
+        version = 3
+        logging.info("Migrated snapshot from v2 to v3")
+
     # Add future migrations here
-    # if version == 2:
-    #     data = _migrate_v2_to_v3(data)
-    #     version = 3
-    
-    return UserSnapshot(**data)
+    # if version == 3:
+    #     current_data = _migrate_v3_to_v4(current_data)
+    #     version = 4
+
+    # Apply field migration to ensure canonical field names
+    field_migration_result = migrate_snapshot_data(current_data)
+    if field_migration_result.migration_applied:
+        logging.info(f"Applied field migration: {list(field_migration_result.migrated_fields.keys())}")
+        for warning in field_migration_result.warnings:
+            logging.warning(f"Field migration warning: {warning}")
+        for error in field_migration_result.errors:
+            logging.error(f"Field migration error: {error}")
+
+    # Validate final version
+    if version != CURRENT_SNAPSHOT_VERSION:
+        raise ValueError(f"Migration chain incomplete: reached v{version}, expected v{CURRENT_SNAPSHOT_VERSION}")
+
+    return current_data
+
+
+def _emergency_migration_fallback(data: Dict[str, Any]) -> UserSnapshot:
+    """
+    Emergency fallback migration that creates a minimal valid snapshot.
+    Used when normal migration fails to prevent data loss.
+    """
+    logging.warning("Using emergency migration fallback - some data may be lost")
+
+    # Extract only the most critical data
+    safe_data = {
+        'version': CURRENT_SNAPSHOT_VERSION,
+        'created_at': data.get('created_at', datetime.now(timezone.utc).isoformat()),
+        'last_modified': datetime.now(timezone.utc).isoformat(),
+        'input_text': str(data.get('input_text', ''))[:MAX_INPUT_TEXT_LENGTH],
+        'cards': [],  # Start with empty cards to avoid corruption
+        'options': {},
+        'layout': {},
+        'typography': {},
+        'visual': {},
+        'preview': {},
+        'export_history': [],
+        'total_cards_generated': 0,
+        'session_id': str(uuid.uuid4())
+    }
+
+    # Try to preserve input text and basic options
+    try:
+        if 'cards' in data and isinstance(data['cards'], list):
+            # Limit cards to prevent memory issues
+            safe_cards = data['cards'][:MAX_CARDS_PER_SNAPSHOT]
+            safe_data['cards'] = safe_cards
+    except Exception:
+        pass  # Keep empty cards
+
+    try:
+        if 'total_cards_generated' in data:
+            safe_data['total_cards_generated'] = int(data['total_cards_generated'])
+    except Exception:
+        pass  # Keep default 0
+
+    return UserSnapshot(**safe_data)
 
 
 def _migrate_v1_to_v2(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -362,6 +565,90 @@ def _migrate_v1_to_v2(data: Dict[str, Any]) -> Dict[str, Any]:
         migrated['export_history'] = new_history
     
     return migrated
+
+
+def _migrate_v2_to_v3(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Migrate from version 2 to version 3."""
+    # V2 -> V3 changes:
+    # - Enhanced card format with stable IDs
+    # - Improved state management structure
+    # - Better error handling and validation
+    # - Enhanced export history with more metadata
+
+    migrated = data.copy()
+    migrated['version'] = 3
+
+    # Update timestamp
+    migrated['last_modified'] = datetime.now(timezone.utc).isoformat()
+
+    # Enhance cards with stable IDs if using new card system
+    if 'cards' in migrated and isinstance(migrated['cards'], list):
+        enhanced_cards = []
+        for i, card in enumerate(migrated['cards']):
+            if isinstance(card, dict):
+                # Ensure card has required fields
+                enhanced_card = {
+                    'id': card.get('id', str(uuid.uuid4())),
+                    'hanzi': card.get('hanzi', ''),
+                    'pinyin': card.get('pinyin', ''),
+                    'english': card.get('english', ''),
+                    'version': card.get('version', 1),
+                    'created_at': card.get('created_at', datetime.now(timezone.utc).isoformat())
+                }
+                enhanced_cards.append(enhanced_card)
+        migrated['cards'] = enhanced_cards
+
+    # Enhance export history with additional metadata
+    if 'export_history' in migrated and isinstance(migrated['export_history'], list):
+        enhanced_history = []
+        for record in migrated['export_history']:
+            if isinstance(record, dict):
+                enhanced_record = record.copy()
+                # Add filename if missing
+                if 'filename' not in enhanced_record:
+                    format_type = enhanced_record.get('format_type', 'unknown')
+                    card_count = enhanced_record.get('card_count', 0)
+                    timestamp = enhanced_record.get('timestamp', '')
+                    enhanced_record['filename'] = f"cards_{card_count}_{timestamp[:10]}.{format_type}"
+                enhanced_history.append(enhanced_record)
+        migrated['export_history'] = enhanced_history
+
+    # Add new state management fields
+    if 'state_metadata' not in migrated:
+        migrated['state_metadata'] = {
+            'last_digest': None,
+            'cache_version': 1,
+            'feature_flags_snapshot': {}
+        }
+
+    # Validate and clean up data
+    migrated = _validate_and_clean_v3_data(migrated)
+
+    return migrated
+
+
+def _validate_and_clean_v3_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate and clean v3 snapshot data."""
+    # Ensure input text is within limits
+    if 'input_text' in data and len(data['input_text']) > MAX_INPUT_TEXT_LENGTH:
+        data['input_text'] = data['input_text'][:MAX_INPUT_TEXT_LENGTH]
+        logging.warning("Input text truncated during v3 migration")
+
+    # Ensure cards count is within limits
+    if 'cards' in data and isinstance(data['cards'], list):
+        if len(data['cards']) > MAX_CARDS_PER_SNAPSHOT:
+            data['cards'] = data['cards'][:MAX_CARDS_PER_SNAPSHOT]
+            logging.warning(f"Cards truncated to {MAX_CARDS_PER_SNAPSHOT} during v3 migration")
+
+    # Ensure export history is within limits
+    if 'export_history' in data and isinstance(data['export_history'], list):
+        if len(data['export_history']) > MAX_EXPORT_HISTORY_RECORDS:
+            # Keep most recent records
+            data['export_history'].sort(key=lambda r: r.get('timestamp', ''), reverse=True)
+            data['export_history'] = data['export_history'][:MAX_EXPORT_HISTORY_RECORDS]
+            logging.warning("Export history truncated during v3 migration")
+
+    return data
 
 
 def validate_snapshot_data(data: Any) -> bool:

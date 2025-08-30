@@ -18,6 +18,40 @@ from core.constants import (
 
 def export_cards(cards: List[Dict[str, str]], format_type: str, **options) -> bytes:
     """Export cards to specified format and return file content."""
+    # Try to use shared render core if available
+    from core.feature_flags import get_feature_flag
+
+    if get_feature_flag('shared_render_core', False):
+        try:
+            from services.render_core import render_cards_unified, create_render_options_from_legacy
+
+            # Convert legacy options to RenderOptions
+            render_options = create_render_options_from_legacy(
+                card_size=options.get('card_size', DEFAULT_CARD_SIZE),
+                gap=options.get('gap', DEFAULT_GAP),
+                margin=options.get('margin', DEFAULT_MARGIN),
+                font_hanzi=options.get('font_hanzi', DEFAULT_FONT_HANZI),
+                font_pinyin=options.get('font_pinyin', DEFAULT_FONT_PINYIN),
+                font_english=options.get('font_english', DEFAULT_FONT_ENGLISH),
+                page_size=options.get('page_size', DEFAULT_PAGE_SIZE),
+                hanzi_font=options.get('hanzi_font', DEFAULT_HANZI_FONT),
+                background_color=options.get('background_color', DEFAULT_BACKGROUND_COLOR),
+                rows=options.get('rows', DEFAULT_ROWS),
+                cols=options.get('cols', DEFAULT_COLS),
+                auto_fill=options.get('auto_fill', DEFAULT_AUTO_FILL)
+            )
+
+            # Use unified rendering
+            result = render_cards_unified(cards, render_options, output_format=format_type)
+            if result.success:
+                return result.content
+        except Exception as e:
+            # Log error and fall back to legacy implementation
+            import logging
+            logging.warning(f"Shared render core failed, falling back to legacy: {e}")
+            pass
+
+    # Legacy implementation
     tmp_file = tempfile.NamedTemporaryFile(suffix=f'.{format_type}', delete=False)
     tmp_file_path = tmp_file.name
     tmp_file.close()  # Close the file handle immediately

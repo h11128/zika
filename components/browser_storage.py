@@ -36,48 +36,72 @@ class BrowserStorageManager:
     def hydrate_once(self) -> bool:
         """
         Hydrate session state from localStorage once per session.
-        
+
         Returns:
             True if hydration occurred and rerun is needed, False otherwise
         """
         if not is_persistence_enabled():
             return False
-        
+
         if self.hydrated:
             return False
-        
+
         # Check if we've already hydrated this session
         if hasattr(st.session_state, '_storage_hydrated'):
             self.hydrated = True
             return False
-        
+
         try:
-            # Get data from localStorage
-            stored_data = self._get_from_localstorage()
-            
+            # Try multiple methods to get localStorage data
+            stored_data = self._get_from_localstorage_reliable()
+
             if stored_data:
                 snapshot = load_snapshot_from_data(stored_data)
                 if snapshot:
                     # Apply to session state
                     snapshot.apply_to_session_state(st.session_state)
-                    
+
                     # Mark as hydrated
                     st.session_state._storage_hydrated = True
                     self.hydrated = True
-                    
+
                     logging.info("Session state hydrated from localStorage")
                     return True  # Rerun needed
-            
+
             # Mark as hydrated even if no data found
             st.session_state._storage_hydrated = True
             self.hydrated = True
-            
+
         except Exception as e:
             logging.error(f"Failed to hydrate from localStorage: {e}")
             st.session_state._storage_hydrated = True
             self.hydrated = True
-        
+
         return False
+
+    def _get_from_localstorage_reliable(self) -> Optional[Dict[str, Any]]:
+        """Get data from localStorage using multiple fallback methods."""
+        # Method 1: Try session state bridge
+        storage_state_key = f"_localStorage_{STORAGE_KEY}"
+        if storage_state_key in st.session_state:
+            return st.session_state[storage_state_key]
+
+        # Method 2: Try URL parameters (if data was passed via URL)
+        try:
+            query_params = st.experimental_get_query_params()
+            if 'localStorage_data' in query_params:
+                data_str = query_params['localStorage_data'][0]
+                return json.loads(data_str)
+        except Exception:
+            pass
+
+        # Method 3: Try the original JavaScript method
+        return self._get_from_localstorage()
+
+    def _set_localstorage_in_session(self, data: Dict[str, Any]) -> None:
+        """Set localStorage data in session state for reliable access."""
+        storage_state_key = f"_localStorage_{STORAGE_KEY}"
+        st.session_state[storage_state_key] = data
     
     def schedule_save(self) -> None:
         """Schedule a debounced save to localStorage."""
@@ -190,11 +214,18 @@ class BrowserStorageManager:
             return {'has_data': False, 'error': str(e)}
     
     def _get_from_localstorage(self) -> Optional[Dict[str, Any]]:
-        """Get data from localStorage using JavaScript."""
+        """Get data from localStorage using JavaScript with session state bridge."""
         if not get_feature_flag('browser_storage_js', True):
             return None
-        
-        # JavaScript code to get data from localStorage
+
+        # Use session state as a bridge for localStorage data
+        storage_state_key = f"_localStorage_{STORAGE_KEY}"
+
+        # Check if we already have the data in session state
+        if storage_state_key in st.session_state:
+            return st.session_state[storage_state_key]
+
+        # JavaScript code to get data from localStorage and store in session state
         js_code = f"""
         <script>
         function getStorageData() {{
@@ -202,41 +233,40 @@ class BrowserStorageManager:
                 const data = localStorage.getItem('{STORAGE_KEY}');
                 if (data) {{
                     const parsed = JSON.parse(data);
-                    // Send data to Streamlit
-                    window.parent.postMessage({{
-                        type: 'storage_data',
-                        data: parsed
-                    }}, '*');
+                    // Store in a hidden input that Streamlit can read
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'localStorage_data';
+                    hiddenInput.value = data;
+                    document.body.appendChild(hiddenInput);
+
+                    // Also try to communicate via window name (fallback method)
+                    window.name = 'localStorage_data:' + data;
+
+                    console.log('localStorage data retrieved and stored');
                 }} else {{
-                    window.parent.postMessage({{
-                        type: 'storage_data',
-                        data: null
-                    }}, '*');
+                    console.log('No localStorage data found');
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'localStorage_data';
+                    hiddenInput.value = '';
+                    document.body.appendChild(hiddenInput);
                 }}
             }} catch (error) {{
                 console.error('Failed to get localStorage data:', error);
-                window.parent.postMessage({{
-                    type: 'storage_error',
-                    error: error.message
-                }}, '*');
             }}
         }}
-        
+
         // Execute immediately
         getStorageData();
         </script>
         """
-        
-        # Use session state to store the result
-        storage_key = f"_storage_result_{int(time.time() * 1000)}"
-        
+
         # Render the JavaScript
-        components.html(js_code, height=0, key=storage_key)
-        
-        # For now, return None as we can't easily get the result synchronously
-        # In a real implementation, this would use a more sophisticated
-        # communication mechanism
-        return None
+        components.html(js_code, height=0, key=f"get_storage_{int(time.time() * 1000)}")
+
+        # Try to get data from session state (may have been set by previous runs)
+        return st.session_state.get(storage_state_key, None)
     
     def _save_to_localstorage(self, data: Dict[str, Any]) -> None:
         """Save data to localStorage using JavaScript."""

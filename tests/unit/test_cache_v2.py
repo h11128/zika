@@ -263,6 +263,179 @@ class TestCacheDecorators:
         with patch('services.cache_v2.use_cache_v2', return_value=False):
             result = cached_preview_render(test_func, 1, 2)
             assert result == 3
+
+
+class TestPreviewDataclassesV2:
+    """Test v2 preview functions using dataclasses."""
+
+    def test_create_page_preview_html_v2(self):
+        """Test create_page_preview_html_v2 with dataclasses."""
+        from services.cache_v2 import create_page_preview_html_v2
+        from services.preview_types import LayoutOptions, Typography, VisualOptions
+
+        # Create test data
+        cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
+        page_num = 0
+
+        layout = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        # Test function
+        result = create_page_preview_html_v2(cards, page_num, layout, typography, visual)
+
+        # Verify result is HTML string
+        assert isinstance(result, str)
+        assert '<html>' in result or '<div' in result
+        assert 'you' in result  # Should contain card content
+
+    def test_cached_create_page_preview_html_v2(self):
+        """Test cached version of create_page_preview_html_v2."""
+        from services.cache_v2 import cached_create_page_preview_html_v2
+        from services.preview_types import LayoutOptions, Typography, VisualOptions
+
+        # Create test data
+        cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
+        page_num = 0
+
+        layout = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        # Test cached function
+        with patch('services.cache_v2.use_cache_v2', return_value=True):
+            result = cached_create_page_preview_html_v2(cards, page_num, layout, typography, visual)
+
+            # Verify result is HTML string
+            assert isinstance(result, str)
+            assert '<html>' in result or '<div' in result
+
+    def test_create_simple_grid_html_v2(self):
+        """Test create_simple_grid_html_v2 with dataclasses."""
+        from services.cache_v2 import create_simple_grid_html_v2
+        from services.preview_types import LayoutOptions, Typography, VisualOptions
+
+        # Create test data
+        cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
+
+        layout = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='🔲 简单网格'
+        )
+
+        # Test function
+        result = create_simple_grid_html_v2(cards, layout, typography, visual)
+
+        # Verify result is HTML string
+        assert isinstance(result, str)
+        assert '<html>' in result or '<div' in result
+        assert 'you' in result  # Should contain card content
+
+    def test_cached_create_simple_grid_html_v2(self):
+        """Test cached version of create_simple_grid_html_v2."""
+        from services.cache_v2 import cached_create_simple_grid_html_v2
+        from services.preview_types import LayoutOptions, Typography, VisualOptions
+
+        # Create test data
+        cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
+
+        layout = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='🔲 简单网格'
+        )
+
+        # Test cached function
+        with patch('services.cache_v2.use_cache_v2', return_value=True):
+            result = cached_create_simple_grid_html_v2(cards, layout, typography, visual)
+
+            # Verify result is HTML string
+            assert isinstance(result, str)
+            assert '<html>' in result or '<div' in result
+
+    def test_dataclass_cache_key_consistency(self):
+        """Test that dataclasses produce consistent cache keys."""
+        from services.cache_v2 import cached_preview_render, create_page_preview_html_v2
+        from services.preview_types import LayoutOptions, Typography, VisualOptions
+
+        # Create identical dataclasses
+        layout1 = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        layout2 = LayoutOptions(
+            rows=2, cols=2, auto_fill=True,
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            page_size='A4'
+        )
+
+        typography = Typography(
+            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font='SimHei'
+        )
+
+        visual = VisualOptions(
+            background_color='#ffffff',
+            preview_mode='📄 完整页面'
+        )
+
+        cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
+
+        # Test that identical dataclasses produce same cache behavior
+        with patch('services.cache_v2.use_cache_v2', return_value=True):
+            # Both calls should use the same cache key since dataclasses are identical
+            result1 = cached_preview_render(create_page_preview_html_v2, cards, 0, layout1, typography, visual)
+            result2 = cached_preview_render(create_page_preview_html_v2, cards, 0, layout2, typography, visual)
+
+            # Results should be identical (from cache)
+            assert result1 == result2
     
     def test_cached_preview_render_enabled(self):
         """Test cached preview render when cache is enabled."""

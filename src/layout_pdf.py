@@ -141,11 +141,11 @@ class PDFCardGenerator:
         # If no specific pinyin font found, use the same as Chinese
         if self.pinyin_font == "Helvetica" and self.chinese_font != "Helvetica":
             self.pinyin_font = self.chinese_font
-    
+
     def _draw_card_border(self, c: canvas.Canvas, x: float, y: float) -> None:
         """
         Draw card border.
-        
+
         Args:
             c: Canvas object
             x: Left position
@@ -154,7 +154,7 @@ class PDFCardGenerator:
         c.setStrokeColor(black)
         c.setLineWidth(2)
         c.rect(x, y, self.card_size, self.card_size, stroke=1, fill=0)
-    
+
     def _draw_card_text(self, c: canvas.Canvas, card: Dict[str, str], x: float, y: float,
                        font_hanzi: int, font_pinyin: int, font_english: int) -> None:
         """
@@ -265,12 +265,12 @@ class PDFCardGenerator:
                     text_width = c.stringWidth(line, self.english_font, font_english)
                     text_x = center_x - text_width / 2
                     c.drawString(text_x, start_y - i * line_height, line)
-    
+
     def _add_single_card(self, c: canvas.Canvas, card: Dict[str, str], row: int, col: int,
                         font_hanzi: int, font_pinyin: int, font_english: int) -> None:
         """
         Add a single card to the page.
-        
+
         Args:
             c: Canvas object
             card: Card data dictionary
@@ -290,13 +290,13 @@ class PDFCardGenerator:
         x = start_x + col * (self.card_size + self.gap)
         # Row 0 is top row -> its bottom = start_y + 2*(card+gap)
         y = start_y + (2 - row) * (self.card_size + self.gap)
-        
+
         # Draw border
         self._draw_card_border(c, x, y)
-        
+
         # Draw text
         self._draw_card_text(c, card, x, y, font_hanzi, font_pinyin, font_english)
-    
+
     def add_cards_page(self, c: canvas.Canvas, cards: List[Dict[str, str]],
                       font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14) -> None:
         """
@@ -388,20 +388,74 @@ def create_sample_cards() -> List[Dict[str, str]]:
 if __name__ == "__main__":
     # Test the PDF generator
     print("Testing PDF generator...")
-    
+
     generator = PDFCardGenerator(page_size="A4", card_size_cm=6.0, gap_cm=0.6, margin_cm=1.0)
-    
+
     print("Layout info:")
     layout_info = generator.get_layout_info()
     for key, value in layout_info.items():
         print(f"  {key}: {value}")
-    
+
     # Generate sample PDF
     sample_cards = create_sample_cards()
     output_path = "../out/test_cards.pdf"
-    
+
     success = generator.generate_pdf(sample_cards, output_path)
     if success:
         print(f"\nSample PDF generated: {output_path}")
     else:
         print("\nFailed to generate PDF")
+
+
+def generate_pdf_with_shared_core(cards: List[Dict[str, str]], output_path: str,
+                                 render_options: 'RenderOptions') -> bool:
+    """
+    Generate PDF using shared render core if available, fallback to legacy.
+
+    Args:
+        cards: List of card data
+        output_path: Output file path
+        render_options: Unified render options
+
+    Returns:
+        True if successful
+    """
+    # Try to use shared render core if available
+    try:
+        from core.feature_flags import get_feature_flag
+
+        if get_feature_flag('shared_render_core', True):
+            from services.render_core import render_cards_unified
+
+            # Use unified rendering for PDF
+            result = render_cards_unified(cards, render_options, output_format='pdf', output_path=output_path)
+
+            if result.success:
+                return True
+            else:
+                # Fall back to legacy implementation
+                import logging
+                logging.warning(f"Shared render core failed for PDF, falling back: {result.error_message}")
+
+    except Exception as e:
+        # Fall back to legacy implementation
+        import logging
+        logging.warning(f"Shared render core not available for PDF, falling back: {e}")
+
+    # Legacy implementation fallback
+    generator = PDFCardGenerator(
+        page_size=render_options.page_size,
+        card_size_cm=render_options.card_size_cm,
+        gap_cm=render_options.gap_cm,
+        margin_cm=render_options.margin_cm,
+        rows=render_options.rows,
+        cols=render_options.cols,
+        auto_fill=render_options.auto_fill
+    )
+
+    return generator.generate_pdf(
+        cards, output_path,
+        font_hanzi=render_options.font_hanzi_pt,
+        font_pinyin=render_options.font_pinyin_pt,
+        font_english=render_options.font_english_pt
+    )
