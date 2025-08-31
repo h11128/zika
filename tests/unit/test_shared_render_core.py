@@ -23,7 +23,7 @@ class TestSharedRenderCoreIntegration:
         )
         
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         
@@ -51,9 +51,9 @@ class TestSharedRenderCoreIntegration:
         assert render_options.page_size == 'A4'
         assert render_options.layout_auto_fill is True
 
-        assert render_options.font_hanzi_pt == 48
-        assert render_options.font_pinyin_pt == 18
-        assert render_options.font_english_pt == 14
+        assert render_options.hanzi_font_size_pt == 48
+        assert render_options.pinyin_font_size_pt == 18
+        assert render_options.english_font_size_pt == 14
         assert render_options.hanzi_font_family == 'SimHei'
 
         assert render_options.background_color == '#ffffff'
@@ -83,7 +83,7 @@ class TestSharedRenderCoreIntegration:
         )
         
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         
@@ -135,7 +135,7 @@ class TestSharedRenderCoreIntegration:
         )
         
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         
@@ -179,7 +179,7 @@ class TestSharedRenderCoreIntegration:
         )
         
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         
@@ -224,7 +224,7 @@ class TestSharedRenderCoreIntegration:
         render_options = RenderOptions(
             layout_rows=2, layout_cols=2, gap_cm=0.5, margin_cm=1.0,
             card_size_cm=5.5, page_size='A4', layout_auto_fill=True,
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei',
             background_color='#ffffff'
         )
@@ -266,7 +266,7 @@ class TestSharedRenderCoreIntegration:
         render_options = RenderOptions(
             layout_rows=2, layout_cols=2, gap_cm=0.5, margin_cm=1.0,
             card_size_cm=5.5, page_size='A4', layout_auto_fill=True,
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei',
             background_color='#ffffff'
         )

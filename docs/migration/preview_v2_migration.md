@@ -47,7 +47,7 @@ result = create_page_preview_html(
     pinyin_font_size_pt=18,
     english_font_size_pt=14,
     page_size='A4',
-    hanzi_font='SimHei',
+    hanzi_font_family='SimHei',
     background_color='#ffffff',
     rows=3,
     cols=2,
@@ -71,7 +71,7 @@ typography = Typography(
     font_hanzi_pt=48,
     font_pinyin_pt=18,
     font_english_pt=14,
-    hanzi_font='SimHei'
+    hanzi_font_family='SimHei'
 )
 
 visual = VisualOptions(
@@ -99,7 +99,7 @@ from services.preview_types import convert_legacy_params_to_preview_params
 preview_params = convert_legacy_params_to_preview_params(
     card_size=5.5, gap=0.5, margin=1.0, page_size='A4',
     hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
-    hanzi_font='SimHei', background_color='#ffffff', 
+    hanzi_font_family='SimHei', background_color='#ffffff', 
     preview_mode='📄 完整页面',
     rows=3, cols=2, auto_fill=True
 )

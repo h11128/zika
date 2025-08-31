@@ -73,18 +73,18 @@ Decisions:
   - E2E: unchanged; measure first frame and rerun counts in dev.
 
 4.1 State domains and keys
-- Keys: layout.rows/cols/auto_fill, layout.gap_cm/margin_cm/card_size; ui.hanzi_font/ui.background_color/ui.preview_mode; nav.current_page (nav_index); caches.preview_params_digest
+- Keys: layout.rows/cols/auto_fill, layout.gap_cm/margin_cm/card_size; ui.hanzi_font_family/ui.background_color/ui.preview_mode; nav.current_page (nav_index); caches.preview_params_digest
 - Domains:
   - Processing: input_text, auto_pinyin, auto_translate, translate_order, segmentation
   - Layout: rows, cols, gap_cm, margin_cm, page_size, auto_fill, card_size
-  - Style: hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font, background_color
+  - Style: hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font_family, background_color
   - Navigation: nav_index (int)
 
 4.2 Digests & invalidation
 - normalize_for_digest: round floats to 4 decimals; sort sets; stringify Decimals; JSON‑serializable only
 - processing_digest = stable_digest({input_text, auto_pinyin, auto_translate, translate_order})
 - layout_digest = stable_digest({rows, cols, gap_cm, margin_cm, page_size, auto_fill, card_size})
-- style_digest = stable_digest({hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font, background_color})
+- style_digest = stable_digest({hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font_family, background_color})
 - PREVIEW_CACHE_SCHEMA_VERSION / EXPORT_SCHEMA_VERSION constants; include code_version in cached args
 - preview_params_digest = stable_digest({layout_digest, style_digest, preview_mode, cards_count, PREVIEW_CACHE_SCHEMA_VERSION, code_version})
 - Page‑slice key = (preview_params_digest, nav_index)
@@ -529,7 +529,7 @@ flowchart TD
 B. Schemas
 - PaginateInfo(cards_per_page:int, total_pages:int)
 - LayoutOptions(rows:int, cols:int, auto_fill:bool, card_size_cm:float, gap_cm:float, margin_cm:float, page_size:str)
-- Typography(font_hanzi_pt:int, font_pinyin_pt:int, font_english_pt:int, hanzi_font:str)
+- Typography(font_hanzi_pt:int, font_pinyin_pt:int, font_english_pt:int, hanzi_font_family:str)
 - VisualOptions(background_color:str)
 - UserSnapshot(version:int, input_text:str, options:dict, layout:dict, typography:dict, visual:dict, preview:dict, cards: List[Card], export_history: List[ExportRecord])
 - ErrorInfo(type:str, message:str, context:dict, timestamp:datetime)

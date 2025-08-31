@@ -106,7 +106,7 @@ if st.button("选择", key=f"color_btn_{i}"):
 
 ```python
 # 简单网格预览
-def create_simple_grid_html(cards, hanzi_font, background_color):
+def create_simple_grid_html(cards, hanzi_font_family, background_color):
     return f"""
     .simple-card {{
         background: {background_color};

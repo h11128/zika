@@ -455,7 +455,7 @@ def generate_pdf_with_shared_core(cards: List[Dict[str, str]], output_path: str,
 
     return generator.generate_pdf(
         cards, output_path,
-        hanzi_font_size=render_options.font_hanzi_pt,
-        pinyin_font_size=render_options.font_pinyin_pt,
-        english_font_size=render_options.font_english_pt
+        hanzi_font_size=render_options.hanzi_font_size_pt,
+        pinyin_font_size=render_options.pinyin_font_size_pt,
+        english_font_size=render_options.english_font_size_pt
     )

@@ -177,9 +177,9 @@ class TestTypographyManager:
         manager = TypographyManager()
         
         normalized = manager.normalize_typography_params(
-            font_hanzi_pt=48,
-            font_pinyin_pt=18,
-            font_english_pt=14,
+            hanzi_font_size_pt=48,
+            pinyin_font_size_pt=18,
+            english_font_size_pt=14,
             hanzi_font_family="SimHei",
             render_target=RenderTarget.SCREEN
         )
@@ -229,9 +229,9 @@ class TestGlobalFunctions:
     def test_normalize_typography_for_render_target(self):
         """Test convenience function for typography normalization."""
         normalized = normalize_typography_for_render_target(
-            font_hanzi_pt=48,
-            font_pinyin_pt=18,
-            font_english_pt=14,
+            hanzi_font_size_pt=48,
+            pinyin_font_size_pt=18,
+            english_font_size_pt=14,
             hanzi_font_family="SimHei",
             render_target=RenderTarget.PDF
         )

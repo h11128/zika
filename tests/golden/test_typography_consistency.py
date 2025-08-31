@@ -20,9 +20,9 @@ class TestTypographyGoldenTests:
     def sample_typography_params(self):
         """Sample typography parameters for testing."""
         return {
-            "font_hanzi_pt": 48,
-            "font_pinyin_pt": 18,
-            "font_english_pt": 14,
+            "hanzi_font_size_pt": 48,
+            "pinyin_font_size_pt": 18,
+            "english_font_size_pt": 14,
             "hanzi_font_family": "SimHei"
         }
     
@@ -224,7 +224,7 @@ class TestTypographyGoldenTests:
         """Test typography with edge case font sizes."""
         # Very small fonts
         small_normalized = normalize_typography_for_render_target(
-            font_hanzi_pt=12, font_pinyin_pt=8, font_english_pt=6,
+            hanzi_font_size_pt=12, pinyin_font_size_pt=8, english_font_size_pt=6,
             hanzi_font_family="SimHei", render_target=RenderTarget.SCREEN
         )
         
@@ -234,7 +234,7 @@ class TestTypographyGoldenTests:
         
         # Very large fonts
         large_normalized = normalize_typography_for_render_target(
-            font_hanzi_pt=120, font_pinyin_pt=60, font_english_pt=48,
+            hanzi_font_size_pt=120, pinyin_font_size_pt=60, english_font_size_pt=48,
             hanzi_font_family="SimHei", render_target=RenderTarget.SCREEN
         )
         
@@ -248,7 +248,7 @@ class TestTypographyGoldenTests:
         
         for font in fonts_to_test:
             normalized = normalize_typography_for_render_target(
-                font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+                hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
                 hanzi_font_family=font, render_target=RenderTarget.SCREEN
             )
             

@@ -24,9 +24,9 @@ class RenderOptions:
     page_size: str = 'A4'
     
     # Typography options
-    font_hanzi_pt: int = 48
-    font_pinyin_pt: int = 18
-    font_english_pt: int = 14
+    hanzi_font_size_pt: int = 48
+    pinyin_font_size_pt: int = 18
+    english_font_size_pt: int = 14
     hanzi_font_family: str = 'SimHei'
     
     # Visual options
@@ -50,9 +50,9 @@ class RenderOptions:
         self.margin_cm = max(0.0, self.margin_cm)
         self.layout_rows = max(1, self.layout_rows)
         self.layout_cols = max(1, self.layout_cols)
-        self.font_hanzi_pt = max(8, self.font_hanzi_pt)
-        self.font_pinyin_pt = max(6, self.font_pinyin_pt)
-        self.font_english_pt = max(6, self.font_english_pt)
+        self.hanzi_font_size_pt = max(8, self.hanzi_font_size_pt)
+        self.pinyin_font_size_pt = max(6, self.pinyin_font_size_pt)
+        self.english_font_size_pt = max(6, self.english_font_size_pt)
 
 
 @dataclass
@@ -152,7 +152,7 @@ def _render_empty_page(options: RenderOptions) -> str:
         border: 2px dashed #ccc;
         border-radius: 8px;
         font-family: {options.hanzi_font_family}, sans-serif;
-        font-size: {options.font_hanzi_pt}px;
+        font-size: {options.hanzi_font_size_pt}px;
         color: #666;
     ">
         <div style="text-align: center;">
@@ -265,7 +265,7 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
         }}
         
         .hanzi {{
-            font-size: {options.font_hanzi_pt}pt;
+            font-size: {options.hanzi_font_size_pt}pt;
             font-weight: bold;
             color: #000;
             margin-bottom: 0.2cm;
@@ -273,14 +273,14 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
         }}
         
         .pinyin {{
-            font-size: {options.font_pinyin_pt}pt;
+            font-size: {options.pinyin_font_size_pt}pt;
             color: #666;
             margin-bottom: 0.2cm;
             line-height_cm: 1.2;
         }}
         
         .english {{
-            font-size: {options.font_english_pt}pt;
+            font-size: {options.english_font_size_pt}pt;
             color: #333;
             line-height_cm: 1.2;
         }}
@@ -361,9 +361,9 @@ def create_render_options_from_legacy(card_size_cm: float, gap_cm: float, margin
         layout_cols=layout_cols,
         layout_auto_fill=layout_auto_fill,
         page_size=page_size,
-        font_hanzi_pt=hanzi_font_size,
-        font_pinyin_pt=pinyin_font_size,
-        font_english_pt=english_font_size,
+        hanzi_font_size_pt=hanzi_font_size,
+        pinyin_font_size_pt=pinyin_font_size,
+        english_font_size_pt=english_font_size,
         hanzi_font_family=hanzi_font_family,
         background_color=background_color,
         include_page_numbers=kwargs.get('include_page_numbers', True),
@@ -446,9 +446,9 @@ def render_pdf_unified(cards: List[Dict[str, str]], options: RenderOptions) -> R
         # Generate PDF
         success = generator.generate_pdf(
             cards, tmp_file_path,
-            hanzi_font_size=options.font_hanzi_pt,
-            pinyin_font_size=options.font_pinyin_pt,
-            english_font_size=options.font_english_pt
+            hanzi_font_size=options.hanzi_font_size_pt,
+            pinyin_font_size=options.pinyin_font_size_pt,
+            english_font_size=options.english_font_size_pt
         )
 
         if not success:
@@ -504,9 +504,9 @@ def render_pptx_unified(cards: List[Dict[str, str]], options: RenderOptions) -> 
         # Generate PPTX
         success = generator.generate_pptx(
             cards, tmp_file_path,
-            hanzi_font_size=options.font_hanzi_pt,
-            pinyin_font_size=options.font_pinyin_pt,
-            english_font_size=options.font_english_pt
+            hanzi_font_size=options.hanzi_font_size_pt,
+            pinyin_font_size=options.pinyin_font_size_pt,
+            english_font_size=options.english_font_size_pt
         )
 
         if not success:

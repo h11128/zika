@@ -117,7 +117,7 @@ def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int
             font_config, options=font_options, index=0
         )
     
-    return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font
+    return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family
 
 
 def render_options_section_adapted(adapter: UIAdapter) -> Tuple[bool, bool, str]:
@@ -261,7 +261,7 @@ def showcase_adapter_usage() -> Dict[str, Any]:
     hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family = render_typography_section_adapted(adapter)
     results['typography'] = {
         'hanzi_font_size': hanzi_font_size, 'pinyin_font_size': pinyin_font_size,
-        'english_font_size': english_font_size, 'hanzi_font_family': hanzi_font
+        'english_font_size': english_font_size, 'hanzi_font_family': hanzi_font_family
     }
     
     # Options section

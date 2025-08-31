@@ -17,7 +17,7 @@ Current signatures (as of this plan):
     pinyin_font_size_pt: int,
     english_font_size_pt: int,
     page_size: str = "A4",
-    hanzi_font: str = DEFAULT_HANZI_FONT,
+    hanzi_font_family: str = DEFAULT_HANZI_FONT,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
     rows: int = 3,
     cols: int = 3,
@@ -27,13 +27,13 @@ Current signatures (as of this plan):
   - cached_create_page_preview_html(
     cards, page_num, card_size, gap, margin,
     hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt,
-    page_size, hanzi_font, background_color,
+    page_size, hanzi_font_family, background_color,
     rows, cols, auto_fill
   ) -> str  → 14 parameters (duplication)
 
   - create_simple_grid_html(
     cards: List[Dict[str, str]],
-    hanzi_font: str = DEFAULT_HANZI_FONT,
+    hanzi_font_family: str = DEFAULT_HANZI_FONT,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
     rows: int = 3,
     cols: int = 3,
@@ -75,7 +75,7 @@ class Typography:
     font_hanzi_pt: int
     font_pinyin_pt: int
     font_english_pt: int
-    hanzi_font: str
+    hanzi_font_family: str
 
 @dataclass(frozen=True)
 class VisualOptions:
@@ -107,7 +107,7 @@ Back-compat: existing functions keep their signatures but delegate to the new v2
 ### Phase 2: Update ui/sections.py
 1. Where UI collects inputs, construct dataclasses once:
    - layout = LayoutOptions(rows, cols, auto_fill, card_size, gap, margin, page_size)
-   - type = Typography(hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font)
+   - type = Typography(hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font_family)
    - visual = VisualOptions(background_color)
 2. Replace calls to old functions with v2 signatures.
 3. Ensure cached versions are used where needed.
@@ -168,7 +168,7 @@ html = create_page_preview_html(
     pinyin_font_size_pt,
     english_font_size_pt,
     page_size,
-    hanzi_font,
+    hanzi_font_family,
     background_color,
     rows,
     cols,
@@ -192,7 +192,7 @@ typo = Typography(
     font_hanzi_pt=hanzi_font_size_pt,
     font_pinyin_pt=pinyin_font_size_pt,
     font_english_pt=english_font_size_pt,
-    hanzi_font=hanzi_font,
+    hanzi_font_family=hanzi_font_family,
 )
 
 visual = VisualOptions(background_color=background_color)
@@ -214,11 +214,11 @@ html = create_simple_grid_html_v2(cards, layout, typo, visual)
 ### Legacy function delegating to v2 (implementation sketch)
 ```python
 def create_page_preview_html(cards, page_num, card_size, gap, margin, hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt,
-                             page_size="A4", hanzi_font=DEFAULT_HANZI_FONT, background_color=DEFAULT_BACKGROUND_COLOR,
+                             page_size="A4", hanzi_font_family=DEFAULT_HANZI_FONT, background_color=DEFAULT_BACKGROUND_COLOR,
                              rows=3, cols=3, auto_fill=True) -> str:
     warnings.warn("create_page_preview_html is deprecated; use create_page_preview_html_v2", DeprecationWarning, stacklevel=2)
     layout = LayoutOptions(rows, cols, auto_fill, card_size, gap, margin, page_size)
-    typo = Typography(hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font)
+    typo = Typography(hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font_family)
     visual = VisualOptions(background_color)
     return create_page_preview_html_v2(cards, page_num, layout, typo, visual)
 ```

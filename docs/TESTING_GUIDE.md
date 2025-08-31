@@ -445,8 +445,8 @@ class TestGoldenConsistency:
         pptx_fonts = extract_font_info_from_pptx(pptx_result.file_path)
         
         # Verify consistency
-        assert html_fonts['hanzi_font'] == pdf_fonts['hanzi_font']
-        assert html_fonts['hanzi_font'] == pptx_fonts['hanzi_font']
+        assert html_fonts['hanzi_font_family'] == pdf_fonts['hanzi_font_family']
+        assert html_fonts['hanzi_font_family'] == pptx_fonts['hanzi_font_family']
 ```
 
 ## Test Utilities
@@ -480,7 +480,7 @@ def create_test_preview_params() -> PreviewParams:
     return PreviewParams(
         layout=LayoutParams(rows=3, cols=3, card_size=5.5, gap_cm=0.5, margin_cm=1.0),
         typography=TypographyParams(hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14),
-        visual=VisualParams(hanzi_font="SimHei", background_color="#FFFFFF")
+        visual=VisualParams(hanzi_font_family="SimHei", background_color="#FFFFFF")
     )
 ```
 

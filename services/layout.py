@@ -103,12 +103,12 @@ def compute_auto_card_size_cm(page_size: str, margin_cm: float, gap_cm: float,
     page_width, page_height = get_page_dimensions_cm(page_size)
 
     # Calculate usable space
-    usable_width = page_width - (2 * margin_cm) - (max(0, cols - 1) * gap_cm)
-    usable_height = page_height - (2 * margin_cm) - (max(0, rows - 1) * gap_cm)
+    usable_width = page_width - (2 * margin_cm) - (max(0, layout_cols - 1) * gap_cm)
+    usable_height = page_height - (2 * margin_cm) - (max(0, layout_rows - 1) * gap_cm)
 
     # Calculate card dimensions
-    card_width = usable_width / cols if cols > 0 else 0
-    card_height = usable_height / rows if rows > 0 else 0
+    card_width = usable_width / layout_cols if layout_cols > 0 else 0
+    card_height = usable_height / layout_rows if layout_rows > 0 else 0
 
     # Return the smaller dimension to ensure cards fit
     return max(0.0, min(card_width, card_height))

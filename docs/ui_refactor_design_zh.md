@@ -40,20 +40,20 @@
 #### 4.1 状态与域
 - 命名空间键：
   - layout.rows/cols/auto_fill，layout.gap_cm/margin_cm/card_size
-  - ui.hanzi_font/ui.background_color/ui.preview_mode
+  - ui.hanzi_font_family/ui.background_color/ui.preview_mode
   - nav.current_page（= nav_index）
   - caches.preview_params_digest
 - 域划分：
   - Processing：input_text、auto_pinyin、auto_translate、translate_order、segmentation
   - Layout：rows、cols、gap_cm、margin_cm、page_size、auto_fill、card_size
-  - Style：hanzi_font_size_pt、pinyin_font_size_pt、english_font_size_pt、hanzi_font、background_color
+  - Style：hanzi_font_size_pt、pinyin_font_size_pt、english_font_size_pt、hanzi_font_family、background_color
   - Navigation：current_page（nav_index）
 
 #### 4.2 摘要与失效
 - 归一化后再哈希：浮点四舍五入至 4 位、集合排序、Decimal 字符串化
 - processing_digest = stable_digest({input_text, auto_pinyin, auto_translate, translate_order})
 - layout_digest = stable_digest({rows, cols, gap_cm, margin_cm, page_size, auto_fill, card_size})
-- style_digest = stable_digest({hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font, background_color})
+- style_digest = stable_digest({hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font_family, background_color})
 - preview_params_digest = stable_digest({layout_digest, style_digest, preview_mode, cards_count, PREVIEW_CACHE_SCHEMA_VERSION, code_version})
 - 页面切片缓存键 = (preview_params_digest, nav_index)
 - 重置规则：仅当 cards_per_page（布局改变）或 cards_count（处理改变）变化时重置/钳制 nav_index；Style 变更不重置页码
@@ -269,7 +269,7 @@ flowchart TD
 B. 简要 Schema
 - PaginateInfo(cards_per_page:int, total_pages:int)
 - LayoutOptions(rows:int, cols:int, auto_fill:bool, card_size_cm:float, gap_cm:float, margin_cm:float, page_size:str)
-- Typography(font_hanzi_pt:int, font_pinyin_pt:int, font_english_pt:int, hanzi_font:str)
+- Typography(font_hanzi_pt:int, font_pinyin_pt:int, font_english_pt:int, hanzi_font_family:str)
 - VisualOptions(background_color:str)
 - UserSnapshot(version:int, input_text:str, options:dict, layout:dict, typography:dict, visual:dict, preview:dict)
 

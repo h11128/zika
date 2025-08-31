@@ -141,7 +141,7 @@ def layout_options_section() -> Tuple[float, float, int, int, bool]:
 def typography_section() -> Tuple[int, int, int, str]:
     """
     Render typography options with form semantics.
-    Returns: (hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font)
+    Returns: (hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family)
     """
     with FormSection("typography") as form:
         st.subheader("🔤 字体设置")
@@ -194,10 +194,10 @@ def typography_section() -> Tuple[int, int, int, str]:
                 index=font_index,
                 key="hanzi_font_select"
             )
-            if hanzi_font != current_font:
+            if hanzi_font_family != current_font:
                 form.add_change('hanzi_font_family', hanzi_font_family, immediate=True)
     
-    return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font
+    return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family
 
 
 def visual_options_section() -> Tuple[str, str]:

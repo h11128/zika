@@ -187,20 +187,20 @@ class TypographyManager:
     
     def normalize_typography_params(
         self, 
-        font_hanzi_pt: int, 
-        font_pinyin_pt: int, 
-        font_english_pt: int,
+        hanzi_font_size_pt: int, 
+        pinyin_font_size_pt: int, 
+        english_font_size_pt: int,
         hanzi_font_family: str,
         render_target: RenderTarget = RenderTarget.SCREEN
     ) -> Dict[str, Any]:
         """Normalize typography parameters for consistent rendering."""
         # Measure each font type
-        hanzi_measurement = self.measure_typography(font_hanzi_pt, FontType.HANZI, render_target)
-        pinyin_measurement = self.measure_typography(font_pinyin_pt, FontType.PINYIN, render_target)
-        english_measurement = self.measure_typography(font_english_pt, FontType.ENGLISH, render_target)
+        hanzi_measurement = self.measure_typography(hanzi_font_size_pt, FontType.HANZI, render_target)
+        pinyin_measurement = self.measure_typography(pinyin_font_size_pt, FontType.PINYIN, render_target)
+        english_measurement = self.measure_typography(english_font_size_pt, FontType.ENGLISH, render_target)
         
         # Get font stacks
-        hanzi_stack = self.get_font_stack(FontType.HANZI, hanzi_font)
+        hanzi_stack = self.get_font_stack(FontType.HANZI, hanzi_font_family)
         pinyin_stack = self.get_font_stack(FontType.PINYIN)
         english_stack = self.get_font_stack(FontType.ENGLISH)
         
@@ -274,14 +274,14 @@ def get_typography_manager() -> TypographyManager:
 
 
 def normalize_typography_for_render_target(
-    font_hanzi_pt: int,
-    font_pinyin_pt: int, 
-    font_english_pt: int,
+    hanzi_font_size_pt: int,
+    pinyin_font_size_pt: int, 
+    english_font_size_pt: int,
     hanzi_font_family: str,
     render_target: RenderTarget = RenderTarget.SCREEN
 ) -> Dict[str, Any]:
     """Convenience function to normalize typography for a specific render target."""
     manager = get_typography_manager()
     return manager.normalize_typography_params(
-        font_hanzi_pt, font_pinyin_pt, font_english_pt, hanzi_font_family, render_target
+        hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font_family, render_target
     )

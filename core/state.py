@@ -136,7 +136,7 @@ def get_ui_preferences() -> Dict[str, str]:
             background_color = state_service.get('background_color', DEFAULT_BACKGROUND_COLOR)
 
             return {
-                'hanzi_font_family': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
+                'hanzi_font_family': hanzi_font_family if hanzi_font_family else DEFAULT_HANZI_FONT,
                 'background_color': background_color if background_color else DEFAULT_BACKGROUND_COLOR,
             }
         except Exception:
@@ -147,7 +147,7 @@ def get_ui_preferences() -> Dict[str, str]:
     hanzi_font_family = _ss_get('hanzi_font_family', DEFAULT_HANZI_FONT)
     background_color = _ss_get('background_color', DEFAULT_BACKGROUND_COLOR)
     return {
-        'hanzi_font_family': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
+        'hanzi_font_family': hanzi_font_family if hanzi_font_family else DEFAULT_HANZI_FONT,
         'background_color': background_color if background_color else DEFAULT_BACKGROUND_COLOR,
     }
 
@@ -217,8 +217,8 @@ def update_layout_settings(layout_rows: int = None, layout_cols: int = None, lay
 
 def update_ui_preferences(hanzi_font_family: str = None, background_color: str = None) -> None:
     """Update UI preferences."""
-    if hanzi_font is not None:
-        st.session_state.hanzi_font_family = hanzi_font
+    if hanzi_font_family is not None:
+        st.session_state.hanzi_font_family = hanzi_font_family
     if background_color is not None:
         st.session_state.background_color = background_color
         _validate_background_color()

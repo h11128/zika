@@ -454,8 +454,8 @@ def create_page_preview_html_v2(cards: List[Dict[str, str]], page_num: int,
     )
     card_box = _compute_page_card_box(M)
     font_px = _compute_font_px(
-        typography.font_hanzi_pt, typography.font_pinyin_pt,
-        typography.font_english_pt, M.scale_factor
+        typography.hanzi_font_size_pt, typography.pinyin_font_size_pt,
+        typography.english_font_size_pt, M.scale_factor
     )
 
     from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -517,7 +517,7 @@ def create_simple_grid_html_v2(cards: List[Dict[str, str]],
 
     params = _compute_simple_grid_css(layout_cols, layout.card_size_cm, layout.layout_auto_fill)
     font_px = _compute_simple_grid_font_px(
-        typography.font_hanzi_pt, typography.font_pinyin_pt, typography.font_english_pt
+        typography.hanzi_font_size_pt, typography.pinyin_font_size_pt, typography.english_font_size_pt
     )
     card_box = _compute_simple_card_box(params.card_size_px_calc)
 

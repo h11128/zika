@@ -284,7 +284,7 @@ class TestPreviewDataclassesV2:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -317,7 +317,7 @@ class TestPreviewDataclassesV2:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -349,7 +349,7 @@ class TestPreviewDataclassesV2:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -381,7 +381,7 @@ class TestPreviewDataclassesV2:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -417,7 +417,7 @@ class TestPreviewDataclassesV2:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 

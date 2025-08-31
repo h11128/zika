@@ -124,13 +124,13 @@ class TestTypography:
     def test_typography_creation(self):
         """Test basic Typography creation."""
         typo = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         
-        assert typo.font_hanzi_pt == 48
-        assert typo.font_pinyin_pt == 18
-        assert typo.font_english_pt == 14
+        assert typo.hanzi_font_size_pt == 48
+        assert typo.pinyin_font_size_pt == 18
+        assert typo.english_font_size_pt == 14
         assert typo.hanzi_font_family == 'SimHei'
     
     def test_typography_validation(self):
@@ -138,14 +138,14 @@ class TestTypography:
         # Test negative font size
         with pytest.raises(ValueError, match="Font sizes must be positive"):
             Typography(
-                font_hanzi_pt=-1, font_pinyin_pt=18, font_english_pt=14,
+                hanzi_font_size_pt=-1, pinyin_font_size_pt=18, english_font_size_pt=14,
                 hanzi_font_family='SimHei'
             )
         
         # Test empty font name
         with pytest.raises(ValueError, match="Hanzi font must not be empty"):
             Typography(
-                font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+                hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
                 hanzi_font_family=''
             )
     
@@ -161,9 +161,9 @@ class TestTypography:
         
         typo = Typography.from_configs(mock_layout, mock_ui)
         
-        assert typo.font_hanzi_pt == 50
-        assert typo.font_pinyin_pt == 20
-        assert typo.font_english_pt == 16
+        assert typo.hanzi_font_size_pt == 50
+        assert typo.pinyin_font_size_pt == 20
+        assert typo.english_font_size_pt == 16
         assert typo.hanzi_font_family == 'Arial'
 
 
@@ -213,7 +213,7 @@ class TestPreviewParams:
             page_size='A4'
         )
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
@@ -259,7 +259,7 @@ class TestPreviewParams:
 
         assert params.layout.layout_rows == 2
         assert params.layout.layout_cols == 3
-        assert params.typography.font_hanzi_pt == 48
+        assert params.typography.hanzi_font_size_pt == 48
         assert params.visual.background_color == '#ffffff'
     
     def test_preview_params_json_conversion(self):
@@ -270,7 +270,7 @@ class TestPreviewParams:
             page_size='A4'
         )
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
@@ -303,7 +303,7 @@ class TestConversionFunctions:
         
         assert params.layout.card_size_cm == 5.5
         assert params.layout.gap_cm == 0.5
-        assert params.typography.font_hanzi_pt == 48
+        assert params.typography.hanzi_font_size_pt == 48
         assert params.visual.background_color == '#ffffff'
     
     def test_extract_legacy_params(self):
@@ -314,7 +314,7 @@ class TestConversionFunctions:
             page_size='A4'
         )
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
@@ -342,7 +342,7 @@ class TestConversionFunctions:
             page_size='A4'
         )
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
@@ -389,12 +389,12 @@ class TestDataclassDeterministicBehavior:
     def test_typography_deterministic_hash(self):
         """Test that Typography produces deterministic hashes."""
         typo1 = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
         typo2 = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -403,7 +403,7 @@ class TestDataclassDeterministicBehavior:
 
         # Different values should have different hashes
         typo3 = Typography(
-            font_hanzi_pt=36, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=36, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -441,7 +441,7 @@ class TestDataclassDeterministicBehavior:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 
@@ -465,7 +465,7 @@ class TestDataclassDeterministicBehavior:
         )
 
         typography = Typography(
-            font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
+            hanzi_font_size_pt=48, pinyin_font_size_pt=18, english_font_size_pt=14,
             hanzi_font_family='SimHei'
         )
 

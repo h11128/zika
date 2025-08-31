@@ -173,7 +173,7 @@ class PPTXCardGenerator:
         text_frame.word_wrap = True
         
         # Add text content
-        self._add_card_text(text_frame, card, hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font)
+        self._add_card_text(text_frame, card, hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family)
     
     def _add_card_text(self, text_frame, card: Dict[str, str],
                       hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
@@ -214,7 +214,7 @@ class PPTXCardGenerator:
             p.font.color.rgb = RGBColor(0, 0, 0)
             # Use custom font for Chinese characters
             try:
-                p.font.name = hanzi_font
+                p.font.name = hanzi_font_family
             except:
                 try:
                     p.font.name = "Microsoft YaHei"  # Fallback

@@ -87,14 +87,14 @@ class LayoutOptions:
 @dataclass(frozen=True)
 class Typography:
     """Typography configuration for preview rendering."""
-    font_hanzi_pt: int
-    font_pinyin_pt: int
-    font_english_pt: int
+    hanzi_font_size_pt: int
+    pinyin_font_size_pt: int
+    english_font_size_pt: int
     hanzi_font_family: str
     
     def __post_init__(self):
         """Validate values."""
-        if self.font_hanzi_pt <= 0 or self.font_pinyin_pt <= 0 or self.font_english_pt <= 0:
+        if self.hanzi_font_size_pt <= 0 or self.pinyin_font_size_pt <= 0 or self.english_font_size_pt <= 0:
             raise ValueError("Font sizes must be positive")
         if not self.hanzi_font_family:
             raise ValueError("Hanzi font must not be empty")
@@ -103,9 +103,9 @@ class Typography:
     def from_layout_config(cls, layout_config) -> 'Typography':
         """Create from LayoutConfig object."""
         return cls(
-            font_hanzi_pt=layout_config.hanzi_font_size,
-            font_pinyin_pt=layout_config.pinyin_font_size,
-            font_english_pt=layout_config.english_font_size,
+            hanzi_font_size_pt=layout_config.hanzi_font_size,
+            pinyin_font_size_pt=layout_config.pinyin_font_size,
+            english_font_size_pt=layout_config.english_font_size,
             hanzi_font_family=getattr(layout_config, 'hanzi_font_family', 'SimHei')  # May be in UI config
         )
     
@@ -113,18 +113,18 @@ class Typography:
     def from_configs(cls, layout_config, ui_config) -> 'Typography':
         """Create from both LayoutConfig and UIConfig."""
         return cls(
-            font_hanzi_pt=layout_config.hanzi_font_size,
-            font_pinyin_pt=layout_config.pinyin_font_size,
-            font_english_pt=layout_config.english_font_size,
+            hanzi_font_size_pt=layout_config.hanzi_font_size,
+            pinyin_font_size_pt=layout_config.pinyin_font_size,
+            english_font_size_pt=layout_config.english_font_size,
             hanzi_font_family=ui_config.hanzi_font_family
         )
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'font_hanzi_pt': self.font_hanzi_pt,
-            'font_pinyin_pt': self.font_pinyin_pt,
-            'font_english_pt': self.font_english_pt,
+            'hanzi_font_size_pt': self.hanzi_font_size_pt,
+            'pinyin_font_size_pt': self.pinyin_font_size_pt,
+            'english_font_size_pt': self.english_font_size_pt,
             'hanzi_font_family': self.hanzi_font_family
         }
     
@@ -132,9 +132,9 @@ class Typography:
     def from_dict(cls, data: Dict[str, Any]) -> 'Typography':
         """Create from dictionary."""
         return cls(
-            font_hanzi_pt=int(data['font_hanzi_pt']),
-            font_pinyin_pt=int(data['font_pinyin_pt']),
-            font_english_pt=int(data['font_english_pt']),
+            hanzi_font_size_pt=int(data['hanzi_font_size_pt']),
+            pinyin_font_size_pt=int(data['pinyin_font_size_pt']),
+            english_font_size_pt=int(data['english_font_size_pt']),
             hanzi_font_family=str(data['hanzi_font_family'])
         )
 
@@ -243,10 +243,10 @@ def convert_legacy_params_to_preview_params(
     )
     
     typography = Typography(
-        font_hanzi_pt=hanzi_font_size,
-        font_pinyin_pt=pinyin_font_size,
-        font_english_pt=english_font_size,
-        hanzi_font_family=hanzi_font
+        hanzi_font_size_pt=hanzi_font_size,
+        pinyin_font_size_pt=pinyin_font_size,
+        english_font_size_pt=english_font_size,
+        hanzi_font_family=hanzi_font_family
     )
     
     visual = VisualOptions(
@@ -294,9 +294,9 @@ def extract_legacy_params(params: PreviewParams) -> Dict[str, Any]:
         'gap_cm': params.layout.gap_cm,
         'margin_cm': params.layout.margin_cm,
         'page_size': params.layout.page_size,
-        'hanzi_font_size': params.typography.font_hanzi_pt,
-        'pinyin_font_size': params.typography.font_pinyin_pt,
-        'english_font_size': params.typography.font_english_pt,
+        'hanzi_font_size': params.typography.hanzi_font_size_pt,
+        'pinyin_font_size': params.typography.pinyin_font_size_pt,
+        'english_font_size': params.typography.english_font_size_pt,
         'hanzi_font_family': params.typography.hanzi_font_family,
         'background_color': params.visual.background_color,
         'preview_mode': params.visual.preview_mode,
@@ -329,9 +329,9 @@ def convert_preview_params_to_render_options(params: PreviewParams) -> 'RenderOp
         layout_auto_fill=params.layout.layout_auto_fill,
 
         # Typography options
-        font_hanzi_pt=params.typography.font_hanzi_pt,
-        font_pinyin_pt=params.typography.font_pinyin_pt,
-        font_english_pt=params.typography.font_english_pt,
+        hanzi_font_size_pt=params.typography.hanzi_font_size_pt,
+        pinyin_font_size_pt=params.typography.pinyin_font_size_pt,
+        english_font_size_pt=params.typography.english_font_size_pt,
         hanzi_font_family=params.typography.hanzi_font_family,
 
         # Visual options

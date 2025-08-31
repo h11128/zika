@@ -254,14 +254,14 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]:  
             )
 
             # Clear cache if font changed
-            if hanzi_font != prev_hanzi_font:
+            if hanzi_font_family != prev_hanzi_font:
                 from services.cache_v2 import clear_preview_cache
                 clear_preview_cache()
                 # Force preview parameter reset
                 if 'last_preview_params' in st.session_state:
                     del st.session_state.last_preview_params
                 # Update the previous value for next comparison
-                st.session_state._prev_hanzi_font = hanzi_font
+                st.session_state._prev_hanzi_font = hanzi_font_family
 
             # Background color selection with visual color palette
             st.write("**卡片背景颜色:**")
@@ -367,7 +367,7 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]:  
                     'layout_rows': layout_rows,
                     'layout_cols': layout_cols,
                     'layout_auto_fill': layout_auto_fill,
-                    'hanzi_font_family': hanzi_font
+                    'hanzi_font_family': hanzi_font_family
                 }
                 changeset = set_options_batch(changes)
 
@@ -379,7 +379,7 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]:  
                 st.session_state.layout_rows = rows
                 st.session_state.layout_cols = cols
                 st.session_state.layout_auto_fill = auto_fill
-                st.session_state.hanzi_font_family = hanzi_font
+                st.session_state.hanzi_font_family = hanzi_font_family
 
                 # Clear preview cache if layout or font parameters changed
                 if layout_changed or font_changed:
@@ -393,7 +393,7 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]:  
             st.session_state.layout_rows = rows
             st.session_state.layout_cols = cols
             st.session_state.layout_auto_fill = auto_fill
-            st.session_state.hanzi_font_family = hanzi_font
+            st.session_state.hanzi_font_family = hanzi_font_family
 
             if layout_changed or font_changed:
                 from services.cache_v2 import clear_preview_cache
