@@ -41,9 +41,9 @@ def _fallback_palette(preset: List[str], current: str, key: Optional[str]) -> st
     cols_per_row = 12
     container = st.container()
     chosen = current
-    rows = (len(values) + cols_per_row - 1) // cols_per_row
+    layout_rows = (len(values) + cols_per_row - 1) // cols_per_row
     for r in range(rows):
-        cols = container.columns(cols_per_row, gap="small")
+        layout_cols = container.columns(cols_per_row, gap_cm="small")
         for i in range(cols_per_row):
             idx = r * cols_per_row + i
             if idx >= len(values):
@@ -51,7 +51,7 @@ def _fallback_palette(preset: List[str], current: str, key: Optional[str]) -> st
             c = values[idx]
             border = '#1e90ff' if c == current else '#ddd'
             with cols[i]:
-                st.markdown(f"<div style='width:20px;height:20px;border-radius:4px;border:2px solid {border};background:{c};margin:2px auto'></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='width_cm:20px;height_cm:20px;border-radius:4px;border:2px solid {border};background:{c};margin_cm:2px auto'></div>", unsafe_allow_html=True)
                 if st.button(" ", key=(key or "cp") + f"_fb_{idx}", use_container_width=False):
                     chosen = c
     return chosen

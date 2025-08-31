@@ -12,6 +12,7 @@ from datetime import datetime
 import streamlit as st
 
 from core.feature_flags import get_feature_flag
+from ui.ports import get_ui_adapter, ComponentConfig
 from core.version import get_code_version
 # Import from the main ui.state module (not the package)
 import importlib.util
@@ -210,13 +211,13 @@ def compute_processing_digest_debug() -> str:
 def compute_layout_digest_debug() -> str:
     """Compute layout digest with debug recording."""
     raw_inputs = {
-        'rows': getattr(st.session_state, 'rows', 4),
-        'cols': getattr(st.session_state, 'cols', 2),
+        'layout_rows': getattr(st.session_state, 'layout_rows', 4),
+        'layout_cols': getattr(st.session_state, 'layout_cols', 2),
         'gap_cm': getattr(st.session_state, 'gap_cm', 0.5),
         'margin_cm': getattr(st.session_state, 'margin_cm', 1.0),
         'page_size': getattr(st.session_state, 'page_size', 'A4'),
-        'auto_fill': getattr(st.session_state, 'auto_fill', True),
-        'card_size': getattr(st.session_state, 'card_size', 'auto'),
+        'layout_auto_fill': getattr(st.session_state, 'layout_auto_fill', True),
+        'card_size_cm': getattr(st.session_state, 'card_size_cm', 'auto'),
     }
 
     digest = ui_state_module.stable_digest(raw_inputs)
@@ -227,10 +228,10 @@ def compute_layout_digest_debug() -> str:
 def compute_style_digest_debug() -> str:
     """Compute style digest with debug recording."""
     raw_inputs = {
-        'font_hanzi': getattr(st.session_state, 'font_hanzi', 48),
-        'font_pinyin': getattr(st.session_state, 'font_pinyin', 18),
-        'font_english': getattr(st.session_state, 'font_english', 14),
-        'hanzi_font': getattr(st.session_state, 'hanzi_font', 'SimHei'),
+        'hanzi_font_size': getattr(st.session_state, 'hanzi_font_size', 48),
+        'pinyin_font_size': getattr(st.session_state, 'pinyin_font_size', 18),
+        'english_font_size': getattr(st.session_state, 'english_font_size', 14),
+        'hanzi_font_family': getattr(st.session_state, 'hanzi_font_family', 'SimHei'),
         'background_color': getattr(st.session_state, 'background_color', '#ffffff'),
     }
 

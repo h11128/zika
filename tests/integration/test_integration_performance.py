@@ -32,7 +32,7 @@ if ROOT not in sys.path:
 
 from services.processing import parse_input_text, generate_missing_data, auto_segment_text
 from services.export import export_cards
-from services.cache import (
+from services.cache_v2 import (
     create_page_preview_html, create_simple_grid_html,
     cached_create_page_preview_html, cached_create_simple_grid_html
 )
@@ -55,13 +55,13 @@ class TestCachingBehavior:
         """Test cache consistency for simple grid HTML generation."""
         # Generate HTML multiple times with same parameters
         html1 = create_simple_grid_html(
-            self.sample_cards, hanzi_font='SimHei', background_color='#E3F2FD'
+            self.sample_cards, hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         html2 = create_simple_grid_html(
-            self.sample_cards, hanzi_font='SimHei', background_color='#E3F2FD'
+            self.sample_cards, hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         html3 = create_simple_grid_html(
-            self.sample_cards, hanzi_font='SimHei', background_color='#E3F2FD'
+            self.sample_cards, hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         
         # Should be identical (cache working)
@@ -69,7 +69,7 @@ class TestCachingBehavior:
         
         # Different parameters should produce different results
         html_different = create_simple_grid_html(
-            self.sample_cards, hanzi_font='Microsoft YaHei', background_color='#FFEBEE'
+            self.sample_cards, hanzi_font_family='Microsoft YaHei', background_color='#FFEBEE'
         )
         assert html1 != html_different
     
@@ -77,14 +77,14 @@ class TestCachingBehavior:
         """Test cache consistency for page preview HTML generation."""
         # Generate page preview multiple times with same parameters
         html1 = create_page_preview_html(
-            self.sample_cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-            font_hanzi=48, font_pinyin=18, font_english=14,
-            page_size='A4', hanzi_font='SimHei', background_color='#E3F2FD'
+            self.sample_cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+            page_size='A4', hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         html2 = create_page_preview_html(
-            self.sample_cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-            font_hanzi=48, font_pinyin=18, font_english=14,
-            page_size='A4', hanzi_font='SimHei', background_color='#E3F2FD'
+            self.sample_cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+            page_size='A4', hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         
         # Should be identical
@@ -92,9 +92,9 @@ class TestCachingBehavior:
         
         # Different page number should produce different result
         html_page2 = create_page_preview_html(
-            self.sample_cards, page_num=1, card_size=5.5, gap=0.5, margin=1.0,
-            font_hanzi=48, font_pinyin=18, font_english=14,
-            page_size='A4', hanzi_font='SimHei', background_color='#E3F2FD'
+            self.sample_cards, page_num=1, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+            page_size='A4', hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         assert html1 != html_page2
     
@@ -102,7 +102,7 @@ class TestCachingBehavior:
         """Test that cache is properly invalidated when parameters change."""
         base_params = {
             'cards': self.sample_cards,
-            'hanzi_font': 'SimHei',
+            'hanzi_font_family': 'SimHei',
             'background_color': '#E3F2FD'
         }
         
@@ -111,9 +111,9 @@ class TestCachingBehavior:
         
         # Test each parameter change
         param_variations = [
-            {'hanzi_font': 'Microsoft YaHei'},
+            {'hanzi_font_family': 'Microsoft YaHei'},
             {'background_color': '#FFEBEE'},
-            {'rows': 2, 'cols': 2},
+            {'layout_rows': 2, 'layout_cols': 2},
         ]
         
         for variation in param_variations:
@@ -129,12 +129,12 @@ class TestCachingBehavior:
         ]
 
         # Test that cached function exists and works
-        from services.cache import cached_create_simple_grid_html
+        from services.cache_v2 import cached_create_simple_grid_html
 
         # Multiple calls should return identical results
-        html1 = cached_create_simple_grid_html(large_cards, hanzi_font='SimHei')
-        html2 = cached_create_simple_grid_html(large_cards, hanzi_font='SimHei')
-        html3 = cached_create_simple_grid_html(large_cards, hanzi_font='SimHei')
+        html1 = cached_create_simple_grid_html(large_cards, hanzi_font_family='SimHei')
+        html2 = cached_create_simple_grid_html(large_cards, hanzi_font_family='SimHei')
+        html3 = cached_create_simple_grid_html(large_cards, hanzi_font_family='SimHei')
 
         # Results should be identical (this tests cache correctness)
         assert html1 == html2 == html3
@@ -142,7 +142,7 @@ class TestCachingBehavior:
         assert 'simple-grid' in html1
 
         # Test with different parameters to ensure cache key differentiation
-        html_different = cached_create_simple_grid_html(large_cards, hanzi_font='Arial')
+        html_different = cached_create_simple_grid_html(large_cards, hanzi_font_family='Arial')
         assert html_different != html1  # Different parameters should give different results
 
 
@@ -236,8 +236,8 @@ class TestPerformanceBenchmarks:
             # Test page preview performance
             start_time = time.time()
             page_html = create_page_preview_html(
-                cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-                font_hanzi=48, font_pinyin=18, font_english=14
+                cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+                hanzi_font_size=48, pinyin_font_size=18, english_font_size=14
             )
             page_time = time.time() - start_time
             
@@ -272,8 +272,8 @@ class TestMemoryManagement:
         for i in range(10):
             html = create_simple_grid_html(processed_cards)
             page_html = create_page_preview_html(
-                processed_cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-                font_hanzi=48, font_pinyin=18, font_english=14
+                processed_cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+                hanzi_font_size=48, pinyin_font_size=18, english_font_size=14
             )
         
         # Force garbage collection
@@ -321,7 +321,7 @@ class TestMemoryManagement:
             
             # Each call should create a new cache entry
             html = create_simple_grid_html(
-                cards, hanzi_font=f'Font{i}', background_color=f'#00{i:02d}{i:02d}{i:02d}'
+                cards, hanzi_font_family=f'Font{i}', background_color=f'#00{i:02d}{i:02d}{i:02d}'
             )
         
         cache_memory = self.get_memory_usage()

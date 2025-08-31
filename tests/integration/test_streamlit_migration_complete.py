@@ -174,16 +174,16 @@ class TestStreamlitMigrationComplete:
                 mock_get_adapter.return_value = mock_adapter
                 
                 # Mock preview rendering
-                with patch('services.cache.create_preview_html') as mock_create_html:
+                with patch('services.cache_v2.create_preview_html') as mock_create_html:
                     mock_create_html.return_value = '<div>Preview</div>'
                     
                     try:
                         render_preview_section_wrapper(
                             processed_cards=test_cards,
-                            card_size=5.5, gap=0.5, margin=1.0, page_size='A4',
-                            font_hanzi=48, font_pinyin=18, font_english=14,
-                            hanzi_font='SimHei', background_color='#ffffff',
-                            rows=2, cols=3, auto_fill=True
+                            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0, page_size='A4',
+                            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+                            hanzi_font_family='SimHei', background_color='#ffffff',
+                            layout_rows=2, layout_cols=3, layout_auto_fill=True
                         )
                         # Verify adapter was used
                         mock_get_adapter.assert_called()
@@ -201,11 +201,11 @@ class TestStreamlitMigrationComplete:
         
         with patch('streamlit.session_state') as mock_session:
             mock_session.get.return_value = 5.5
-            mock_session.hanzi_font = 'SimHei'
+            mock_session.hanzi_font_family = 'SimHei'
             mock_session.background_color = '#ffffff'
-            mock_session.rows = 2
-            mock_session.cols = 3
-            mock_session.auto_fill = True
+            mock_session.layout_rows = 2
+            mock_session.layout_cols = 3
+            mock_session.layout_auto_fill = True
             mock_session.export_ready = {}
             mock_session.export_data = {}
             mock_session.export_history = []

@@ -159,7 +159,7 @@ class CacheManager:
     def _clear_legacy_preview_cache(self) -> None:
         """Clear legacy preview cache."""
         try:
-            from services.cache import clear_preview_cache
+            from services.cache_v2 import clear_preview_cache
             clear_preview_cache()
         except ImportError:
             pass

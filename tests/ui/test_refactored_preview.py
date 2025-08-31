@@ -63,7 +63,7 @@ class TestCalculatePagination:
     @patch('ui.sections.get_layout_settings')
     def test_normal_pagination(self, mock_get_layout):
         """Test normal pagination calculation."""
-        mock_get_layout.return_value = {'rows': 2, 'cols': 3}
+        mock_get_layout.return_value = {'layout_rows': 2, 'layout_cols': 3}
         cards = [{'hanzi': f'卡片{i}'} for i in range(10)]
         
         cards_per_page, total_pages = _calculate_pagination(cards)
@@ -74,7 +74,7 @@ class TestCalculatePagination:
     @patch('ui.sections.get_layout_settings')
     def test_empty_cards(self, mock_get_layout):
         """Test pagination with empty cards."""
-        mock_get_layout.return_value = {'rows': 2, 'cols': 3}
+        mock_get_layout.return_value = {'layout_rows': 2, 'layout_cols': 3}
         cards = []
         
         cards_per_page, total_pages = _calculate_pagination(cards)
@@ -85,7 +85,7 @@ class TestCalculatePagination:
     @patch('ui.sections.get_layout_settings')
     def test_single_card(self, mock_get_layout):
         """Test pagination with single card."""
-        mock_get_layout.return_value = {'rows': 2, 'cols': 3}
+        mock_get_layout.return_value = {'layout_rows': 2, 'layout_cols': 3}
         cards = [{'hanzi': '你好'}]
         
         cards_per_page, total_pages = _calculate_pagination(cards)
@@ -96,7 +96,7 @@ class TestCalculatePagination:
     @patch('ui.sections.get_layout_settings')
     def test_exact_page_boundary(self, mock_get_layout):
         """Test pagination at exact page boundary."""
-        mock_get_layout.return_value = {'rows': 2, 'cols': 3}
+        mock_get_layout.return_value = {'layout_rows': 2, 'layout_cols': 3}
         cards = [{'hanzi': f'卡片{i}'} for i in range(6)]  # Exactly one page
         
         cards_per_page, total_pages = _calculate_pagination(cards)
@@ -152,7 +152,7 @@ class TestRenderPreviewUI:
     def test_render_preview_ui(self, mock_page_info, mock_preview_section, 
                               mock_page_nav, mock_get_layout):
         """Test _render_preview_ui function."""
-        mock_get_layout.return_value = {'rows': 2, 'cols': 3, 'auto_fill': True}
+        mock_get_layout.return_value = {'layout_rows': 2, 'layout_cols': 3, 'layout_auto_fill': True}
         
         cards = [{'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'}]
         config = AppConfig.default()
@@ -241,23 +241,23 @@ class TestRenderPreviewContentLegacy:
     @patch('ui.sections.render_preview_content')
     def test_legacy_function(self, mock_render_content, mock_get_layout):
         """Test legacy function converts parameters correctly."""
-        mock_get_layout.return_value = {'rows': 2, 'cols': 3, 'auto_fill': True}
+        mock_get_layout.return_value = {'layout_rows': 2, 'layout_cols': 3, 'layout_auto_fill': True}
         mock_render_content.return_value = (6, 1)
         
         cards = [{'hanzi': '你好'}]
         preview_params = {
-            'hanzi_font': 'Arial',
+            'hanzi_font_family': 'Arial',
             'background_color': '#f0f0f0',
             'preview_mode': '🔲 简单网格'
         }
         layout_params = {
-            'card_size': 6.0,
-            'gap': 0.8,
-            'margin': 1.5,
+            'card_size_cm': 6.0,
+            'gap_cm': 0.8,
+            'margin_cm': 1.5,
             'page_size': 'A3',
-            'font_hanzi': 50,
-            'font_pinyin': 20,
-            'font_english': 16
+            'hanzi_font_size': 50,
+            'pinyin_font_size': 20,
+            'english_font_size': 16
         }
         
         result = render_preview_content_legacy(cards, preview_params, layout_params)

@@ -39,15 +39,15 @@ class TestAppController:
                 'auto_pinyin': True,
                 'auto_translate': True,
                 'page_size': 'A4',
-                'card_size': 5.5,
-                'gap': 0.5,
-                'margin': 1.0,
-                'font_hanzi': 48,
-                'font_pinyin': 18,
-                'font_english': 14
+                'card_size_cm': 5.5,
+                'gap_cm': 0.5,
+                'margin_cm': 1.0,
+                'hanzi_font_size': 48,
+                'pinyin_font_size': 18,
+                'english_font_size': 14
             }),
             render_preview_column_header=Mock(return_value={
-                'hanzi_font': 'SimHei',
+                'hanzi_font_family': 'SimHei',
                 'background_color': '#ffffff',
                 'preview_mode': '📄 完整页面'
             }),
@@ -162,10 +162,10 @@ class TestAppController:
         """Test calculate_pagination method."""
         test_cards = [{'hanzi': f'卡片{i}'} for i in range(10)]
         
-        with patch('ui.app_controller.get_layout_settings', return_value={'rows': 2, 'cols': 3}):
+        with patch('ui.app_controller.get_layout_settings', return_value={'layout_rows': 2, 'layout_cols': 3}):
             with patch('ui.app_controller.get_current_page', return_value=0):
                 controller = AppController()
-                cards_per_page, total_pages = controller.calculate_pagination(test_cards, {'rows': 2, 'cols': 3})
+                cards_per_page, total_pages = controller.calculate_pagination(test_cards, {'layout_rows': 2, 'layout_cols': 3})
                 
                 assert cards_per_page == 6  # 2 * 3
                 assert total_pages == 2     # ceil(10 / 6)
@@ -174,11 +174,11 @@ class TestAppController:
         """Test calculate_pagination with page reset."""
         test_cards = [{'hanzi': '卡片1'}]
         
-        with patch('ui.app_controller.get_layout_settings', return_value={'rows': 2, 'cols': 3}):
+        with patch('ui.app_controller.get_layout_settings', return_value={'layout_rows': 2, 'layout_cols': 3}):
             with patch('ui.app_controller.get_current_page', return_value=5):  # Out of range
                 with patch('ui.app_controller.set_current_page') as mock_set_page:
                     controller = AppController()
-                    controller.calculate_pagination(test_cards, {'rows': 2, 'cols': 3})
+                    controller.calculate_pagination(test_cards, {'layout_rows': 2, 'layout_cols': 3})
                     
                     mock_set_page.assert_called_with(0)  # Should reset to page 0
 
@@ -254,7 +254,7 @@ class TestAppController:
 
             controller = AppController()
             cards = [{'hanzi': f'字{i}', 'pinyin': f'zi{i}', 'english': f'word{i}'} for i in range(10)]
-            layout = {'rows': 2, 'cols': 3}  # 6 cards per page
+            layout = {'layout_rows': 2, 'layout_cols': 3}  # 6 cards per page
 
             cards_per_page, total_pages = controller.calculate_pagination(cards, layout)
 

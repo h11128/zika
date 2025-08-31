@@ -340,13 +340,13 @@ class TestDomainDigests:
 
         # Test data that would come from session state
         layout_data = {
-            'rows': 2,
-            'cols': 3,
+            'layout_rows': 2,
+            'layout_cols': 3,
             'gap_cm': 0.5,
             'margin_cm': 1.0,
             'page_size': 'A4',
-            'auto_fill': True,
-            'card_size': 5.5
+            'layout_auto_fill': True,
+            'card_size_cm': 5.5
         }
 
         digest = stable_digest(layout_data)
@@ -360,10 +360,10 @@ class TestDomainDigests:
 
         # Test data that would come from session state
         style_data = {
-            'font_hanzi': 48,
-            'font_pinyin': 18,
-            'font_english': 14,
-            'hanzi_font': 'SimHei',
+            'hanzi_font_size': 48,
+            'pinyin_font_size': 18,
+            'english_font_size': 14,
+            'hanzi_font_family': 'SimHei',
             'background_color': '#ffffff'
         }
 

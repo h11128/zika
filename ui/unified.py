@@ -100,15 +100,15 @@ class UnifiedUI:
             return st.text_input(label, value=value, key=key, help=help_text, placeholder=placeholder)
     
     def text_area(self, label: str, value: str = "", key: Optional[str] = None,
-                  help_text: Optional[str] = None, height: int = 200, placeholder: Optional[str] = None) -> str:
+                  help_text: Optional[str] = None, height_cm: int = 200, placeholder: Optional[str] = None) -> str:
         """Render a text area."""
         if self._use_adapter and self._adapter:
             from ui.ports import ComponentConfig
             config = ComponentConfig(key=key, label=label, help_text=help_text)
-            return self._adapter.inputs.text_area(config, value=value, height=height)
+            return self._adapter.inputs.text_area(config, value=value, height_cm=height)
         else:
             import streamlit as st
-            return st.text_area(label, value=value, key=key, help=help_text, height=height, placeholder=placeholder)
+            return st.text_area(label, value=value, key=key, help=help_text, height_cm=height, placeholder=placeholder)
     
     def checkbox(self, label: str, value: bool = False, key: Optional[str] = None,
                  help_text: Optional[str] = None) -> bool:
@@ -310,14 +310,14 @@ class UnifiedUI:
             import streamlit as st
             st.dataframe(data)
 
-    def html(self, html_content: str, height: int = 400) -> None:
+    def html(self, html_content: str, height_cm: int = 400) -> None:
         """Render HTML content."""
         if self._use_adapter and self._adapter:
             # Adapter might not have HTML component, fallback to markdown
             self._adapter.markdown(f"```html\n{html_content}\n```")
         else:
             import streamlit as st
-            st.components.v1.html(html_content, height=height)
+            st.components.v1.html(html_content, height_cm=height)
 
 
 # Global unified UI instance

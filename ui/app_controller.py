@@ -16,6 +16,7 @@ from core.state import (
 from ui.components import render_page_navigation, render_preview_section, render_page_info
 # Use unified sections if available
 from core.feature_flags import get_feature_flag
+from ui.ports import get_ui_adapter
 
 if get_feature_flag('unified_sections', True):
     from ui.sections_unified import (
@@ -48,9 +49,10 @@ class AppController:
     
     def render_header(self):
         """Render application header."""
-        st.title("🀄 Chinese Learning Cards Generator")
-        st.markdown("输入汉字，自动生成拼音和翻译，制作学习卡片")
-        st.markdown("💡 **新功能**: 支持空格分隔输入和智能自动分词")
+        adapter = get_ui_adapter()
+        adapter.header("🀄 Chinese Learning Cards Generator", level=1)
+        adapter.markdown("输入汉字，自动生成拼音和翻译，制作学习卡片")
+        adapter.markdown("💡 **新功能**: 支持空格分隔输入和智能自动分词")
     
 
     
@@ -67,7 +69,8 @@ class AppController:
                 not processed_cards
             )
         except Exception as e:
-            st.error(f"检查卡片状态时出错: {e}")
+            adapter = get_ui_adapter()
+            adapter.notifications.show_error(f"检查卡片状态时出错: {e}")
             return True  # Force reprocessing on error
     
     def process_cards_if_needed(self, cards, auto_pinyin, auto_translate, translate_order: str = 'local_first'):
@@ -95,36 +98,45 @@ class AppController:
                     set_processed_cards(processed_cards, current_source)
                     return processed_cards
                 except Exception as e:
-                    st.error(f"生成卡片数据时出错: {e}")
+                    adapter = get_ui_adapter()
+                    adapter.notifications.show_error(f"生成卡片数据时出错: {e}")
                     # Return basic cards without generated data
                     basic_cards = [{'hanzi': card.get('hanzi', ''), 'pinyin': card.get('pinyin', ''), 'english': card.get('english', '')} for card in cards]
                     return basic_cards
 
             return get_processed_cards()
         except Exception as e:
-            st.error(f"处理卡片时出错: {e}")
+            adapter = get_ui_adapter()
+            adapter.notifications.show_error(f"处理卡片时出错: {e}")
             return []
     
 
     
     def calculate_pagination(self, processed_cards, layout):
         """Calculate pagination information."""
-        cards_per_page = max(1, layout['rows'] * layout['cols'])
-        total_pages = max(1, (len(processed_cards) + cards_per_page - 1) // cards_per_page)
-        
+        from services.layout import paginate, PaginateInfo
+
+        # Use the standardized paginate function
+        pagination_info = paginate(
+            len(processed_cards),
+            layout['layout_rows'],
+            layout['layout_cols']
+        )
+
         # Reset current page if out of range
         current_page = get_current_page()
-        if current_page >= total_pages:
+        if current_page >= pagination_info.total_pages:
             set_current_page(0)
-        
-        return cards_per_page, total_pages
+
+        return pagination_info.cards_per_page, pagination_info.total_pages
     
     def render_card_editor(self, processed_cards, cards_per_page):
         """Render card editing section."""
         if not processed_cards:
             return
             
-        with st.expander("✏️ 编辑卡片", expanded=False):
+        adapter = get_ui_adapter()
+        with adapter.layout.expander("✏️ 编辑卡片", expanded=False):
             # Use the improved editor supporting pagination/search
             render_improved_card_editor(processed_cards)
     
@@ -132,96 +144,88 @@ class AppController:
     
     def render_right_column_content(self, left_params):
         """Render the right column with preview and editing using high-level functions."""
-        # Start sticky wrapper for right column content
-        try:
-            render_sticky_wrapper_start()
-        except Exception:
-            pass
+        from ui.styles import sticky_preview
 
-        # Get preview parameters
-        preview_params = render_preview_column_header()
+        with sticky_preview():
+            # Get preview parameters
+            preview_params = render_preview_column_header()
 
-        # Process cards
-        processed_cards = self.process_cards_if_needed(
-            left_params['cards'], left_params['auto_pinyin'], left_params['auto_translate'], left_params.get('translate_order', 'local_first')
-        )
+            # Process cards
+            processed_cards = self.process_cards_if_needed(
+                left_params['cards'], left_params['auto_pinyin'], left_params['auto_translate'], left_params.get('translate_order', 'local_first')
+            )
 
-        if processed_cards:
-            # Handle parameter changes
-            try:
-                current_params = get_all_ui_params(
-                    left_params['card_size'], left_params['gap'], left_params['margin'],
-                    left_params['page_size'], left_params['font_hanzi'], left_params['font_pinyin'],
-                    left_params['font_english'], processed_cards,
-                    preview_params.get('preview_mode') if isinstance(preview_params, dict) else None
-                )
-                handle_param_changes(current_params)
-            except Exception as e:
-                st.error(f"参数处理错误: {e}")
+            if processed_cards:
+                # Handle parameter changes
+                try:
+                    current_params = get_all_ui_params(
+                        left_params['card_size_cm'], left_params['gap_cm'], left_params['margin_cm'],
+                        left_params['page_size'], left_params['hanzi_font_size'], left_params['pinyin_font_size'],
+                        left_params['english_font_size'], processed_cards,
+                        preview_params.get('preview_mode') if isinstance(preview_params, dict) else None
+                    )
+                    handle_param_changes(current_params)
+                except Exception as e:
+                    adapter = get_ui_adapter()
+                    adapter.notifications.show_error(f"参数处理错误: {e}")
 
-            # Use SINGLE unified preview entry point
-            try:
-                from ui.preview_controller import render_preview_content_unified
-                from services.preview_types import AppConfig
+                # Use SINGLE unified preview entry point
+                try:
+                    from ui.preview_controller import render_preview_content_unified
+                    from services.preview_types import AppConfig
 
-                # Build unified config - SINGLE configuration format
-                config = AppConfig(
-                    card_size_cm=left_params.get('card_size', 5.5),
-                    gap_cm=left_params.get('gap', 0.5),
-                    margin_cm=left_params.get('margin', 1.0),
-                    page_size=left_params.get('page_size', 'A4'),
-                    font_hanzi=left_params.get('font_hanzi', 48),
-                    font_pinyin=left_params.get('font_pinyin', 18),
-                    font_english=left_params.get('font_english', 14),
-                    hanzi_font=preview_params.get('hanzi_font', 'SimHei'),
-                    background_color=preview_params.get('background_color', '#ffffff'),
-                    rows=left_params.get('rows', 2),
-                    cols=left_params.get('cols', 3),
-                    auto_fill=left_params.get('auto_fill', True)
-                )
+                    # Build unified config - SINGLE configuration format
+                    config = AppConfig(
+                        card_size_cm=left_params.get('card_size_cm', 5.5),
+                        gap_cm=left_params.get('gap_cm', 0.5),
+                        margin_cm=left_params.get('margin_cm', 1.0),
+                        page_size=left_params.get('page_size', 'A4'),
+                        hanzi_font_size=left_params.get('hanzi_font_size', 48),
+                        pinyin_font_size=left_params.get('pinyin_font_size', 18),
+                        english_font_size=left_params.get('english_font_size', 14),
+                        hanzi_font_family=preview_params.get('hanzi_font_family', 'SimHei'),
+                        background_color=preview_params.get('background_color', '#ffffff'),
+                        layout_rows=left_params.get('layout_rows', 2),
+                        layout_cols=left_params.get('layout_cols', 3),
+                        layout_auto_fill=left_params.get('layout_auto_fill', True)
+                    )
 
-                # SINGLE entry point for ALL preview rendering
-                cards_per_page, total_pages = render_preview_content_unified(processed_cards, config)
+                    # SINGLE entry point for ALL preview rendering
+                    cards_per_page, total_pages = render_preview_content_unified(processed_cards, config)
 
-            except ImportError:
-                # Emergency fallback only
-                from ui.sections import render_preview_content_legacy
-                cards_per_page, total_pages = render_preview_content_legacy(processed_cards, preview_params, left_params)
+                except ImportError:
+                    # Emergency fallback only
+                    from ui.sections import render_preview_content_legacy
+                    cards_per_page, total_pages = render_preview_content_legacy(processed_cards, preview_params, left_params)
 
-            # Render card editor
-            self.render_card_editor(processed_cards, cards_per_page)
-        else:
-            # Render empty preview
-            try:
-                from ui.preview import render_preview_unified
-                from core.feature_flags import use_new_preview_pipeline
+                # Render card editor
+                self.render_card_editor(processed_cards, cards_per_page)
+            else:
+                # Render empty preview
+                try:
+                    from ui.preview import render_preview_unified
+                    from core.feature_flags import use_new_preview_pipeline
 
-                if use_new_preview_pipeline():
-                    config = {
-                        'card_size': left_params.get('card_size', 5.5),
-                        'gap': left_params.get('gap', 0.5),
-                        'margin': left_params.get('margin', 1.0),
-                        'font_hanzi': left_params.get('font_hanzi', 48),
-                        'font_pinyin': left_params.get('font_pinyin', 18),
-                        'font_english': left_params.get('font_english', 14),
-                        'page_size': left_params.get('page_size', 'A4'),
-                        'hanzi_font': left_params.get('hanzi_font', 'SimHei'),
-                        'background_color': left_params.get('background_color', '#ffffff'),
-                        'rows': left_params.get('rows', 2),
-                        'cols': left_params.get('cols', 3),
-                        'auto_fill': left_params.get('auto_fill', True)
-                    }
-                    render_preview_unified([], config)
-                else:
+                    if use_new_preview_pipeline():
+                        config = {
+                            'card_size_cm': left_params.get('card_size_cm', 5.5),
+                            'gap_cm': left_params.get('gap_cm', 0.5),
+                            'margin_cm': left_params.get('margin_cm', 1.0),
+                            'hanzi_font_size': left_params.get('hanzi_font_size', 48),
+                            'pinyin_font_size': left_params.get('pinyin_font_size', 18),
+                            'english_font_size': left_params.get('english_font_size', 14),
+                            'page_size': left_params.get('page_size', 'A4'),
+                            'hanzi_font_family': left_params.get('hanzi_font_family', 'SimHei'),
+                            'background_color': left_params.get('background_color', '#ffffff'),
+                            'layout_rows': left_params.get('layout_rows', 2),
+                            'layout_cols': left_params.get('layout_cols', 3),
+                            'layout_auto_fill': left_params.get('layout_auto_fill', True)
+                        }
+                        render_preview_unified([], config)
+                    else:
+                        render_preview_content_legacy([], preview_params, left_params)
+                except ImportError:
                     render_preview_content_legacy([], preview_params, left_params)
-            except ImportError:
-                render_preview_content_legacy([], preview_params, left_params)
-
-        # End sticky wrapper for right column content
-        try:
-            render_sticky_wrapper_end()
-        except Exception:
-            pass
 
     def run_main_flow(self):
         """Execute the main application flow using high-level rendering functions with error handling."""
@@ -231,32 +235,37 @@ class AppController:
             self.render_header()
 
             # Create two columns
-            col1, col2 = st.columns([1, 1])
+            adapter = get_ui_adapter()
+            col1, col2 = adapter.layout.columns([1, 1])
 
             with col1:
                 try:
                     left_params = render_left_column()
                 except Exception as e:
-                    st.error(f"左侧面板渲染错误: {e}")
+                    adapter = get_ui_adapter()
+                    adapter.notifications.show_error(f"左侧面板渲染错误: {e}")
                     left_params = {
                         'cards': [], 'auto_pinyin': True, 'auto_translate': True,
-                        'page_size': 'A4', 'card_size': 5.5, 'gap': 0.5, 'margin': 1.0,
-                        'font_hanzi': 48, 'font_pinyin': 18, 'font_english': 14
+                        'page_size': 'A4', 'card_size_cm': 5.5, 'gap_cm': 0.5, 'margin_cm': 1.0,
+                        'hanzi_font_size': 48, 'pinyin_font_size': 18, 'english_font_size': 14
                     }
 
             with col2:
                 try:
                     self.render_right_column_content(left_params)
                 except Exception as e:
-                    st.error(f"右侧面板渲染错误: {e}")
-                    st.info("请刷新页面重试")
+                    adapter = get_ui_adapter()
+                    adapter.notifications.show_error(f"右侧面板渲染错误: {e}")
+                    adapter.notifications.show_message("请刷新页面重试")
 
             # Export section
             try:
                 render_export_section(get_processed_cards())
             except Exception as e:
-                st.error(f"导出区域渲染错误: {e}")
+                adapter = get_ui_adapter()
+                adapter.notifications.show_error(f"导出区域渲染错误: {e}")
 
         except Exception as e:
-            st.error(f"应用运行时发生严重错误: {e}")
-            st.info("请刷新页面重新开始")
+            adapter = get_ui_adapter()
+            adapter.notifications.show_error(f"应用运行时发生严重错误: {e}")
+            adapter.notifications.show_message("请刷新页面重新开始")

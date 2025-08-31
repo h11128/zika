@@ -27,7 +27,7 @@ def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int
             label="卡片间距 (cm)",
             help_text="卡片之间的间距"
         )
-        gap = adapter.inputs.slider(
+        gap_cm = adapter.inputs.slider(
             gap_config, value=0.5, min_value=0.0, max_value=2.0, step=0.1
         )
         
@@ -36,7 +36,7 @@ def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int
             key="rows_adapted",
             label="行数"
         )
-        rows = adapter.inputs.number_input(
+        layout_rows = adapter.inputs.number_input(
             rows_config, value=2, min_value=1, max_value=10, step=1
         )
     
@@ -47,7 +47,7 @@ def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int
             label="页面边距 (cm)",
             help_text="页面四周的边距"
         )
-        margin = adapter.inputs.slider(
+        margin_cm = adapter.inputs.slider(
             margin_config, value=1.0, min_value=0.0, max_value=3.0, step=0.1
         )
         
@@ -56,7 +56,7 @@ def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int
             key="cols_adapted",
             label="列数"
         )
-        cols = adapter.inputs.number_input(
+        layout_cols = adapter.inputs.number_input(
             cols_config, value=3, min_value=1, max_value=10, step=1
         )
     
@@ -67,7 +67,7 @@ def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int
             NotificationLevel.INFO
         )
     
-    return gap, margin, rows, cols
+    return gap, margin, layout_rows, cols
 
 
 def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int, str]:
@@ -84,7 +84,7 @@ def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int
             key="font_hanzi_adapted",
             label="汉字字体大小"
         )
-        font_hanzi = adapter.inputs.slider(
+        hanzi_font_size = adapter.inputs.slider(
             hanzi_config, value=48, min_value=20, max_value=100, step=2
         )
         
@@ -93,7 +93,7 @@ def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int
             key="font_pinyin_adapted",
             label="拼音字体大小"
         )
-        font_pinyin = adapter.inputs.slider(
+        pinyin_font_size = adapter.inputs.slider(
             pinyin_config, value=18, min_value=10, max_value=40, step=1
         )
     
@@ -103,7 +103,7 @@ def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int
             key="font_english_adapted",
             label="英文字体大小"
         )
-        font_english = adapter.inputs.slider(
+        english_font_size = adapter.inputs.slider(
             english_config, value=14, min_value=8, max_value=30, step=1
         )
         
@@ -113,11 +113,11 @@ def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int
             key="hanzi_font_adapted",
             label="汉字字体"
         )
-        hanzi_font = adapter.inputs.selectbox(
+        hanzi_font_family = adapter.inputs.selectbox(
             font_config, options=font_options, index=0
         )
     
-    return font_hanzi, font_pinyin, font_english, hanzi_font
+    return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font
 
 
 def render_options_section_adapted(adapter: UIAdapter) -> Tuple[bool, bool, str]:
@@ -180,7 +180,7 @@ def render_input_section_adapted(adapter: UIAdapter) -> str:
         help_text="输入要制作卡片的中文文本，每行一个词或短语"
     )
     input_text = adapter.inputs.text_area(
-        input_config, value="", height=200
+        input_config, value="", height_cm=200
     )
     
     # Buttons row
@@ -228,8 +228,8 @@ def render_preview_section_adapted(adapter: UIAdapter, html_content: str) -> Non
     
     # Preview content
     if html_content:
-        height = 850 if preview_mode == '📄 完整页面' else 650
-        adapter.preview.html_component(html_content, height=height)
+        height_cm = 850 if preview_mode == '📄 完整页面' else 650
+        adapter.preview.html_component(html_content, height_cm=height)
     else:
         adapter.notifications.show_message(
             "没有可预览的内容", NotificationLevel.INFO
@@ -254,14 +254,14 @@ def showcase_adapter_usage() -> Dict[str, Any]:
     results = {}
     
     # Layout section
-    gap, margin, rows, cols = render_layout_section_adapted(adapter)
-    results['layout'] = {'gap': gap, 'margin': margin, 'rows': rows, 'cols': cols}
+    gap, margin, layout_rows, layout_cols = render_layout_section_adapted(adapter)
+    results['layout'] = {'gap_cm': gap, 'margin_cm': margin, 'layout_rows': layout_rows, 'layout_cols': cols}
     
     # Typography section
-    font_hanzi, font_pinyin, font_english, hanzi_font = render_typography_section_adapted(adapter)
+    hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family = render_typography_section_adapted(adapter)
     results['typography'] = {
-        'font_hanzi': font_hanzi, 'font_pinyin': font_pinyin,
-        'font_english': font_english, 'hanzi_font': hanzi_font
+        'hanzi_font_size': hanzi_font_size, 'pinyin_font_size': pinyin_font_size,
+        'english_font_size': english_font_size, 'hanzi_font_family': hanzi_font
     }
     
     # Options section
@@ -284,4 +284,4 @@ def showcase_adapter_usage() -> Dict[str, Any]:
 
 def use_ui_adapter() -> bool:
     """Check if UI adapter should be used."""
-    return get_feature_flag('ui_adapter', False)
+    return True

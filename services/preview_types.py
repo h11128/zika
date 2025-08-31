@@ -12,9 +12,9 @@ from core.field_migration import resolve_field_value
 @dataclass(frozen=True)
 class LayoutOptions:
     """Layout configuration for preview rendering."""
-    rows: int
-    cols: int
-    auto_fill: bool
+    layout_rows: int
+    layout_cols: int
+    layout_auto_fill: bool
     card_size_cm: float
     gap_cm: float
     margin_cm: float
@@ -23,7 +23,7 @@ class LayoutOptions:
     def __post_init__(self):
         """Validate and normalize values."""
         # Ensure positive values
-        if self.rows <= 0 or self.cols <= 0:
+        if self.layout_rows <= 0 or self.layout_cols <= 0:
             raise ValueError("Rows and cols must be positive")
         if self.card_size_cm <= 0:
             raise ValueError("Card size must be positive")
@@ -41,7 +41,7 @@ class LayoutOptions:
         # Use field migration system for backward compatibility
         config_data = {
             attr: getattr(layout_config, attr, None)
-            for attr in ['gap', 'gap_cm', 'margin', 'margin_cm', 'rows', 'cols', 'auto_fill', 'card_size', 'page_size']
+            for attr in ['gap_cm', 'gap_cm', 'margin_cm', 'margin_cm', 'layout_rows', 'layout_cols', 'layout_auto_fill', 'card_size_cm', 'page_size']
             if hasattr(layout_config, attr)
         }
 
@@ -49,10 +49,10 @@ class LayoutOptions:
         margin_cm = resolve_field_value(config_data, 'margin_cm', 1.0)
 
         return cls(
-            rows=layout_config.rows,
-            cols=layout_config.cols,
-            auto_fill=layout_config.auto_fill,
-            card_size_cm=layout_config.card_size,
+            layout_rows=layout_config.layout_rows,
+            layout_cols=layout_config.layout_cols,
+            layout_auto_fill=layout_config.layout_auto_fill,
+            card_size_cm=layout_config.card_size_cm,
             gap_cm=gap_cm,
             margin_cm=margin_cm,
             page_size=layout_config.page_size
@@ -61,9 +61,9 @@ class LayoutOptions:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'rows': self.rows,
-            'cols': self.cols,
-            'auto_fill': self.auto_fill,
+            'layout_rows': self.layout_rows,
+            'layout_cols': self.layout_cols,
+            'layout_auto_fill': self.layout_auto_fill,
             'card_size_cm': self.card_size_cm,
             'gap_cm': self.gap_cm,
             'margin_cm': self.margin_cm,
@@ -74,9 +74,9 @@ class LayoutOptions:
     def from_dict(cls, data: Dict[str, Any]) -> 'LayoutOptions':
         """Create from dictionary."""
         return cls(
-            rows=int(data['rows']),
-            cols=int(data['cols']),
-            auto_fill=bool(data['auto_fill']),
+            layout_rows=int(data['layout_rows']),
+            layout_cols=int(data['layout_cols']),
+            layout_auto_fill=bool(data['layout_auto_fill']),
             card_size_cm=float(data['card_size_cm']),
             gap_cm=float(data['gap_cm']),
             margin_cm=float(data['margin_cm']),
@@ -90,33 +90,33 @@ class Typography:
     font_hanzi_pt: int
     font_pinyin_pt: int
     font_english_pt: int
-    hanzi_font: str
+    hanzi_font_family: str
     
     def __post_init__(self):
         """Validate values."""
         if self.font_hanzi_pt <= 0 or self.font_pinyin_pt <= 0 or self.font_english_pt <= 0:
             raise ValueError("Font sizes must be positive")
-        if not self.hanzi_font:
+        if not self.hanzi_font_family:
             raise ValueError("Hanzi font must not be empty")
     
     @classmethod
     def from_layout_config(cls, layout_config) -> 'Typography':
         """Create from LayoutConfig object."""
         return cls(
-            font_hanzi_pt=layout_config.font_hanzi,
-            font_pinyin_pt=layout_config.font_pinyin,
-            font_english_pt=layout_config.font_english,
-            hanzi_font=getattr(layout_config, 'hanzi_font', 'SimHei')  # May be in UI config
+            font_hanzi_pt=layout_config.hanzi_font_size,
+            font_pinyin_pt=layout_config.pinyin_font_size,
+            font_english_pt=layout_config.english_font_size,
+            hanzi_font_family=getattr(layout_config, 'hanzi_font_family', 'SimHei')  # May be in UI config
         )
     
     @classmethod
     def from_configs(cls, layout_config, ui_config) -> 'Typography':
         """Create from both LayoutConfig and UIConfig."""
         return cls(
-            font_hanzi_pt=layout_config.font_hanzi,
-            font_pinyin_pt=layout_config.font_pinyin,
-            font_english_pt=layout_config.font_english,
-            hanzi_font=ui_config.hanzi_font
+            font_hanzi_pt=layout_config.hanzi_font_size,
+            font_pinyin_pt=layout_config.pinyin_font_size,
+            font_english_pt=layout_config.english_font_size,
+            hanzi_font_family=ui_config.hanzi_font_family
         )
     
     def to_dict(self) -> Dict[str, Any]:
@@ -125,7 +125,7 @@ class Typography:
             'font_hanzi_pt': self.font_hanzi_pt,
             'font_pinyin_pt': self.font_pinyin_pt,
             'font_english_pt': self.font_english_pt,
-            'hanzi_font': self.hanzi_font
+            'hanzi_font_family': self.hanzi_font_family
         }
     
     @classmethod
@@ -135,7 +135,7 @@ class Typography:
             font_hanzi_pt=int(data['font_hanzi_pt']),
             font_pinyin_pt=int(data['font_pinyin_pt']),
             font_english_pt=int(data['font_english_pt']),
-            hanzi_font=str(data['hanzi_font'])
+            hanzi_font_family=str(data['hanzi_font_family'])
         )
 
 
@@ -226,16 +226,16 @@ def convert_app_config_to_preview_params(app_config) -> PreviewParams:
 
 
 def convert_legacy_params_to_preview_params(
-    card_size: float, gap: float, margin: float, page_size: str,
-    font_hanzi: int, font_pinyin: int, font_english: int,
-    hanzi_font: str, background_color: str, preview_mode: str,
-    rows: int, cols: int, auto_fill: bool
+    card_size_cm: float, gap_cm: float, margin_cm: float, page_size: str,
+    hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+    hanzi_font_family: str, background_color: str, preview_mode: str,
+    layout_rows: int, layout_cols: int, layout_auto_fill: bool
 ) -> PreviewParams:
     """Convert legacy individual parameters to PreviewParams."""
     layout = LayoutOptions(
-        rows=rows,
-        cols=cols,
-        auto_fill=auto_fill,
+        layout_rows=layout_rows,
+        layout_cols=layout_cols,
+        layout_auto_fill=layout_auto_fill,
         card_size_cm=card_size,
         gap_cm=gap,
         margin_cm=margin,
@@ -243,10 +243,10 @@ def convert_legacy_params_to_preview_params(
     )
     
     typography = Typography(
-        font_hanzi_pt=font_hanzi,
-        font_pinyin_pt=font_pinyin,
-        font_english_pt=font_english,
-        hanzi_font=hanzi_font
+        font_hanzi_pt=hanzi_font_size,
+        font_pinyin_pt=pinyin_font_size,
+        font_english_pt=english_font_size,
+        hanzi_font_family=hanzi_font
     )
     
     visual = VisualOptions(
@@ -271,8 +271,8 @@ def validate_preview_params(params: PreviewParams) -> PreviewParams:
     from services.layout import validate_layout_params
     
     validation_result = validate_layout_params(
-        params.layout.rows,
-        params.layout.cols,
+        params.layout.layout_rows,
+        params.layout.layout_cols,
         params.layout.card_size_cm,
         params.layout.gap_cm,
         params.layout.margin_cm,
@@ -290,19 +290,19 @@ def validate_preview_params(params: PreviewParams) -> PreviewParams:
 def extract_legacy_params(params: PreviewParams) -> Dict[str, Any]:
     """Extract legacy parameter format from PreviewParams."""
     return {
-        'card_size': params.layout.card_size_cm,
-        'gap': params.layout.gap_cm,
-        'margin': params.layout.margin_cm,
+        'card_size_cm': params.layout.card_size_cm,
+        'gap_cm': params.layout.gap_cm,
+        'margin_cm': params.layout.margin_cm,
         'page_size': params.layout.page_size,
-        'font_hanzi': params.typography.font_hanzi_pt,
-        'font_pinyin': params.typography.font_pinyin_pt,
-        'font_english': params.typography.font_english_pt,
-        'hanzi_font': params.typography.hanzi_font,
+        'hanzi_font_size': params.typography.font_hanzi_pt,
+        'pinyin_font_size': params.typography.font_pinyin_pt,
+        'english_font_size': params.typography.font_english_pt,
+        'hanzi_font_family': params.typography.hanzi_font_family,
         'background_color': params.visual.background_color,
         'preview_mode': params.visual.preview_mode,
-        'rows': params.layout.rows,
-        'cols': params.layout.cols,
-        'auto_fill': params.layout.auto_fill
+        'layout_rows': params.layout.layout_rows,
+        'layout_cols': params.layout.layout_cols,
+        'layout_auto_fill': params.layout.layout_auto_fill
     }
 
 
@@ -324,15 +324,15 @@ def convert_preview_params_to_render_options(params: PreviewParams) -> 'RenderOp
         gap_cm=params.layout.gap_cm,
         margin_cm=params.layout.margin_cm,
         page_size=params.layout.page_size,
-        rows=params.layout.rows,
-        cols=params.layout.cols,
-        auto_fill=params.layout.auto_fill,
+        layout_rows=params.layout.layout_rows,
+        layout_cols=params.layout.layout_cols,
+        layout_auto_fill=params.layout.layout_auto_fill,
 
         # Typography options
         font_hanzi_pt=params.typography.font_hanzi_pt,
         font_pinyin_pt=params.typography.font_pinyin_pt,
         font_english_pt=params.typography.font_english_pt,
-        hanzi_font=params.typography.hanzi_font,
+        hanzi_font_family=params.typography.hanzi_font_family,
 
         # Visual options
         background_color=params.visual.background_color

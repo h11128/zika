@@ -258,8 +258,8 @@ class TestUserSnapshot:
             {'hanzi': '爱', 'pinyin': 'ài', 'english': 'love'}
         ]
         mock_session_state.auto_pinyin = True
-        mock_session_state.rows = 3
-        mock_session_state.font_hanzi = 50
+        mock_session_state.layout_rows = 3
+        mock_session_state.hanzi_font_size = 50
         mock_session_state.background_color = '#ff0000'
         mock_session_state.current_page = 1
         mock_session_state.export_history = []
@@ -276,8 +276,8 @@ class TestUserSnapshot:
         
         assert snapshot.input_text == "测试文本"
         assert snapshot.options['auto_pinyin'] is True
-        assert snapshot.layout['rows'] == 3
-        assert snapshot.typography['font_hanzi'] == 50
+        assert snapshot.layout['layout_rows'] == 3
+        assert snapshot.typography['hanzi_font_size'] == 50
         assert snapshot.visual['background_color'] == '#ff0000'
         assert snapshot.preview['current_page'] == 1
         assert snapshot.total_cards_generated == 5
@@ -291,8 +291,8 @@ class TestUserSnapshot:
             input_text="测试文本",
             cards=[],
             options={'auto_pinyin': False},
-            layout={'rows': 4},
-            typography={'font_hanzi': 60},
+            layout={'layout_rows': 4},
+            typography={'hanzi_font_size': 60},
             visual={'background_color': '#00ff00'},
             preview={'current_page': 2},
             export_history=[],
@@ -304,8 +304,8 @@ class TestUserSnapshot:
         
         assert mock_session_state.input_text == "测试文本"
         assert mock_session_state.auto_pinyin is False
-        assert mock_session_state.rows == 4
-        assert mock_session_state.font_hanzi == 60
+        assert mock_session_state.layout_rows == 4
+        assert mock_session_state.hanzi_font_size == 60
         assert mock_session_state.background_color == '#00ff00'
         assert mock_session_state.current_page == 2
         assert mock_session_state.total_cards_generated == 10

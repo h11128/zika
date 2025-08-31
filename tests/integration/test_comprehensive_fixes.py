@@ -234,9 +234,9 @@ class TestSharedRenderCoreIntegration:
         
         # Test legacy conversion
         legacy_options = {
-            'card_size': 5.5,
-            'gap': 0.5,
-            'margin': 1.0,
+            'card_size_cm': 5.5,
+            'gap_cm': 0.5,
+            'margin_cm': 1.0,
             'page_size': 'A4'
         }
         
@@ -268,14 +268,14 @@ class TestLayoutLogicExtraction:
         from services.layout import get_page_dimensions_cm
         
         # Test A4
-        width, height = get_page_dimensions_cm('A4')
-        assert width == 21.0
-        assert height == 29.7
+        width, height_cm = get_page_dimensions_cm('A4')
+        assert width_cm == 21.0
+        assert height_cm == 29.7
         
         # Test A3
-        width, height = get_page_dimensions_cm('A3')
-        assert width == 29.7
-        assert height == 42.0
+        width, height_cm = get_page_dimensions_cm('A3')
+        assert width_cm == 29.7
+        assert height_cm == 42.0
     
     def test_layout_validation(self):
         """Test layout validation."""

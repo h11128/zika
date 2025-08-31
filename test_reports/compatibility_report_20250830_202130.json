@@ -1,0 +1,561 @@
+{
+  "test_execution": {
+    "timestamp": "2025-08-31T03:21:30.198487+00:00",
+    "duration_seconds": 0.0,
+    "total_tests": 29,
+    "success_rate": 0.6896551724137931
+  },
+  "compatibility_matrix": {
+    "browser_support": {
+      "total_versions": 15,
+      "full_support": 8,
+      "partial_support": 4,
+      "minimal_support": 3,
+      "market_coverage": 141.0
+    },
+    "streamlit_support": {
+      "total_versions": 7,
+      "full_support": 3,
+      "partial_support": 2,
+      "minimal_support": 2,
+      "known_issues_count": 8
+    },
+    "data_format_support": {
+      "total_formats": 7,
+      "migration_paths": 3,
+      "legacy_support": 1
+    }
+  },
+  "test_results": {
+    "summary": {
+      "total_tests": 29,
+      "successful_tests": 20,
+      "success_rate": 0.6896551724137931,
+      "average_duration_ms": 0.0
+    },
+    "by_category": {
+      "browser_tests": 15,
+      "streamlit_tests": 7,
+      "data_format_tests": 7
+    },
+    "compatibility_levels": {
+      "full": 17,
+      "partial": 7,
+      "minimal": 5,
+      "unsupported": 0
+    },
+    "issues": {
+      "total_issues": 12,
+      "total_warnings": 23,
+      "failed_tests": [
+        "browser_chrome_100.0",
+        "browser_firefox_102.0",
+        "browser_safari_15.0",
+        "data_format_snapshot_3.0.0",
+        "data_format_snapshot_2.0.0",
+        "data_format_snapshot_1.0.0",
+        "data_format_export_pdf_v1",
+        "data_format_export_pptx_v1",
+        "data_format_export_csv_v1"
+      ]
+    }
+  },
+  "detailed_results": {
+    "browser_tests": [
+      {
+        "test_name": "browser_chrome_120.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.CHROME: 'chrome'>, version='120.0', release_date='2023-11-28', market_share=65.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 65.0,
+          "release_date": "2023-11-28"
+        }
+      },
+      {
+        "test_name": "browser_chrome_119.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.CHROME: 'chrome'>, version='119.0', release_date='2023-10-31', market_share=15.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 15.0,
+          "release_date": "2023-10-31"
+        }
+      },
+      {
+        "test_name": "browser_chrome_118.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.CHROME: 'chrome'>, version='118.0', release_date='2023-10-10', market_share=10.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 10.0,
+          "release_date": "2023-10-10"
+        }
+      },
+      {
+        "test_name": "browser_chrome_110.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.CHROME: 'chrome'>, version='110.0', release_date='2023-02-07', market_share=5.0, compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 5.0,
+          "release_date": "2023-02-07"
+        }
+      },
+      {
+        "test_name": "browser_chrome_100.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.CHROME: 'chrome'>, version='100.0', release_date='2022-03-29', market_share=2.0, compatibility_level=<CompatibilityLevel.MINIMAL: 'minimal'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.MINIMAL",
+        "issues": [
+          "localStorage not supported"
+        ],
+        "warnings": [
+          "CSS Grid support limited",
+          "Limited ES6 support",
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 2.0,
+          "release_date": "2022-03-29"
+        }
+      },
+      {
+        "test_name": "browser_firefox_121.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.FIREFOX: 'firefox'>, version='121.0', release_date='2023-12-19', market_share=8.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 8.0,
+          "release_date": "2023-12-19"
+        }
+      },
+      {
+        "test_name": "browser_firefox_120.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.FIREFOX: 'firefox'>, version='120.0', release_date='2023-11-21', market_share=5.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 5.0,
+          "release_date": "2023-11-21"
+        }
+      },
+      {
+        "test_name": "browser_firefox_115.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.FIREFOX: 'firefox'>, version='115.0', release_date='2023-07-04', market_share=3.0, compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 3.0,
+          "release_date": "2023-07-04"
+        }
+      },
+      {
+        "test_name": "browser_firefox_102.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.FIREFOX: 'firefox'>, version='102.0', release_date='2022-06-28', market_share=1.0, compatibility_level=<CompatibilityLevel.MINIMAL: 'minimal'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.MINIMAL",
+        "issues": [
+          "localStorage not supported"
+        ],
+        "warnings": [
+          "CSS Grid support limited",
+          "Limited ES6 support",
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 1.0,
+          "release_date": "2022-06-28"
+        }
+      },
+      {
+        "test_name": "browser_safari_17.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.SAFARI: 'safari'>, version='17.0', release_date='2023-09-18', market_share=10.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 10.0,
+          "release_date": "2023-09-18"
+        }
+      },
+      {
+        "test_name": "browser_safari_16.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.SAFARI: 'safari'>, version='16.0', release_date='2022-09-12', market_share=5.0, compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 5.0,
+          "release_date": "2022-09-12"
+        }
+      },
+      {
+        "test_name": "browser_safari_15.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.SAFARI: 'safari'>, version='15.0', release_date='2021-09-20', market_share=2.0, compatibility_level=<CompatibilityLevel.MINIMAL: 'minimal'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.MINIMAL",
+        "issues": [
+          "localStorage not supported"
+        ],
+        "warnings": [
+          "CSS Grid support limited",
+          "Limited ES6 support",
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 2.0,
+          "release_date": "2021-09-20"
+        }
+      },
+      {
+        "test_name": "browser_edge_120.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.EDGE: 'edge'>, version='120.0', release_date='2023-11-30', market_share=5.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 5.0,
+          "release_date": "2023-11-30"
+        }
+      },
+      {
+        "test_name": "browser_edge_119.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.EDGE: 'edge'>, version='119.0', release_date='2023-11-02', market_share=3.0, compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 3.0,
+          "release_date": "2023-11-02"
+        }
+      },
+      {
+        "test_name": "browser_edge_110.0",
+        "browser_version": "BrowserVersion(type=<BrowserType.EDGE: 'edge'>, version='110.0', release_date='2023-02-09', market_share=2.0, compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>)",
+        "streamlit_version": null,
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [
+          "WebComponents support limited"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "market_share": 2.0,
+          "release_date": "2023-02-09"
+        }
+      }
+    ],
+    "streamlit_tests": [
+      {
+        "test_name": "streamlit_1.29.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.29.0', release_date='2023-11-16', python_requirement='>=3.8', compatibility_level=<CompatibilityLevel.FULL: 'full'>, known_issues=[])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.8",
+          "release_date": "2023-11-16"
+        }
+      },
+      {
+        "test_name": "streamlit_1.28.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.28.0', release_date='2023-10-26', python_requirement='>=3.8', compatibility_level=<CompatibilityLevel.FULL: 'full'>, known_issues=[])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.8",
+          "release_date": "2023-10-26"
+        }
+      },
+      {
+        "test_name": "streamlit_1.27.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.27.0', release_date='2023-09-21', python_requirement='>=3.8', compatibility_level=<CompatibilityLevel.FULL: 'full'>, known_issues=[])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.8",
+          "release_date": "2023-09-21"
+        }
+      },
+      {
+        "test_name": "streamlit_1.26.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.26.0', release_date='2023-08-24', python_requirement='>=3.8', compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>, known_issues=['Session state issues', 'Component rendering delays'])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [
+          "Component rendering issues detected",
+          "Session state issues",
+          "Component rendering delays"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.8",
+          "release_date": "2023-08-24"
+        }
+      },
+      {
+        "test_name": "streamlit_1.25.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.25.0', release_date='2023-07-13', python_requirement='>=3.8', compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>, known_issues=['Cache invalidation bugs', 'Memory leaks'])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [
+          "Cache invalidation bugs",
+          "Memory leaks"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.8",
+          "release_date": "2023-07-13"
+        }
+      },
+      {
+        "test_name": "streamlit_1.20.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.20.0', release_date='2023-03-09', python_requirement='>=3.7', compatibility_level=<CompatibilityLevel.MINIMAL: 'minimal'>, known_issues=['Limited component support', 'Performance issues'])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.MINIMAL",
+        "issues": [],
+        "warnings": [
+          "Limited component support",
+          "Performance issues"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.7",
+          "release_date": "2023-03-09"
+        }
+      },
+      {
+        "test_name": "streamlit_1.15.0",
+        "browser_version": null,
+        "streamlit_version": "StreamlitVersion(version='1.15.0', release_date='2022-10-27', python_requirement='>=3.7', compatibility_level=<CompatibilityLevel.MINIMAL: 'minimal'>, known_issues=['No session state', 'Limited caching'])",
+        "data_format": null,
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.MINIMAL",
+        "issues": [],
+        "warnings": [
+          "Session state not available",
+          "No session state",
+          "Limited caching"
+        ],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "python_requirement": ">=3.7",
+          "release_date": "2022-10-27"
+        }
+      }
+    ],
+    "data_format_tests": [
+      {
+        "test_name": "data_format_snapshot_3.0.0",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='snapshot', version='3.0.0', schema_file='schemas/snapshot_v3.json', migration_path=['legacy', '1.0.0', '2.0.0'], compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [
+          "Migration from legacy to 3.0.0 failed",
+          "Migration from 1.0.0 to 3.0.0 failed",
+          "Migration from 2.0.0 to 3.0.0 failed"
+        ],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 3,
+          "has_schema": true
+        }
+      },
+      {
+        "test_name": "data_format_snapshot_2.0.0",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='snapshot', version='2.0.0', schema_file='schemas/snapshot_v2.json', migration_path=['legacy', '1.0.0'], compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [
+          "Migration from legacy to 2.0.0 failed",
+          "Migration from 1.0.0 to 2.0.0 failed"
+        ],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 2,
+          "has_schema": true
+        }
+      },
+      {
+        "test_name": "data_format_snapshot_1.0.0",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='snapshot', version='1.0.0', schema_file='schemas/snapshot_v1.json', migration_path=['legacy'], compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [
+          "Migration from legacy to 1.0.0 failed"
+        ],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 1,
+          "has_schema": true
+        }
+      },
+      {
+        "test_name": "data_format_legacy_legacy",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='legacy', version='legacy', schema_file=None, migration_path=[], compatibility_level=<CompatibilityLevel.PARTIAL: 'partial'>)",
+        "success": true,
+        "compatibility_level": "CompatibilityLevel.PARTIAL",
+        "issues": [],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 0,
+          "has_schema": false
+        }
+      },
+      {
+        "test_name": "data_format_export_pdf_v1",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='export', version='pdf_v1', schema_file=None, migration_path=[], compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [
+          "Data format validation failed"
+        ],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 0,
+          "has_schema": false
+        }
+      },
+      {
+        "test_name": "data_format_export_pptx_v1",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='export', version='pptx_v1', schema_file=None, migration_path=[], compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [
+          "Data format validation failed"
+        ],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 0,
+          "has_schema": false
+        }
+      },
+      {
+        "test_name": "data_format_export_csv_v1",
+        "browser_version": null,
+        "streamlit_version": null,
+        "data_format": "DataFormatVersion(format_name='export', version='csv_v1', schema_file=None, migration_path=[], compatibility_level=<CompatibilityLevel.FULL: 'full'>)",
+        "success": false,
+        "compatibility_level": "CompatibilityLevel.FULL",
+        "issues": [
+          "Data format validation failed"
+        ],
+        "warnings": [],
+        "test_duration_ms": 0.0,
+        "metadata": {
+          "migration_path_length": 0,
+          "has_schema": false
+        }
+      }
+    ]
+  }
+}

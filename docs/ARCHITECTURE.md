@@ -2,197 +2,415 @@
 
 ## Overview
 
-The Chinese Character Learning Cards application has been refactored into a modular, maintainable architecture. The main `web_ui.py` file has been reduced to 34 lines through systematic extraction of concerns.
+The Chinese Character Learning Cards application has undergone a comprehensive UI refactor implementing a layered, framework-agnostic architecture. The system now features unified preview pipelines, digest-driven invalidation, UI adapter abstraction, and comprehensive state management.
+
+## Architecture Principles
+
+### 1. Layered Architecture
+- **UI Layer**: Framework-agnostic components using UI adapters
+- **Service Layer**: Business logic and data processing
+- **Core Layer**: State management, feature flags, and utilities
+- **Infrastructure Layer**: Persistence, caching, and monitoring
+
+### 2. Digest-Driven Invalidation
+- Deterministic digest computation for cache invalidation
+- Domain-specific digests (processing, layout, style, navigation)
+- Single source of truth for cache invalidation decisions
+
+### 3. Framework Abstraction
+- UI Adapter pattern isolates framework dependencies
+- Components work with any UI framework (Streamlit, web, CLI)
+- Clean separation between business logic and presentation
 
 ## Directory Structure
 
-Root placement conventions:
-
-- Root contains only: web_ui.py, README, requirements, high-level docs, core directories (core/, services/, ui/, src/, docs/, tests/, data/, samples/, out/)
-- Tests live in tests/
-- Documentation lives in docs/
-- Framework-agnostic modules live in src/; services wrap them for app use; UI does not import src directly
-
 ```text
-├── web_ui.py                 # Main Streamlit application (34 lines)
-├── core/
+├── web_ui.py                 # Main Streamlit application entry point
+├── core/                     # Core infrastructure
 │   ├── constants.py          # Application constants and defaults
-│   └── state.py              # Session state management
-├── services/
-│   ├── cache.py              # Cached functions and HTML generation
+│   ├── feature_flags.py      # Feature flag system
+│   ├── field_migration.py    # Data migration utilities
+│   └── version.py            # Code version management
+├── services/                 # Business logic layer
+│   ├── cache_v2.py           # V2 caching with schema versioning
 │   ├── export.py             # Export functionality (PPTX/PDF)
-│   └── processing.py         # Text processing and data generation
-├── ui/
-│   ├── app_controller.py     # Main application controller (flows, error handling)
-│   ├── components.py         # Reusable UI components
-│   ├── sections.py           # Major page sections
+│   ├── layout.py             # Layout computation services
+│   ├── persistence.py        # Browser storage and snapshots
+│   ├── processing.py         # Text processing and data generation
+│   ├── render_core.py        # Shared rendering logic
+│   ├── rollout.py            # Feature rollout management
+│   └── telemetry.py          # Performance monitoring
+├── ui/                       # UI layer (framework-agnostic)
+│   ├── app_controller.py     # Main application controller
+│   ├── editor.py             # Table-based card editor
+│   ├── export.py             # Export UI components
+│   ├── inputs.py             # Input handling components
+│   ├── options.py            # Configuration options
+│   ├── ports.py              # UI adapter interfaces
+│   ├── preview.py            # Preview components
+│   ├── preview_controller.py # Preview pipeline controller
+│   ├── sidebar.py            # Sidebar components
+│   ├── state.py              # State service with rule engine
 │   └── styles.py             # CSS and styling utilities
 
+├── src/                      # Framework-agnostic source modules
+│   ├── dict_utils.py         # Dictionary utilities
+│   ├── layout_pdf.py         # PDF generation
+│   ├── layout_pptx.py        # PowerPoint generation
+│   └── pinyin_utils.py       # Pinyin generation utilities
+└── tests/                    # Comprehensive test suite
+    ├── integration/          # Integration tests
+    ├── ui/                   # UI component tests
+    └── unit/                 # Unit tests
+```
 
 ## Architecture Diagram
 
 ```mermaid
 flowchart TD
-  A[web_ui.py] --> L[ui/app_controller.py]
-  L --> B[ui/sections.py]
-  B --> C[ui/components.py]
-  L --> D[core/state.py]
-  L --> E[services/processing.py]
-  L --> F[services/cache.py]
-  L --> G[services/export.py]
-  E --> H[src/pinyin_utils.py]
-  E --> I[src/dict_utils.py]
-  G --> J[src/layout_pptx.py]
-  G --> K[src/layout_pdf.py]
+    A[web_ui.py] --> B[ui/app_controller.py]
+    B --> C[ui/preview_controller.py]
+    B --> D[ui/state.py]
+
+    C --> E[services/cache_v2.py]
+    C --> F[services/render_core.py]
+
+    D --> G[core/feature_flags.py]
+    D --> H[services/persistence.py]
+
+    E --> I[services/processing.py]
+    F --> J[src/layout_pdf.py]
+    F --> K[src/layout_pptx.py]
+
+    B --> L[UI Components]
+    L --> M[ui/inputs.py]
+    L --> N[ui/preview.py]
+    L --> O[ui/editor.py]
+    L --> P[ui/export.py]
+
+    M --> Q[ui/ports.py - UI Adapters]
+    N --> Q
+    O --> Q
+    P --> Q
 ```
 
-```text
-└── src/                      # Original source modules
-    ├── pinyin_utils.py       # Pinyin generation utilities
-    ├── dict_utils.py         # Dictionary utilities
-    ├── layout_pptx.py        # PowerPoint generation
-    └── layout_pdf.py         # PDF generation
+## Core Architecture Components
+
+### State Management Layer
+
+#### `ui/state.py` - State Service
+- **Rule Engine**: Automatic field normalization and validation
+- **Batch Operations**: Atomic state updates with change tracking
+- **Digest Computation**: Deterministic cache invalidation
+- **Session Management**: Session generation and lifecycle
+- **Change Detection**: Domain-specific change tracking
+
+#### `core/feature_flags.py` - Feature Flag System
+- **Environment Integration**: Support for env vars, config files
+- **Rollout Management**: Gradual feature rollout capabilities
+- **Testing Overrides**: Test-specific flag configurations
+- **Priority Hierarchy**: test > env > config > remote > defaults
+
+### Service Layer
+
+#### `services/cache_v2.py` - Advanced Caching System
+
+- **Schema Versioning**: PREVIEW_CACHE_SCHEMA_VERSION and EXPORT_SCHEMA_VERSION
+- **Content Versioning**: Code version integration for cache invalidation
+- **TTL Management**: Time-based cache expiration
+- **Size Limits**: Memory-aware cache eviction policies
+- **Performance Monitoring**: Cache hit/miss statistics
+
+#### `services/render_core.py` - Shared Rendering Engine
+
+- **Unified Rendering**: Single rendering pipeline for preview and export
+- **Template Composition**: Consistent HTML/layout generation
+- **Font Fallback**: Robust font handling across formats
+- **Line Height Normalization**: Consistent typography rendering
+- **Format Abstraction**: Support for HTML, PDF, PPTX output
+
+#### `services/persistence.py` - Browser Storage Management
+
+- **UserSnapshot System**: Versioned JSON snapshots with migration
+- **Storage Quota**: Graceful degradation when storage limits exceeded
+- **Data Migration**: Automatic schema evolution and backward compatibility
+- **Export History**: Cleanup policies (max 50 records, 30 days)
+- **Kill Switch**: DISABLE_PERSISTENCE for emergency scenarios
+
+#### `services/rollout.py` - Feature Rollout Management
+
+- **Gradual Rollout**: Percentage-based feature deployment
+- **A/B Testing**: Statistical experiment management
+- **Canary Deployment**: Small-scale validation before full rollout
+- **Automated Rollback**: Safety triggers based on error rates and performance
+- **User Segmentation**: Targeted feature deployment
+
+### UI Layer (Framework-Agnostic)
+
+#### `ui/ports.py` - UI Adapter System
+
+- **UIAdapter Interface**: Framework abstraction layer
+- **StreamlitAdapter**: Streamlit-specific implementation
+- **FakeAdapter**: Testing and development adapter
+- **Port Interfaces**: Inputs, Preview, Notification, Refresh scheduling
+- **Framework Independence**: Components work with any UI framework
+
+#### `ui/preview_controller.py` - Preview Pipeline Controller
+
+- **Unified Pipeline**: Single entry point for all preview rendering
+- **Digest-Driven Caching**: Intelligent cache invalidation
+- **AppConfig Composition**: Configuration aggregation and validation
+- **Navigation Clamping**: Automatic page boundary enforcement
+- **Fallback Handling**: Graceful degradation on rendering failures
+
+## Data Flow Architecture
+
+### 1. Request Processing Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as UI Components
+    participant State as State Service
+    participant Cache as Cache V2
+    participant Render as Render Core
+    participant Export as Export Service
+
+    User->>UI: User Action
+    UI->>State: Update State
+    State->>State: Compute Digests
+    State->>Cache: Check Cache
+    alt Cache Hit
+        Cache->>UI: Return Cached Result
+    else Cache Miss
+        Cache->>Render: Generate Content
+        Render->>Cache: Store Result
+        Cache->>UI: Return New Result
+    end
+    UI->>User: Display Result
+
+    Note over User,Export: Export Flow
+    User->>UI: Export Request
+    UI->>Export: Generate Export
+    Export->>Render: Use Shared Core
+    Export->>User: Download File
 ```
 
-## Module Responsibilities
+### 2. State Management Flow
 
-### Core Modules
+1. **User Interaction**: UI components capture user input
+2. **State Updates**: Changes routed through `ui/state.py` service
+3. **Rule Engine**: Automatic field normalization and validation
+4. **Digest Computation**: Domain-specific digests computed
+5. **Change Detection**: Affected domains identified
+6. **Cache Invalidation**: Targeted cache clearing based on digests
+7. **UI Refresh**: Components re-render with new state
 
-#### `core/constants.py`
+### 3. Preview Pipeline Flow
 
-- Application-wide constants (colors, fonts, defaults)
-- Font options for Chinese characters
-- Preset color palette
-- Default layout and page settings
-
-#### `core/state.py`
-
-- Centralized session state management
-- Getter/setter functions for clean access
-- State validation and initialization
-- Export state tracking
-
-### Service Modules
-
-#### `services/cache.py`
-
-- Cached HTML generation functions
-- Page preview rendering with realistic layout
-- Simple grid preview for quick viewing
-- Streamlit cache decorators
-
-#### `services/export.py`
-
-- Export functionality for PPTX and PDF formats
-- Encapsulates layout generator calls
-- Handles temporary file management
-- Error handling and cleanup
-
-#### `services/processing.py`
-
-- Pure functions for text processing
-- Input text parsing (space-separated Chinese)
-- Intelligent text segmentation using jieba
-- Missing data generation (pinyin/translations)
-
-### UI Modules
-
-#### `ui/components.py`
-
-- Reusable UI components
-- Color palette selector with fallback
-- Pagination navigation controls
-- Preview section rendering
-- Page information display
-
-#### `ui/sections.py`
-
-- Major page sections as functions
-- Sidebar with statistics and history
-- Input section (manual/CSV upload)
-- Options and advanced settings
-- Preview wrapper with editing
-- Export section with download buttons
-
-#### `ui/styles.py`
-
-- CSS styling utilities
-- Global style application
-- Sticky wrapper helpers
-
-## Data Flow
-
-1. **Initialization**: `core/state.py` initializes all session state variables
-2. **Input**: `ui/sections.py` handles user input (text or CSV)
-3. **Processing**: `services/processing.py` parses and enriches data
-4. **Caching**: `services/cache.py` generates cached HTML previews
-5. **Display**: `ui/components.py` renders UI elements
-6. **Export**: `services/export.py` generates downloadable files
+1. **Configuration**: AppConfig assembled from current state
+2. **Digest Check**: Preview params digest computed
+3. **Cache Lookup**: Check for cached preview with matching digest
+4. **Rendering**: Generate new preview if cache miss
+5. **Storage**: Cache result with digest key
+6. **Display**: Return HTML to UI components
 
 ## Key Design Principles
 
-### Separation of Concerns
+### 1. Framework Independence
 
-- UI logic separated from business logic
-- Pure functions for data processing
-- Centralized state management
-- Modular component architecture
+- **UI Adapter Pattern**: All UI interactions go through adapter interfaces
+- **Business Logic Isolation**: Core logic independent of UI framework
+- **Testing Support**: FakeAdapter enables comprehensive testing
+- **Future Flexibility**: Easy migration to different UI frameworks
+
+### 2. Digest-Driven Architecture
+
+- **Deterministic Caching**: Reproducible cache keys based on content
+- **Selective Invalidation**: Only affected caches are cleared
+- **Performance Optimization**: Minimal unnecessary recomputation
+- **Debugging Support**: Clear cache miss diagnosis
+
+### 3. Shared Render Core
+
+- **Consistency Guarantee**: Preview and export use identical rendering logic
+- **Template Reuse**: Common HTML/layout generation
+- **Format Abstraction**: Support for multiple output formats
+- **Performance Optimization**: Shared computation and caching
+
+### 4. State Service Architecture
+
+- **Centralized Management**: Single source of truth for application state
+- **Rule Engine**: Automatic validation and normalization
+- **Batch Operations**: Atomic updates with change tracking
+- **Session Isolation**: Multi-user support with session boundaries
+
+## Performance Architecture
 
 ### Caching Strategy
 
-- HTML generation is cached for performance
-- Export data is cached to avoid regeneration
-- Parameter change detection clears relevant caches
+1. **Multi-Level Caching**
+   - **Session Cache**: In-memory cache for current session
+   - **Preview Cache**: Digest-keyed HTML previews
+   - **Export Cache**: Content-versioned export data
 
-### Error Handling
+2. **Cache Invalidation**
+   - **Digest-Driven**: Only affected caches cleared
+   - **Domain-Specific**: Separate digests for different concerns
+   - **Automatic**: No manual cache management required
 
-- Graceful fallbacks for component failures
-- Validation of user inputs and state
-- Proper cleanup of temporary files
+3. **Performance Targets**
+   - **First Render**: <500ms after digest change
+   - **Cached Render**: <100ms for cache hits
+   - **Memory Usage**: <50MB total application memory
+   - **Cache Hit Rate**: >80% for typical usage patterns
 
-### Maintainability
+### Monitoring and Telemetry
 
-- Small, focused modules (each <300 lines)
-- Clear naming conventions
-- Comprehensive documentation
-- Consistent import patterns
+- **Performance Metrics**: Browser Performance API integration
+- **Cache Analytics**: Hit/miss rates and performance tracking
+- **Error Tracking**: Structured logging with correlation IDs
+- **Memory Monitoring**: Usage tracking and leak detection
 
-## Performance Optimizations
+## Testing Architecture
 
-1. **Streamlit Caching**: Heavy HTML generation is cached
-2. **Lazy Loading**: Components only render when needed
-3. **State Management**: Efficient change detection
-4. **Memory Management**: Proper cleanup of temporary files
+### Comprehensive Test Strategy
 
-## Testing Strategy
+1. **Unit Tests**
+   - Pure functions in `services/processing.py`
+   - State service rule engine validation
+   - Digest computation correctness
+   - Cache behavior verification
 
-- **Unit Tests**: Pure functions in `services/processing.py`
-- **Integration Tests**: Component rendering and state management
-- **Manual Testing**: Full user workflow verification
-- **Performance Tests**: Cache effectiveness and memory usage
+2. **Integration Tests**
+   - UI adapter system integration
+   - Preview pipeline end-to-end testing
+   - State management across components
+   - Export consistency validation
 
-## Future Improvements
+3. **End-to-End Tests**
+   - Complete user workflow testing
+   - Event-driven testing (no hardcoded delays)
+   - Cross-browser compatibility
+   - Performance regression detection
 
-1. **Component Library**: Extract more reusable components
-2. **Theme System**: Configurable color schemes and fonts
-3. **Plugin Architecture**: Extensible export formats
-4. **Internationalization**: Multi-language support
-5. **Advanced Caching**: Redis or database-backed caching
+4. **Golden Tests**
+   - Preview-export consistency validation
+   - Typography and layout consistency
+   - HTML output normalization
 
-## Migration Notes
+### Test Coverage Targets
 
-The refactoring maintains full backward compatibility:
+- **Unit Tests**: >90% coverage for core logic
+- **Integration Tests**: All adapter paths covered
+- **E2E Tests**: Critical user workflows
+- **Performance Tests**: Baseline establishment and regression detection
 
-- All original functionality preserved
-- Same user interface and experience
-- Identical export formats and quality
-- No breaking changes to existing workflows
+## Migration and Compatibility
 
-## Dependencies
+### Data Migration Strategy
 
-- **Streamlit**: Web framework
+1. **Automatic Migration**
+   - Version detection and automatic upgrade
+   - Backward compatibility for old data formats
+   - Graceful handling of schema evolution
+
+2. **Rollback Capability**
+   - Safe rollback to previous versions
+   - Data integrity preservation
+   - User notification of migration status
+
+3. **Testing Matrix**
+   - Historical data format compatibility
+   - Browser version compatibility
+   - Streamlit version compatibility
+
+### Feature Flag Rollout
+
+1. **Gradual Deployment**
+   - Percentage-based rollout
+   - User segmentation support
+   - A/B testing capabilities
+
+2. **Safety Mechanisms**
+   - Automated rollback triggers
+   - Performance monitoring
+   - Error rate thresholds
+
+3. **Monitoring**
+   - Real-time rollout status
+   - User feedback collection
+   - Performance impact tracking
+
+## Dependencies and Technology Stack
+
+### Core Dependencies
+
+- **Streamlit**: Web framework and UI components
 - **jieba**: Chinese text segmentation
 - **python-pptx**: PowerPoint generation
 - **reportlab**: PDF generation
-- **pandas**: Data manipulation
-- **Custom modules**: Pinyin and dictionary utilities
+- **pandas**: Data manipulation and CSV handling
+
+### Development Dependencies
+
+- **pytest**: Testing framework
+- **pytest-cov**: Coverage reporting
+- **black**: Code formatting
+- **mypy**: Type checking
+- **pre-commit**: Git hooks for quality assurance
+
+### Browser Dependencies
+
+- **localStorage**: Client-side persistence
+- **Performance API**: Performance monitoring
+- **CSS Grid/Flexbox**: Modern layout support
+
+## Security Considerations
+
+### Input Validation
+
+- **XSS Protection**: HTML sanitization for user inputs
+- **CSV Validation**: Safe parsing of uploaded files
+- **Size Limits**: Protection against resource exhaustion
+
+### Data Protection
+
+- **Local Storage Only**: No server-side data persistence
+- **Session Isolation**: Multi-user session boundaries
+- **Secure Defaults**: Conservative security settings
+
+### Content Security Policy
+
+- **HTML Preview**: CSP headers for generated content
+- **Script Execution**: Controlled JavaScript execution
+- **Resource Loading**: Restricted external resource access
+
+## Deployment and Operations
+
+### Environment Configuration
+
+- **Feature Flags**: Environment-specific flag configuration
+- **Performance Tuning**: Cache size and TTL configuration
+- **Monitoring**: Telemetry and logging configuration
+
+### Monitoring and Alerting
+
+- **Performance Metrics**: Response time and throughput monitoring
+- **Error Tracking**: Structured error logging and alerting
+- **Resource Usage**: Memory and storage monitoring
+- **User Analytics**: Usage patterns and feature adoption
+
+### Maintenance Procedures
+
+- **Cache Management**: Automated cache cleanup and optimization
+- **Data Migration**: Scheduled migration and validation procedures
+- **Performance Optimization**: Regular performance review and tuning
+- **Security Updates**: Dependency updates and vulnerability scanning
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: August 2024
+**Architecture Version**: Post-UI Refactor
+**Next Review**: November 2024

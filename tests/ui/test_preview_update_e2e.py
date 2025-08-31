@@ -11,7 +11,7 @@ from typing import Dict, Any
 # We'll define our own simple test utilities inline
 
 # Import modules under test
-from services.cache import clear_preview_cache, create_page_preview_html_immediate
+from services.cache_v2 import clear_preview_cache, create_page_preview_html_immediate
 from core.state import initialize_session_state, get_all_ui_params
 from ui.sections import render_advanced_options
 from ui.components import render_preview_section
@@ -31,18 +31,18 @@ class TestPreviewUpdateEndToEnd:
         ]
         
         self.default_params = {
-            'card_size': 5.5,
-            'gap': 0.5,
-            'margin': 1.0,
-            'font_hanzi': 48,
-            'font_pinyin': 18,
-            'font_english': 14,
+            'card_size_cm': 5.5,
+            'gap_cm': 0.5,
+            'margin_cm': 1.0,
+            'hanzi_font_size': 48,
+            'pinyin_font_size': 18,
+            'english_font_size': 14,
             'page_size': 'A4',
-            'hanzi_font': 'SimHei',
+            'hanzi_font_family': 'SimHei',
             'background_color': '#ffffff',
-            'rows': 2,
-            'cols': 3,
-            'auto_fill': True
+            'layout_rows': 2,
+            'layout_cols': 3,
+            'layout_auto_fill': True
         }
     
     @patch('streamlit.session_state')
@@ -53,9 +53,9 @@ class TestPreviewUpdateEndToEnd:
         session_data = {
             'current_page': 0,
             'processed_cards': self.test_cards,
-            'font_hanzi': 48,
-            'font_pinyin': 18,
-            'font_english': 14,
+            'hanzi_font_size': 48,
+            'pinyin_font_size': 18,
+            'english_font_size': 14,
             'last_preview_params': None
         }
         
@@ -77,23 +77,23 @@ class TestPreviewUpdateEndToEnd:
         
         # Step 2: Simulate user changing font size
         new_font_size = 60
-        session_data['font_hanzi'] = new_font_size
+        session_data['hanzi_font_size'] = new_font_size
         
         # Step 3: Generate updated preview
         updated_html = create_page_preview_html_immediate(
             self.test_cards, 0,
-            card_size=self.default_params['card_size'],
-            gap=self.default_params['gap'],
-            margin=self.default_params['margin'],
-            font_hanzi=new_font_size,  # Changed parameter
-            font_pinyin=self.default_params['font_pinyin'],
-            font_english=self.default_params['font_english'],
+            card_size_cm=self.default_params['card_size_cm'],
+            gap_cm=self.default_params['gap_cm'],
+            margin_cm=self.default_params['margin_cm'],
+            hanzi_font_size=new_font_size,  # Changed parameter
+            pinyin_font_size=self.default_params['pinyin_font_size'],
+            english_font_size=self.default_params['english_font_size'],
             page_size=self.default_params['page_size'],
-            hanzi_font=self.default_params['hanzi_font'],
+            hanzi_font_family=self.default_params['hanzi_font_family'],
             background_color=self.default_params['background_color'],
-            rows=self.default_params['rows'],
-            cols=self.default_params['cols'],
-            auto_fill=self.default_params['auto_fill']
+            layout_rows=self.default_params['layout_rows'],
+            layout_cols=self.default_params['layout_cols'],
+            layout_auto_fill=self.default_params['layout_auto_fill']
         )
         
         # Step 4: Verify preview updated
@@ -197,7 +197,7 @@ class TestPreviewUpdateEndToEnd:
     def test_cache_clearing_effectiveness(self):
         """Test that cache clearing actually forces regeneration."""
         # Generate HTML with caching
-        from services.cache import cached_create_page_preview_html
+        from services.cache_v2 import cached_create_page_preview_html
         
         html1 = cached_create_page_preview_html(
             self.test_cards, 0, **self.default_params
@@ -231,8 +231,8 @@ class TestPreviewUpdateEndToEnd:
     def test_parameter_change_detection_accuracy(self, mock_prefs, mock_layout, mock_session_state):
         """Test that parameter change detection works accurately."""
         # Mock the dependencies
-        mock_layout.return_value = {'rows': 2, 'cols': 3, 'auto_fill': True}
-        mock_prefs.return_value = {'hanzi_font': 'SimHei', 'background_color': '#ffffff'}
+        mock_layout.return_value = {'layout_rows': 2, 'layout_cols': 3, 'layout_auto_fill': True}
+        mock_prefs.return_value = {'hanzi_font_family': 'SimHei', 'background_color': '#ffffff'}
 
         # Test with identical parameters
         params1 = get_all_ui_params(
@@ -253,7 +253,7 @@ class TestPreviewUpdateEndToEnd:
 
         # Should be different
         assert params1 != params3
-        assert params1['card_size'] != params3['card_size']
+        assert params1['card_size_cm'] != params3['card_size_cm']
     
     def test_multiple_parameter_changes(self):
         """Test handling multiple parameter changes simultaneously."""
@@ -268,10 +268,10 @@ class TestPreviewUpdateEndToEnd:
         # Change multiple parameters
         modified_params = initial_params.copy()
         modified_params.update({
-            'font_hanzi': 60,           # Font size change
+            'hanzi_font_size': 60,           # Font size change
             'background_color': '#00ff00',  # Color change
-            'card_size': 6.0,           # Size change
-            'gap': 0.8                  # Gap change
+            'card_size_cm': 6.0,           # Size change
+            'gap_cm': 0.8                  # Gap change
         })
         
         # Generate updated HTML

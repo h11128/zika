@@ -31,19 +31,19 @@ class TestFieldMigrationIntegration:
                 'use_segmented': False
             },
             'layout': {
-                'rows': 3,
-                'cols': 2,
-                'auto_fill': True,
-                'card_size': 5.5,
-                'gap': 0.7,  # Legacy field
-                'margin': 1.2,  # Legacy field
+                'layout_rows': 3,
+                'layout_cols': 2,
+                'layout_auto_fill': True,
+                'card_size_cm': 5.5,
+                'gap_cm': 0.7,  # Legacy field
+                'margin_cm': 1.2,  # Legacy field
                 'page_size': 'A4'
             },
             'typography': {
-                'font_hanzi': 48,
-                'font_pinyin': 18,
-                'font_english': 14,
-                'hanzi_font': 'SimHei'
+                'hanzi_font_size': 48,
+                'pinyin_font_size': 18,
+                'english_font_size': 14,
+                'hanzi_font_family': 'SimHei'
             },
             'visual': {
                 'background_color': '#ffffff',
@@ -65,16 +65,16 @@ class TestFieldMigrationIntegration:
         
         # Verify layout fields were migrated
         layout = migrated_snapshot.layout
-        assert 'gap' not in layout  # Legacy field should be removed
-        assert 'margin' not in layout  # Legacy field should be removed
+        assert 'gap_cm' not in layout  # Legacy field should be removed
+        assert 'margin_cm' not in layout  # Legacy field should be removed
         assert layout['gap_cm'] == 0.7  # Canonical field should exist
         assert layout['margin_cm'] == 1.2  # Canonical field should exist
-        assert layout['rows'] == 3  # Other fields unchanged
-        assert layout['cols'] == 2
+        assert layout['layout_rows'] == 3  # Other fields unchanged
+        assert layout['layout_cols'] == 2
         assert layout['page_size'] == 'A4'
         
         # Other sections should be unchanged
-        assert migrated_snapshot.typography['font_hanzi'] == 48
+        assert migrated_snapshot.typography['hanzi_font_size'] == 48
         assert migrated_snapshot.visual['background_color'] == '#ffffff'
     
     def test_snapshot_migration_with_canonical_fields(self):
@@ -92,19 +92,19 @@ class TestFieldMigrationIntegration:
                 'use_segmented': False
             },
             'layout': {
-                'rows': 3,
-                'cols': 2,
-                'auto_fill': True,
-                'card_size': 5.5,
+                'layout_rows': 3,
+                'layout_cols': 2,
+                'layout_auto_fill': True,
+                'card_size_cm': 5.5,
                 'gap_cm': 0.7,  # Canonical field
                 'margin_cm': 1.2,  # Canonical field
                 'page_size': 'A4'
             },
             'typography': {
-                'font_hanzi': 48,
-                'font_pinyin': 18,
-                'font_english': 14,
-                'hanzi_font': 'SimHei'
+                'hanzi_font_size': 48,
+                'pinyin_font_size': 18,
+                'english_font_size': 14,
+                'hanzi_font_family': 'SimHei'
             },
             'visual': {
                 'background_color': '#ffffff',
@@ -125,8 +125,8 @@ class TestFieldMigrationIntegration:
         layout = migrated_snapshot.layout
         assert layout['gap_cm'] == 0.7  # Should remain unchanged
         assert layout['margin_cm'] == 1.2  # Should remain unchanged
-        assert 'gap' not in layout  # Legacy fields should not exist
-        assert 'margin' not in layout
+        assert 'gap_cm' not in layout  # Legacy fields should not exist
+        assert 'margin_cm' not in layout
     
     def test_snapshot_migration_with_field_conflicts(self):
         """Test snapshot migration with both legacy and canonical fields."""
@@ -143,21 +143,21 @@ class TestFieldMigrationIntegration:
                 'use_segmented': False
             },
             'layout': {
-                'rows': 3,
-                'cols': 2,
-                'auto_fill': True,
-                'card_size': 5.5,
-                'gap': 0.5,  # Legacy field
+                'layout_rows': 3,
+                'layout_cols': 2,
+                'layout_auto_fill': True,
+                'card_size_cm': 5.5,
+                'gap_cm': 0.5,  # Legacy field
                 'gap_cm': 0.7,  # Canonical field (should win)
-                'margin': 1.0,  # Legacy field
+                'margin_cm': 1.0,  # Legacy field
                 'margin_cm': 1.2,  # Canonical field (should win)
                 'page_size': 'A4'
             },
             'typography': {
-                'font_hanzi': 48,
-                'font_pinyin': 18,
-                'font_english': 14,
-                'hanzi_font': 'SimHei'
+                'hanzi_font_size': 48,
+                'pinyin_font_size': 18,
+                'english_font_size': 14,
+                'hanzi_font_family': 'SimHei'
             },
             'visual': {
                 'background_color': '#ffffff',
@@ -177,17 +177,17 @@ class TestFieldMigrationIntegration:
         layout = migrated_snapshot.layout
         assert layout['gap_cm'] == 0.7  # Canonical field should be preserved
         assert layout['margin_cm'] == 1.2  # Canonical field should be preserved
-        assert 'gap' not in layout  # Legacy field should be removed
-        assert 'margin' not in layout  # Legacy field should be removed
+        assert 'gap_cm' not in layout  # Legacy field should be removed
+        assert 'margin_cm' not in layout  # Legacy field should be removed
     
     def test_field_resolution_in_digest_computation(self):
         """Test field resolution in digest computation scenarios."""
         # Test with legacy fields only
         legacy_data = {
-            'gap': 0.5,
-            'margin': 1.0,
-            'rows': 3,
-            'cols': 2
+            'gap_cm': 0.5,
+            'margin_cm': 1.0,
+            'layout_rows': 3,
+            'layout_cols': 2
         }
         
         gap_cm = resolve_field_value(legacy_data, 'gap_cm', 0.8)
@@ -200,8 +200,8 @@ class TestFieldMigrationIntegration:
         canonical_data = {
             'gap_cm': 0.7,
             'margin_cm': 1.2,
-            'rows': 3,
-            'cols': 2
+            'layout_rows': 3,
+            'layout_cols': 2
         }
         
         gap_cm = resolve_field_value(canonical_data, 'gap_cm', 0.8)
@@ -212,12 +212,12 @@ class TestFieldMigrationIntegration:
         
         # Test with mixed fields (canonical should win)
         mixed_data = {
-            'gap': 0.5,
+            'gap_cm': 0.5,
             'gap_cm': 0.7,
-            'margin': 1.0,
+            'margin_cm': 1.0,
             'margin_cm': 1.2,
-            'rows': 3,
-            'cols': 2
+            'layout_rows': 3,
+            'layout_cols': 2
         }
         
         gap_cm = resolve_field_value(mixed_data, 'gap_cm', 0.8)
@@ -234,44 +234,44 @@ class TestFieldMigrationIntegration:
             return {
                 'gap_cm': get_field_with_alias(data, 'gap_cm', 0.5),
                 'margin_cm': get_field_with_alias(data, 'margin_cm', 1.0),
-                'rows': data.get('rows', 2),
-                'cols': data.get('cols', 3)
+                'layout_rows': data.get('layout_rows', 2),
+                'layout_cols': data.get('layout_cols', 3)
             }
         
         # Test with legacy data
         legacy_config = get_layout_config({
-            'gap': 0.8,
-            'margin': 1.5,
-            'rows': 4,
-            'cols': 2
+            'gap_cm': 0.8,
+            'margin_cm': 1.5,
+            'layout_rows': 4,
+            'layout_cols': 2
         })
         
         assert legacy_config['gap_cm'] == 0.8
         assert legacy_config['margin_cm'] == 1.5
-        assert legacy_config['rows'] == 4
-        assert legacy_config['cols'] == 2
+        assert legacy_config['layout_rows'] == 4
+        assert legacy_config['layout_cols'] == 2
         
         # Test with canonical data
         canonical_config = get_layout_config({
             'gap_cm': 0.6,
             'margin_cm': 1.3,
-            'rows': 3,
-            'cols': 4
+            'layout_rows': 3,
+            'layout_cols': 4
         })
         
         assert canonical_config['gap_cm'] == 0.6
         assert canonical_config['margin_cm'] == 1.3
-        assert canonical_config['rows'] == 3
-        assert canonical_config['cols'] == 4
+        assert canonical_config['layout_rows'] == 3
+        assert canonical_config['layout_cols'] == 4
         
         # Test with mixed data (canonical should win)
         mixed_config = get_layout_config({
-            'gap': 0.4,
+            'gap_cm': 0.4,
             'gap_cm': 0.6,
-            'margin': 0.8,
+            'margin_cm': 0.8,
             'margin_cm': 1.3,
-            'rows': 3,
-            'cols': 4
+            'layout_rows': 3,
+            'layout_cols': 4
         })
         
         assert mixed_config['gap_cm'] == 0.6  # Canonical wins
@@ -290,24 +290,24 @@ class TestFieldMigrationIntegration:
         
         # Verify field aliases
         aliases = status['field_aliases']
-        assert 'gap' in aliases
-        assert 'margin' in aliases
-        assert aliases['gap']['new_name'] == 'gap_cm'
-        assert aliases['margin']['new_name'] == 'margin_cm'
+        assert 'gap_cm' in aliases
+        assert 'margin_cm' in aliases
+        assert aliases['gap_cm']['new_name'] == 'gap_cm'
+        assert aliases['margin_cm']['new_name'] == 'margin_cm'
         
         # Verify field lists
         assert 'gap_cm' in status['canonical_fields']
         assert 'margin_cm' in status['canonical_fields']
-        assert 'gap' in status['legacy_fields']
-        assert 'margin' in status['legacy_fields']
+        assert 'gap_cm' in status['legacy_fields']
+        assert 'margin_cm' in status['legacy_fields']
         
         # Verify field units
         units = status['field_units']
         assert units['gap_cm'] == 'cm'
         assert units['margin_cm'] == 'cm'
-        assert units['rows'] == 'count'
-        assert units['cols'] == 'count'
-        assert units['font_hanzi'] == 'pt'
+        assert units['layout_rows'] == 'count'
+        assert units['layout_cols'] == 'count'
+        assert units['hanzi_font_size'] == 'pt'
     
     def test_end_to_end_migration_workflow(self):
         """Test complete end-to-end migration workflow."""
@@ -315,10 +315,10 @@ class TestFieldMigrationIntegration:
         legacy_data = {
             'version': 2,  # Old version
             'layout': {
-                'gap': 0.6,
-                'margin': 1.1,
-                'rows': 4,
-                'cols': 3
+                'gap_cm': 0.6,
+                'margin_cm': 1.1,
+                'layout_rows': 4,
+                'layout_cols': 3
             }
         }
         
@@ -327,17 +327,17 @@ class TestFieldMigrationIntegration:
         
         assert migration_result.migration_applied is True
         assert len(migration_result.migrated_fields) == 2
-        assert 'layout.gap' in migration_result.migrated_fields
-        assert 'layout.margin' in migration_result.migrated_fields
+        assert 'layout.gap_cm' in migration_result.migrated_fields
+        assert 'layout.margin_cm' in migration_result.migrated_fields
         
         # Step 3: Verify migrated data structure
         layout = legacy_data['layout']
-        assert 'gap' not in layout
-        assert 'margin' not in layout
+        assert 'gap_cm' not in layout
+        assert 'margin_cm' not in layout
         assert layout['gap_cm'] == 0.6
         assert layout['margin_cm'] == 1.1
-        assert layout['rows'] == 4  # Unchanged
-        assert layout['cols'] == 3  # Unchanged
+        assert layout['layout_rows'] == 4  # Unchanged
+        assert layout['layout_cols'] == 3  # Unchanged
         
         # Step 4: Test field resolution on migrated data
         gap_resolved = resolve_field_value(layout, 'gap_cm', 0.5)
@@ -347,8 +347,8 @@ class TestFieldMigrationIntegration:
         assert margin_resolved == 1.1
         
         # Step 5: Test that legacy field resolution still works (should resolve to canonical)
-        gap_legacy = resolve_field_value(layout, 'gap', 0.5)
-        margin_legacy = resolve_field_value(layout, 'margin', 1.0)
+        gap_legacy = resolve_field_value(layout, 'gap_cm', 0.5)
+        margin_legacy = resolve_field_value(layout, 'margin_cm', 1.0)
 
         assert gap_legacy == 0.6  # Should resolve to canonical field value
         assert margin_legacy == 1.1  # Should resolve to canonical field value

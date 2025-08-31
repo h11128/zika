@@ -63,7 +63,7 @@ class DummySt:
     class components:
         class v1:
             @staticmethod
-            def html(html, height=0):
+            def html(html, height_cm=0):
                 pass
 
 
@@ -94,7 +94,8 @@ def test_render_color_palette_fallback(monkeypatch):
     uc.render_color_palette(["#112233", "#445566"])  # should hit fallback without exceptions
 
 
-def test_render_color_palette_success(monkeypatch):
+def test_render_color_palette_returns_value(monkeypatch):
+    """Test that render_color_palette returns selected value without side effects."""
     st = setup_dummy_st(monkeypatch)
     st.session_state.background_color = "#112233"
 
@@ -108,8 +109,67 @@ def test_render_color_palette_success(monkeypatch):
     sys.modules["components"] = pkg
     sys.modules["components.color_palette"] = mod
 
-    uc.render_color_palette(["#112233", "#445566"])  # should update background_color
-    assert st.session_state.background_color == "#445566"
+    # Test that function returns new value but doesn't modify session state
+    result = uc.render_color_palette(["#112233", "#445566"])
+    assert result == "#445566"
+    assert st.session_state.background_color == "#112233"  # Should not change
+
+
+def test_render_color_palette_with_callback(monkeypatch):
+    """Test that render_color_palette calls on_change callback when color changes."""
+    st = setup_dummy_st(monkeypatch)
+    st.session_state.background_color = "#112233"
+
+    # Provide a fake components.color_palette module
+    import sys, types as _types
+    pkg = _types.ModuleType("components")
+    mod = _types.ModuleType("components.color_palette")
+    def fake_color_palette(preset_colors, value, key):
+        return "#445566"  # different from current to trigger change
+    mod.color_palette = fake_color_palette
+    sys.modules["components"] = pkg
+    sys.modules["components.color_palette"] = mod
+
+    # Test callback is called
+    callback_called = False
+    callback_value = None
+
+    def test_callback(new_color):
+        nonlocal callback_called, callback_value
+        callback_called = True
+        callback_value = new_color
+
+    result = uc.render_color_palette(["#112233", "#445566"], on_change=test_callback)
+    assert result == "#445566"
+    assert callback_called
+    assert callback_value == "#445566"
+
+
+def test_render_color_palette_legacy_behavior(monkeypatch):
+    """Test that legacy wrapper maintains old behavior."""
+    st = setup_dummy_st(monkeypatch)
+    st.session_state.background_color = "#112233"
+
+    # Provide a fake components.color_palette module
+    import sys, types as _types
+    pkg = _types.ModuleType("components")
+    mod = _types.ModuleType("components.color_palette")
+    def fake_color_palette(preset_colors, value, key):
+        return "#445566"  # different from current to trigger change
+    mod.color_palette = fake_color_palette
+    sys.modules["components"] = pkg
+    sys.modules["components.color_palette"] = mod
+
+    # Test legacy wrapper shows deprecation warning and updates session state
+    import warnings
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        uc.render_color_palette_legacy(["#112233", "#445566"])
+
+        # Should show deprecation warning
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "deprecated" in str(w[0].message)
 
 
 def test_render_page_navigation_buttons_and_select(monkeypatch):
@@ -152,7 +212,7 @@ def test_render_preview_section_debug_mode(monkeypatch):
     # Patch immediate and cached creators (immediate should be used when params changed)
     monkeypatch.setattr(uc, "cached_create_page_preview_html", lambda *a, **k: "<html>page</html>")
     monkeypatch.setattr(uc, "cached_create_simple_grid_html", lambda *a, **k: "<html>grid</html>")
-    monkeypatch.setattr("services.cache.create_page_preview_html_immediate", lambda *a, **k: "<html>debug</html>")
+    monkeypatch.setattr("services.cache_v2.create_page_preview_html_immediate", lambda *a, **k: "<html>debug</html>")
 
     # Make params appear changed to force immediate path
     monkeypatch.setattr("core.state.get_all_ui_params", lambda *a, **k: {"dummy": 1})

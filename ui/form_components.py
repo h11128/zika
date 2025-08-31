@@ -75,7 +75,7 @@ class FormSection:
 def layout_options_section() -> Tuple[float, float, int, int, bool]:
     """
     Render layout options with form semantics.
-    Returns: (gap, margin, rows, cols, auto_fill)
+    Returns: (gap, margin, layout_rows, layout_cols, auto_fill)
     """
     with FormSection("layout_options") as form:
         st.subheader("📐 布局设置")
@@ -84,64 +84,64 @@ def layout_options_section() -> Tuple[float, float, int, int, bool]:
         
         with col1:
             # Gap setting with debouncing
-            current_gap = get_pending_value('gap', 0.5)
-            gap = st.slider(
+            current_gap = get_pending_value('gap_cm', 0.5)
+            gap_cm = st.slider(
                 "卡片间距 (cm)",
                 min_value=0.0, max_value=2.0, value=current_gap, step=0.1,
                 key="gap_slider",
                 help="卡片之间的间距"
             )
             if gap != current_gap:
-                form.add_change('gap', gap, immediate=True)
+                form.add_change('gap_cm', gap, immediate=True)
             
             # Rows setting
-            current_rows = get_pending_value('rows', 2)
-            rows = st.number_input(
+            current_rows = get_pending_value('layout_rows', 2)
+            layout_rows = st.number_input(
                 "行数", min_value=1, max_value=10, value=current_rows,
                 key="rows_input"
             )
             if rows != current_rows:
-                form.add_change('rows', rows)
+                form.add_change('layout_rows', rows)
         
         with col2:
             # Margin setting with debouncing
-            current_margin = get_pending_value('margin', 1.0)
-            margin = st.slider(
+            current_margin = get_pending_value('margin_cm', 1.0)
+            margin_cm = st.slider(
                 "页面边距 (cm)",
                 min_value=0.0, max_value=3.0, value=current_margin, step=0.1,
                 key="margin_slider",
                 help="页面四周的边距"
             )
             if margin != current_margin:
-                form.add_change('margin', margin, immediate=True)
+                form.add_change('margin_cm', margin, immediate=True)
             
             # Cols setting
-            current_cols = get_pending_value('cols', 3)
-            cols = st.number_input(
+            current_cols = get_pending_value('layout_cols', 3)
+            layout_cols = st.number_input(
                 "列数", min_value=1, max_value=10, value=current_cols,
                 key="cols_input"
             )
             if cols != current_cols:
-                form.add_change('cols', cols)
+                form.add_change('layout_cols', cols)
         
         # Auto fill setting
-        current_auto_fill = get_pending_value('auto_fill', True)
-        auto_fill = st.checkbox(
+        current_auto_fill = get_pending_value('layout_auto_fill', True)
+        layout_auto_fill = st.checkbox(
             "自动填充页面",
             value=current_auto_fill,
             key="auto_fill_checkbox",
             help="自动调整卡片大小以填充页面"
         )
         if auto_fill != current_auto_fill:
-            form.add_change('auto_fill', auto_fill, immediate=True)
+            form.add_change('layout_auto_fill', layout_auto_fill, immediate=True)
     
-    return gap, margin, rows, cols, auto_fill
+    return gap, margin, layout_rows, layout_cols, auto_fill
 
 
 def typography_section() -> Tuple[int, int, int, str]:
     """
     Render typography options with form semantics.
-    Returns: (font_hanzi, font_pinyin, font_english, hanzi_font)
+    Returns: (hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font)
     """
     with FormSection("typography") as form:
         st.subheader("🔤 字体设置")
@@ -150,54 +150,54 @@ def typography_section() -> Tuple[int, int, int, str]:
         
         with col1:
             # Hanzi font size
-            current_hanzi = get_pending_value('font_hanzi', 48)
-            font_hanzi = st.slider(
+            current_hanzi = get_pending_value('hanzi_font_size', 48)
+            hanzi_font_size = st.slider(
                 "汉字字体大小",
                 min_value=20, max_value=100, value=current_hanzi, step=2,
                 key="font_hanzi_slider"
             )
-            if font_hanzi != current_hanzi:
-                form.add_change('font_hanzi', font_hanzi, immediate=True)
+            if hanzi_font_size != current_hanzi:
+                form.add_change('hanzi_font_size', hanzi_font_size, immediate=True)
             
             # Pinyin font size
-            current_pinyin = get_pending_value('font_pinyin', 18)
-            font_pinyin = st.slider(
+            current_pinyin = get_pending_value('pinyin_font_size', 18)
+            pinyin_font_size = st.slider(
                 "拼音字体大小",
                 min_value=10, max_value=40, value=current_pinyin, step=1,
                 key="font_pinyin_slider"
             )
-            if font_pinyin != current_pinyin:
-                form.add_change('font_pinyin', font_pinyin, immediate=True)
+            if pinyin_font_size != current_pinyin:
+                form.add_change('pinyin_font_size', pinyin_font_size, immediate=True)
         
         with col2:
             # English font size
-            current_english = get_pending_value('font_english', 14)
-            font_english = st.slider(
+            current_english = get_pending_value('english_font_size', 14)
+            english_font_size = st.slider(
                 "英文字体大小",
                 min_value=8, max_value=30, value=current_english, step=1,
                 key="font_english_slider"
             )
-            if font_english != current_english:
-                form.add_change('font_english', font_english, immediate=True)
+            if english_font_size != current_english:
+                form.add_change('english_font_size', english_font_size, immediate=True)
             
             # Hanzi font family
             from core.constants import HANZI_FONT_OPTIONS
-            current_font = get_pending_value('hanzi_font', 'SimHei')
+            current_font = get_pending_value('hanzi_font_family', 'SimHei')
             try:
                 font_index = HANZI_FONT_OPTIONS.index(current_font)
             except ValueError:
                 font_index = 0
             
-            hanzi_font = st.selectbox(
+            hanzi_font_family = st.selectbox(
                 "汉字字体",
                 options=HANZI_FONT_OPTIONS,
                 index=font_index,
                 key="hanzi_font_select"
             )
             if hanzi_font != current_font:
-                form.add_change('hanzi_font', hanzi_font, immediate=True)
+                form.add_change('hanzi_font_family', hanzi_font_family, immediate=True)
     
-    return font_hanzi, font_pinyin, font_english, hanzi_font
+    return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font
 
 
 def visual_options_section() -> Tuple[str, str]:
@@ -270,7 +270,7 @@ def input_section_clean() -> str:
     new_text = st.text_area(
         "输入中文文本（每行一个词或短语）",
         value=current_text,
-        height=200,
+        height_cm=200,
         key="input_text_clean",
         help="输入要制作卡片的中文文本，每行一个词或短语"
     )
@@ -291,7 +291,7 @@ def input_section_clean() -> str:
                     invalidate_preview_cache("manual segmentation")
                 else:
                     st.session_state.input_text = new_text
-                    from services.cache import clear_preview_cache
+                    from services.cache_v2 import clear_preview_cache
                     clear_preview_cache()
                 st.rerun()
             except Exception:
@@ -351,14 +351,14 @@ def options_section_clean() -> Tuple[bool, bool, str, float]:
                 form.add_change('page_size', page_size)
             
             # Card size
-            current_card_size = get_pending_value('card_size', 5.5)
-            card_size = st.slider(
+            current_card_size = get_pending_value('card_size_cm', 5.5)
+            card_size_cm = st.slider(
                 "卡片大小 (cm)",
                 min_value=3.0, max_value=10.0, value=current_card_size, step=0.1,
                 key="card_size_clean"
             )
             if card_size != current_card_size:
-                form.add_change('card_size', card_size, immediate=True)
+                form.add_change('card_size_cm', card_size, immediate=True)
     
     return auto_pinyin, auto_translate, page_size, card_size
 
@@ -366,4 +366,4 @@ def options_section_clean() -> Tuple[bool, bool, str, float]:
 # Feature flag integration
 def use_clean_components() -> bool:
     """Check if clean components should be used."""
-    return get_feature_flag('clean_ui_components', False)
+    return False

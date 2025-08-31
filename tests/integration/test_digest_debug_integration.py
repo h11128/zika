@@ -118,13 +118,13 @@ class TestDigestDebugIntegration:
         set_test_override('ENABLE_DIGEST_DEBUG', True)
         
         # Mock session state
-        mock_st.session_state.rows = 3
-        mock_st.session_state.cols = 3
+        mock_st.session_state.layout_rows = 3
+        mock_st.session_state.layout_cols = 3
         mock_st.session_state.gap_cm = 0.8
         mock_st.session_state.margin_cm = 1.2
         mock_st.session_state.page_size = 'A3'
-        mock_st.session_state.auto_fill = False
-        mock_st.session_state.card_size = 'manual'
+        mock_st.session_state.layout_auto_fill = False
+        mock_st.session_state.card_size_cm = 'manual'
         
         with patch('ui.debug.ui_state_module.get_session_generation', return_value='session999'):
             with patch('ui.debug.get_code_version', return_value='v1.0.3'):
@@ -140,13 +140,13 @@ class TestDigestDebugIntegration:
                 
                 entry = entries[0]
                 assert entry.domain == "layout"
-                assert entry.raw_inputs['rows'] == 3
-                assert entry.raw_inputs['cols'] == 3
+                assert entry.raw_inputs['layout_rows'] == 3
+                assert entry.raw_inputs['layout_cols'] == 3
                 assert entry.raw_inputs['gap_cm'] == 0.8
                 assert entry.raw_inputs['margin_cm'] == 1.2
                 assert entry.raw_inputs['page_size'] == 'A3'
-                assert entry.raw_inputs['auto_fill'] is False
-                assert entry.raw_inputs['card_size'] == 'manual'
+                assert entry.raw_inputs['layout_auto_fill'] is False
+                assert entry.raw_inputs['card_size_cm'] == 'manual'
                 assert entry.digest == digest
     
     @patch('ui.debug.st')
@@ -155,10 +155,10 @@ class TestDigestDebugIntegration:
         set_test_override('ENABLE_DIGEST_DEBUG', True)
         
         # Mock session state
-        mock_st.session_state.font_hanzi = 36
-        mock_st.session_state.font_pinyin = 16
-        mock_st.session_state.font_english = 12
-        mock_st.session_state.hanzi_font = 'KaiTi'
+        mock_st.session_state.hanzi_font_size = 36
+        mock_st.session_state.pinyin_font_size = 16
+        mock_st.session_state.english_font_size = 12
+        mock_st.session_state.hanzi_font_family = 'KaiTi'
         mock_st.session_state.background_color = '#f0f0f0'
         
         with patch('ui.debug.ui_state_module.get_session_generation', return_value='session111'):
@@ -175,10 +175,10 @@ class TestDigestDebugIntegration:
                 
                 entry = entries[0]
                 assert entry.domain == "style"
-                assert entry.raw_inputs['font_hanzi'] == 36
-                assert entry.raw_inputs['font_pinyin'] == 16
-                assert entry.raw_inputs['font_english'] == 12
-                assert entry.raw_inputs['hanzi_font'] == 'KaiTi'
+                assert entry.raw_inputs['hanzi_font_size'] == 36
+                assert entry.raw_inputs['pinyin_font_size'] == 16
+                assert entry.raw_inputs['english_font_size'] == 12
+                assert entry.raw_inputs['hanzi_font_family'] == 'KaiTi'
                 assert entry.raw_inputs['background_color'] == '#f0f0f0'
                 assert entry.digest == digest
     

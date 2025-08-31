@@ -172,13 +172,13 @@ class TestDebugDigestFunctions:
     def test_compute_layout_digest_debug(self, mock_st):
         """Test layout digest computation with debug."""
         # Mock session state
-        mock_st.session_state.rows = 4
-        mock_st.session_state.cols = 2
+        mock_st.session_state.layout_rows = 4
+        mock_st.session_state.layout_cols = 2
         mock_st.session_state.gap_cm = 0.5
         mock_st.session_state.margin_cm = 1.0
         mock_st.session_state.page_size = 'A4'
-        mock_st.session_state.auto_fill = True
-        mock_st.session_state.card_size = 'auto'
+        mock_st.session_state.layout_auto_fill = True
+        mock_st.session_state.card_size_cm = 'auto'
         
         with patch('ui.debug.ui_state_module.stable_digest', return_value='layout123') as mock_digest:
             with patch('ui.debug.record_digest_debug') as mock_record:
@@ -188,13 +188,13 @@ class TestDebugDigestFunctions:
                 
                 # Check that digest was computed with correct inputs
                 expected_inputs = {
-                    'rows': 4,
-                    'cols': 2,
+                    'layout_rows': 4,
+                    'layout_cols': 2,
                     'gap_cm': 0.5,
                     'margin_cm': 1.0,
                     'page_size': 'A4',
-                    'auto_fill': True,
-                    'card_size': 'auto'
+                    'layout_auto_fill': True,
+                    'card_size_cm': 'auto'
                 }
                 mock_digest.assert_called_once_with(expected_inputs)
                 mock_record.assert_called_once_with('layout', expected_inputs, 'layout123')
@@ -203,10 +203,10 @@ class TestDebugDigestFunctions:
     def test_compute_style_digest_debug(self, mock_st):
         """Test style digest computation with debug."""
         # Mock session state
-        mock_st.session_state.font_hanzi = 48
-        mock_st.session_state.font_pinyin = 18
-        mock_st.session_state.font_english = 14
-        mock_st.session_state.hanzi_font = 'SimHei'
+        mock_st.session_state.hanzi_font_size = 48
+        mock_st.session_state.pinyin_font_size = 18
+        mock_st.session_state.english_font_size = 14
+        mock_st.session_state.hanzi_font_family = 'SimHei'
         mock_st.session_state.background_color = '#ffffff'
         
         with patch('ui.debug.ui_state_module.stable_digest', return_value='style123') as mock_digest:
@@ -217,10 +217,10 @@ class TestDebugDigestFunctions:
                 
                 # Check that digest was computed with correct inputs
                 expected_inputs = {
-                    'font_hanzi': 48,
-                    'font_pinyin': 18,
-                    'font_english': 14,
-                    'hanzi_font': 'SimHei',
+                    'hanzi_font_size': 48,
+                    'pinyin_font_size': 18,
+                    'english_font_size': 14,
+                    'hanzi_font_family': 'SimHei',
                     'background_color': '#ffffff'
                 }
                 mock_digest.assert_called_once_with(expected_inputs)

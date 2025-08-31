@@ -78,18 +78,18 @@ def render_export_section(processed_cards: List[Dict[str, str]]) -> None:
 def _effective_preview_params_from_state(passed: dict) -> dict:
     """Return effective preview params using state bridge as source of truth."""
     return {
-        'card_size': state_get('card_size', passed.get('card_size')),
-        'gap': state_get('gap_cm', passed.get('gap')),
-        'margin': state_get('margin_cm', passed.get('margin')),
-        'font_hanzi': state_get('font_hanzi', passed.get('font_hanzi')),
-        'font_pinyin': state_get('font_pinyin', passed.get('font_pinyin')),
-        'font_english': state_get('font_english', passed.get('font_english')),
+        'card_size_cm': state_get('card_size_cm', passed.get('card_size_cm')),
+        'gap_cm': state_get('gap_cm', passed.get('gap_cm')),
+        'margin_cm': state_get('margin_cm', passed.get('margin_cm')),
+        'hanzi_font_size': state_get('hanzi_font_size', passed.get('hanzi_font_size')),
+        'pinyin_font_size': state_get('pinyin_font_size', passed.get('pinyin_font_size')),
+        'english_font_size': state_get('english_font_size', passed.get('english_font_size')),
         'page_size': state_get('page_size', passed.get('page_size')),
-        'hanzi_font': state_get('hanzi_font', passed.get('hanzi_font')),
+        'hanzi_font_family': state_get('hanzi_font_family', passed.get('hanzi_font_family')),
         'background_color': state_get('background_color', passed.get('background_color')),
-        'rows': state_get('rows', passed.get('rows')),
-        'cols': state_get('cols', passed.get('cols')),
-        'auto_fill': state_get('auto_fill', passed.get('auto_fill')),
+        'layout_rows': state_get('layout_rows', passed.get('layout_rows')),
+        'layout_cols': state_get('layout_cols', passed.get('layout_cols')),
+        'layout_auto_fill': state_get('layout_auto_fill', passed.get('layout_auto_fill')),
     }
 
 
@@ -102,30 +102,30 @@ def render_left_column():
         from ui.options import render_options_section_adapted, render_advanced_options_adapted
         
         processed_cards = render_input_section_adapted()
-        auto_pinyin, auto_translate, page_size, card_size = render_options_section_adapted()
-        gap, margin, font_hanzi, font_pinyin, font_english, rows, cols = render_advanced_options_adapted()
+        auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section_adapted()
+        gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options_adapted()
     else:
         # Use existing implementations
         from ui.inputs import render_input_section
         from ui.options import render_options_section, render_advanced_options
         
         processed_cards = render_input_section()
-        auto_pinyin, auto_translate, page_size, card_size = render_options_section()
-        gap, margin, font_hanzi, font_pinyin, font_english, rows, cols = render_advanced_options()
+        auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section()
+        gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options()
 
     return {
         'processed_cards': processed_cards,
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
         'page_size': page_size,
-        'card_size': card_size,
-        'gap': gap,
-        'margin': margin,
-        'font_hanzi': font_hanzi,
-        'font_pinyin': font_pinyin,
-        'font_english': font_english,
-        'rows': rows,
-        'cols': cols
+        'card_size_cm': card_size,
+        'gap_cm': gap,
+        'margin_cm': margin,
+        'hanzi_font_size': hanzi_font_size,
+        'pinyin_font_size': pinyin_font_size,
+        'english_font_size': english_font_size,
+        'layout_rows': layout_rows,
+        'layout_cols': cols
     }
 
 
@@ -171,7 +171,7 @@ def render_preview_column_header():
         ui = get_unified_ui()
         
         prefs = get_ui_preferences()
-        hanzi_font, background_color = prefs['hanzi_font'], prefs['background_color']
+        hanzi_font_family, background_color = prefs['hanzi_font_family'], prefs['background_color']
 
         # Preview mode selection
         preview_mode = ui.radio(
@@ -189,7 +189,7 @@ def render_preview_column_header():
             state_set('preview_mode', preview_mode)
 
         return {
-            'hanzi_font': hanzi_font,
+            'hanzi_font_family': hanzi_font_family,
             'background_color': background_color,
             'preview_mode': preview_mode
         }

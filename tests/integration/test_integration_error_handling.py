@@ -26,7 +26,7 @@ if ROOT not in sys.path:
 
 from services.processing import parse_input_text, generate_missing_data, auto_segment_text
 from services.export import export_cards
-from services.cache import create_page_preview_html, create_simple_grid_html
+from services.cache_v2 import create_page_preview_html, create_simple_grid_html
 from src.dict_utils import create_default_dict, ChineseDict
 from src.pinyin_utils import hanzi_to_pinyin
 from core.constants import DEFAULT_PAGE_SIZE
@@ -173,7 +173,7 @@ class TestServiceFailureAndRecovery:
         # Test with extreme parameters that might cause issues
         try:
             # Very large card size
-            content = export_cards(cards, 'pptx', card_size=100.0)
+            content = export_cards(cards, 'pptx', card_size_cm=100.0)
             assert isinstance(content, (bytes, bytearray))
         except Exception:
             # If it fails, that's acceptable for extreme values
@@ -181,7 +181,7 @@ class TestServiceFailureAndRecovery:
         
         try:
             # Very small card size
-            content = export_cards(cards, 'pptx', card_size=0.1)
+            content = export_cards(cards, 'pptx', card_size_cm=0.1)
             assert isinstance(content, (bytes, bytearray))
         except Exception:
             # If it fails, that's acceptable for extreme values
@@ -350,12 +350,12 @@ class TestConfigurationErrorHandling:
         cards = [{'hanzi': '爱', 'pinyin': 'ài', 'english': 'love'}]
         
         # Test with non-existent font
-        html = create_simple_grid_html(cards, hanzi_font="NonExistentFont")
+        html = create_simple_grid_html(cards, hanzi_font_family="NonExistentFont")
         assert isinstance(html, str)
         assert "NonExistentFont" in html  # Should still include it in CSS
         
         # Test export with invalid font
-        content = export_cards(cards, 'pptx', hanzi_font="NonExistentFont")
+        content = export_cards(cards, 'pptx', hanzi_font_family="NonExistentFont")
         assert isinstance(content, (bytes, bytearray))
     
     def test_invalid_color_configuration_handling(self):
@@ -393,16 +393,16 @@ class TestEdgeCaseDataHandling:
         # Minimum values
         content = export_cards(
             cards, 'pptx',
-            card_size=1.0, gap=0.0, margin=0.0,
-            font_hanzi=8, font_pinyin=6, font_english=6
+            card_size_cm=1.0, gap_cm=0.0, margin_cm=0.0,
+            hanzi_font_size=8, pinyin_font_size=6, english_font_size=6
         )
         assert isinstance(content, (bytes, bytearray))
         
         # Maximum reasonable values
         content = export_cards(
             cards, 'pptx',
-            card_size=20.0, gap=5.0, margin=5.0,
-            font_hanzi=72, font_pinyin=36, font_english=24
+            card_size_cm=20.0, gap_cm=5.0, margin_cm=5.0,
+            hanzi_font_size=72, pinyin_font_size=36, english_font_size=24
         )
         assert isinstance(content, (bytes, bytearray))
     

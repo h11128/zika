@@ -23,22 +23,32 @@ def render_export_section_unified(processed_cards: List[Dict[str, str]]) -> None
 
     # Export parameters from state
     export_params = {
-        'card_size': state_get('card_size', 5.5),
-        'gap': state_get('gap_cm', 0.5),
-        'margin': state_get('margin_cm', 1.0),
-        'font_hanzi': state_get('font_hanzi', 48),
-        'font_pinyin': state_get('font_pinyin', 18),
-        'font_english': state_get('font_english', 14),
+        'card_size_cm': state_get('card_size_cm', 5.5),
+        'gap_cm': state_get('gap_cm', 0.5),
+        'margin_cm': state_get('margin_cm', 1.0),
+        'hanzi_font_size': state_get('hanzi_font_size', 48),
+        'pinyin_font_size': state_get('pinyin_font_size', 18),
+        'english_font_size': state_get('english_font_size', 14),
         'page_size': state_get('page_size', 'A4'),
-        'hanzi_font': state_get('hanzi_font', 'SimHei'),
+        'hanzi_font_family': state_get('hanzi_font_family', 'SimHei'),
         'background_color': state_get('background_color', '#ffffff'),
-        'rows': state_get('rows', 2),
-        'cols': state_get('cols', 3),
-        'auto_fill': state_get('auto_fill', True)
+        'layout_rows': state_get('layout_rows', 2),
+        'layout_cols': state_get('layout_cols', 3),
+        'layout_auto_fill': state_get('layout_auto_fill', True)
     }
 
-    # Create export key for caching
-    export_key = f"{len(processed_cards)}_{hash(str(export_params))}"
+    # Create export key for caching with content version signal
+    from ui.state import compute_export_key, get_content_version_signal
+
+    # Get content version signal from cards
+    content_version_signal = get_content_version_signal(processed_cards)
+
+    # Compute proper export key with content versioning
+    export_key = compute_export_key(
+        export_params=export_params,
+        cards_count=len(processed_cards),
+        content_version_signal=content_version_signal
+    )
     
     # Get state data
     export_ready = state_get('export_ready', {})
@@ -142,7 +152,7 @@ def render_right_column_unified():
             
             # Get UI preferences
             prefs = get_ui_preferences()
-            hanzi_font, background_color = prefs['hanzi_font'], prefs['background_color']
+            hanzi_font_family, background_color = prefs['hanzi_font_family'], prefs['background_color']
 
             # Preview mode selection
             preview_mode = ui.radio(
@@ -164,14 +174,14 @@ def render_right_column_unified():
             state_set('preview_mode', preview_mode)
 
         return {
-            'hanzi_font': hanzi_font,
+            'hanzi_font_family': hanzi_font_family,
             'background_color': background_color,
             'preview_mode': preview_mode
         }
     else:
         # Legacy implementation using unified UI
         prefs = get_ui_preferences()
-        hanzi_font, background_color = prefs['hanzi_font'], prefs['background_color']
+        hanzi_font_family, background_color = prefs['hanzi_font_family'], prefs['background_color']
 
         # Preview mode selection
         preview_mode = ui.radio(
@@ -185,7 +195,7 @@ def render_right_column_unified():
         state_set('preview_mode', preview_mode)
 
         return {
-            'hanzi_font': hanzi_font,
+            'hanzi_font_family': hanzi_font_family,
             'background_color': background_color,
             'preview_mode': preview_mode
         }
@@ -196,11 +206,11 @@ def render_empty_preview_unified():
     ui = get_unified_ui()
     
     try:
-        from services.cache import create_preview_html
+        from services.cache_v2 import create_preview_html
         # Note: This still uses st.components.v1.html as there's no adapter equivalent yet
         # This is one of the few remaining direct calls that's acceptable
         import streamlit as st
-        st.components.v1.html(create_preview_html([]), height=650)
+        st.components.v1.html(create_preview_html([]), height_cm=650)
     except Exception as e:
         ui.error(f"预览渲染错误: {e}")
 

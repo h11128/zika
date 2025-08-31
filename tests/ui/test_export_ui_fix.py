@@ -40,12 +40,12 @@ def test_export_functionality():
     # Test export options (same as used in web UI)
     export_options = {
         'page_size': 'A4',
-        'card_size': 5.5,
-        'gap': 0.5,
-        'margin': 1.0,
-        'font_hanzi': 48,
-        'font_pinyin': 18,
-        'font_english': 14
+        'card_size_cm': 5.5,
+        'gap_cm': 0.5,
+        'margin_cm': 1.0,
+        'hanzi_font_size': 48,
+        'pinyin_font_size': 18,
+        'english_font_size': 14
     }
     
     print("🔧 Export options:", export_options)
@@ -56,15 +56,15 @@ def test_export_functionality():
         with tempfile.NamedTemporaryFile(suffix='.pptx', delete=False) as tmp_file:
             generator = PPTXCardGenerator(
                 page_size=export_options.get('page_size', 'A4'),
-                card_size_cm=export_options.get('card_size', 5.5),
-                gap_cm=export_options.get('gap', 0.5),
-                margin_cm=export_options.get('margin', 1.0)
+                card_size_cm=export_options.get('card_size_cm', 5.5),
+                gap_cm=export_options.get('gap_cm', 0.5),
+                margin_cm=export_options.get('margin_cm', 1.0)
             )
             success = generator.generate_pptx(
                 test_cards, tmp_file.name,
-                font_hanzi=export_options.get('font_hanzi', 48),
-                font_pinyin=export_options.get('font_pinyin', 18),
-                font_english=export_options.get('font_english', 14)
+                hanzi_font_size=export_options.get('hanzi_font_size', 48),
+                pinyin_font_size=export_options.get('pinyin_font_size', 18),
+                english_font_size=export_options.get('english_font_size', 14)
             )
             
             if success:
@@ -87,15 +87,15 @@ def test_export_functionality():
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
             generator = PDFCardGenerator(
                 page_size=export_options.get('page_size', 'A4'),
-                card_size_cm=export_options.get('card_size', 5.5),
-                gap_cm=export_options.get('gap', 0.5),
-                margin_cm=export_options.get('margin', 1.0)
+                card_size_cm=export_options.get('card_size_cm', 5.5),
+                gap_cm=export_options.get('gap_cm', 0.5),
+                margin_cm=export_options.get('margin_cm', 1.0)
             )
             success = generator.generate_pdf(
                 test_cards, tmp_file.name,
-                font_hanzi=export_options.get('font_hanzi', 48),
-                font_pinyin=export_options.get('font_pinyin', 18),
-                font_english=export_options.get('font_english', 14)
+                hanzi_font_size=export_options.get('hanzi_font_size', 48),
+                pinyin_font_size=export_options.get('pinyin_font_size', 18),
+                english_font_size=export_options.get('english_font_size', 14)
             )
             
             if success:

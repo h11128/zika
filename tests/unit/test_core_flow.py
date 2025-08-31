@@ -53,12 +53,12 @@ class TestExportService(unittest.TestCase):
         ]
 
     def test_export_pptx(self):
-        content = export_cards(self.cards, 'pptx', page_size='A4', card_size=5.5, gap=0.5, margin=1.0)
+        content = export_cards(self.cards, 'pptx', page_size='A4', card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0)
         self.assertIsInstance(content, (bytes, bytearray))
         self.assertGreater(len(content), 0)
 
     def test_export_pdf(self):
-        content = export_cards(self.cards, 'pdf', page_size='A4', card_size=5.5, gap=0.5, margin=1.0)
+        content = export_cards(self.cards, 'pdf', page_size='A4', card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0)
         self.assertIsInstance(content, (bytes, bytearray))
         self.assertGreater(len(content), 0)
 
@@ -76,7 +76,7 @@ class TestPreviewHTML(unittest.TestCase):
 
     def test_simple_grid_html_contains_color(self):
         color = '#E3F2FD'
-        html = preview_cache.create_simple_grid_html(self.cards, hanzi_font='Microsoft YaHei', background_color=color)
+        html = preview_cache.create_simple_grid_html(self.cards, hanzi_font_family='Microsoft YaHei', background_color=color)
         self.assertIn(color, html)
         self.assertIn('simple-card', html)
 
@@ -84,10 +84,10 @@ class TestPreviewHTML(unittest.TestCase):
         color = '#E3F2FD'
         html = preview_cache.create_page_preview_html(
             self.cards, page_num=0,
-            card_size=5.5, gap=0.5, margin=1.0,
-            font_hanzi=48, font_pinyin=18, font_english=14,
-            page_size='A4', hanzi_font='Microsoft YaHei', background_color=color,
-            rows=3, cols=3, auto_fill=True
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+            page_size='A4', hanzi_font_family='Microsoft YaHei', background_color=color,
+            layout_rows=3, layout_cols=3, layout_auto_fill=True
         )
         self.assertIn(color, html)
         self.assertIn('page-card', html)

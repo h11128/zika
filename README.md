@@ -1,18 +1,81 @@
 # 🀄 Chinese Learning Cards Generator
 
-Streamlit-based web app to generate printable Chinese learning cards, with real-time preview and export to PPTX/PDF. A CLI workflow is also available for batch/offline use.
+A modern, framework-agnostic web application for generating printable Chinese learning cards with real-time preview and export capabilities. Features a comprehensive UI refactor with digest-driven caching, state management, and unified rendering pipeline.
 
-- UI guide: docs/WEB_UI_GUIDE.md
-- Architecture: docs/ARCHITECTURE.md
-- Color UI details: docs/Color_UI_Improvements.md
-- **E2E Testing**: docs/E2E_TESTS_DOCUMENTATION.md
-- **Test Coverage**: docs/TEST_COVERAGE_REPORT.md
-- **Integration Testing**: docs/INTEGRATION_TESTS_SUMMARY.md
-- **CI E2E Testing**: docs/CI_E2E_TESTING.md
+## 📚 Documentation
 
-- Docs index: docs/README.md
+### Core Documentation
+
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Complete system architecture and design principles
+- **[State Service](docs/STATE_SERVICE_README.md)** - State management and rule engine documentation
+- **[Feature Flags](docs/FEATURE_FLAGS_GUIDE.md)** - Feature flag system and rollout management
+- **[UI Adapters](docs/UI_ADAPTER_API.md)** - Framework-agnostic UI adapter system
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing strategy and examples
+
+### Feature Documentation
+
+- **[Feature Rollout Procedures](docs/FEATURE_ROLLOUT_PROCEDURES.md)** - Gradual rollout and A/B testing
+- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Data migration and compatibility
+- **[Performance Guide](docs/PERFORMANCE_GUIDE.md)** - Performance optimization and monitoring
+
+### Legacy Documentation
+
+- **[E2E Testing](docs/E2E_TESTS_DOCUMENTATION.md)** - End-to-end testing documentation
+- **[Test Coverage](docs/TEST_COVERAGE_REPORT.md)** - Test coverage reports
+- **[Integration Testing](docs/INTEGRATION_TESTS_SUMMARY.md)** - Integration test summaries
+- **[CI E2E Testing](docs/CI_E2E_TESTING.md)** - Continuous integration testing
 
 > 注：本仓库同时保留了最初的 CLI 文档作为补充说明（见 docs/要求.md）。
+
+## 🚀 Key Features
+
+### Modern Architecture
+- **Framework-Agnostic Design**: UI adapter system enables testing and future framework migration
+- **Digest-Driven Caching**: Intelligent cache invalidation based on content changes
+- **State Management**: Centralized state service with rule engine and validation
+- **Unified Rendering**: Shared render core ensures preview-export consistency
+
+### Performance & Reliability
+- **Advanced Caching**: Multi-level caching with TTL and size-based eviction
+- **Performance Monitoring**: Built-in telemetry and performance tracking
+- **Error Handling**: Comprehensive error handling with graceful degradation
+- **Memory Management**: Efficient memory usage with automatic cleanup
+
+### Development & Operations
+- **Feature Flags**: Comprehensive feature flag system with gradual rollout
+- **A/B Testing**: Built-in A/B testing and canary deployment capabilities
+- **Comprehensive Testing**: Unit, integration, and end-to-end test coverage
+- **Migration Support**: Automatic data migration with rollback capabilities
+
+### User Experience
+- **Real-time Preview**: Instant preview updates with intelligent caching
+- **Responsive Design**: Optimized for different screen sizes and devices
+- **Export Consistency**: Guaranteed consistency between preview and export
+- **Browser Storage**: Client-side persistence with automatic cleanup
+
+## 🏗️ Architecture Overview
+
+The application follows a layered, framework-agnostic architecture:
+
+```
+┌─────────────────┐
+│   UI Layer      │ ← Framework-agnostic components
+├─────────────────┤
+│ Service Layer   │ ← Business logic and data processing
+├─────────────────┤
+│  Core Layer     │ ← State management and utilities
+├─────────────────┤
+│Infrastructure   │ ← Caching, persistence, monitoring
+└─────────────────┘
+```
+
+### Key Components
+
+- **State Service**: Centralized state management with rule engine
+- **UI Adapters**: Framework abstraction for testing and flexibility
+- **Cache V2**: Advanced caching with schema versioning
+- **Render Core**: Shared rendering logic for consistency
+- **Feature Flags**: Gradual rollout and A/B testing system
 
 # 一、目标与范围
 

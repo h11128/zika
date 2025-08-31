@@ -15,11 +15,11 @@ class DummySt:
     def __init__(self):
         self.session_state = SS()
         self.session_state.current_page = 0
-        self.session_state.hanzi_font = "SimHei"
+        self.session_state.hanzi_font_family = "SimHei"
         self.session_state.background_color = "#fff"
-        self.session_state.rows = 2
-        self.session_state.cols = 2
-        self.session_state.auto_fill = True
+        self.session_state.layout_rows = 2
+        self.session_state.layout_cols = 2
+        self.session_state.layout_auto_fill = True
         self.session_state.last_params = {}
         self.session_state.export_ready = {}
         self.session_state.export_data = {}
@@ -70,7 +70,7 @@ def test_render_preview_section_wrapper(monkeypatch):
 
     us.render_preview_section_wrapper(cards, 5.5, 0.5, 1.0, 48, 18, 14, "A4", "SimHei", "#fff", 2, 2, True)
     # Ensure last_params updated
-    assert st.session_state.current_page == 0 and st.session_state.last_params["rows"] == 2
+    assert st.session_state.current_page == 0 and st.session_state.last_params["layout_rows"] == 2
 
     # Render empty path
     us.render_preview_section_wrapper([], 5.5, 0.5, 1.0, 48, 18, 14, "A4", "SimHei", "#fff", 2, 2, True)

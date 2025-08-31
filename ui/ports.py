@@ -50,7 +50,7 @@ class UIInputsPort(ABC):
     
     @abstractmethod
     def text_area(self, config: ComponentConfig, value: str = "", 
-                  height: int = 200) -> str:
+                  height_cm: int = 200) -> str:
         """Render text area component."""
         pass
     
@@ -100,7 +100,7 @@ class UIPreviewPort(ABC):
     """Port for preview components."""
     
     @abstractmethod
-    def html_component(self, html_content: str, height: int = 600) -> None:
+    def html_component(self, html_content: str, height_cm: int = 600) -> None:
         """Render HTML component."""
         pass
     
@@ -232,9 +232,9 @@ class StreamlitInputsAdapter(UIInputsPort):
         )
     
     def text_area(self, config: ComponentConfig, value: str = "", 
-                  height: int = 200) -> str:
+                  height_cm: int = 200) -> str:
         return st.text_area(
-            config.label, value=value, height=height,
+            config.label, value=value, height_cm=height,
             key=config.key, help=config.help_text, disabled=config.disabled
         )
     
@@ -293,8 +293,8 @@ class StreamlitInputsAdapter(UIInputsPort):
 class StreamlitPreviewAdapter(UIPreviewPort):
     """Streamlit implementation of preview port."""
     
-    def html_component(self, html_content: str, height: int = 600) -> None:
-        st.components.v1.html(html_content, height=height)
+    def html_component(self, html_content: str, height_cm: int = 600) -> None:
+        st.components.v1.html(html_content, height_cm=height)
     
     def empty_placeholder(self) -> Any:
         return st.empty()
@@ -358,7 +358,7 @@ class StreamlitRefreshAdapter(UIRefreshScheduler):
         except ImportError:
             # Fallback to legacy cache clearing
             try:
-                from services.cache import clear_preview_cache
+                from services.cache_v2 import clear_preview_cache
                 clear_preview_cache()
             except ImportError:
                 pass
@@ -430,8 +430,8 @@ class FakeInputsAdapter(UIInputsPort):
         return self.values.get(config.key, value)
 
     def text_area(self, config: ComponentConfig, value: str = "",
-                  height: int = 200) -> str:
-        self._record_interaction('text_area', config, value=value, height=height)
+                  height_cm: int = 200) -> str:
+        self._record_interaction('text_area', config, value=value, height_cm=height)
         return self.values.get(config.key, value)
 
     def number_input(self, config: ComponentConfig, value: float = 0.0,
@@ -484,8 +484,8 @@ class FakePreviewAdapter(UIPreviewPort):
         self.placeholders: List[str] = []
         self.containers: List[str] = []
 
-    def html_component(self, html_content: str, height: int = 600) -> None:
-        self.html_renders.append({'content': html_content, 'height': height})
+    def html_component(self, html_content: str, height_cm: int = 600) -> None:
+        self.html_renders.append({'content': html_content, 'height_cm': height})
 
     def empty_placeholder(self) -> Any:
         placeholder_id = f"placeholder_{len(self.placeholders)}"

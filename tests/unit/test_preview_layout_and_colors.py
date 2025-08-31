@@ -7,7 +7,7 @@
 
 import re
 import pytest
-from services.cache import (
+from services.cache_v2 import (
     create_page_preview_html,
     create_simple_grid_html_immediate,
 )
@@ -19,16 +19,16 @@ class TestPreviewFontAndColorConsistency:
             {'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'},
             {'hanzi': '世界', 'pinyin': 'shì jiè', 'english': 'world'}
         ]
-        hanzi_font = 'SimHei'
+        hanzi_font_family = 'SimHei'
         background_color = '#ffffff'
-        rows, cols = 2, 1
-        font_hanzi, font_pinyin, font_english = 48, 18, 14
-        card_size, auto_fill = 5.5, False
+        layout_rows, layout_cols = 2, 1
+        hanzi_font_size, pinyin_font_size, english_font_size = 48, 18, 14
+        card_size, layout_auto_fill = 5.5, False
 
         html = create_page_preview_html(
             test_cards, 0, card_size, 0.5, 1.0,
-            font_hanzi, font_pinyin, font_english, 'A4', hanzi_font,
-            background_color, rows, cols, auto_fill
+            hanzi_font_size, pinyin_font_size, english_font_size, 'A4', hanzi_font_family,
+            background_color, layout_rows, layout_cols, auto_fill
         )
 
         hanzi_font_pattern = r'\.page-hanzi[^}]*font-size:\s*(\d+(?:\.\d+)?)px'
@@ -38,8 +38,8 @@ class TestPreviewFontAndColorConsistency:
         # 期望 = pt → px (96/72) × 页面缩放(scale_factor)
         # scale_factor 在预览中约为 600 / page_width_px（A4≈793.8px），此处只校验比例常数 96/72
         pt_to_px = 96/72
-        expected_min = font_hanzi * pt_to_px * 0.6  # 下界（考虑页缩放）
-        expected_max = font_hanzi * pt_to_px * 1.0  # 上界
+        expected_min = hanzi_font_size * pt_to_px * 0.6  # 下界（考虑页缩放）
+        expected_max = hanzi_font_size * pt_to_px * 1.0  # 上界
         assert expected_min <= actual_hanzi_size <= expected_max
 
     def test_color_consistency_across_preview_modes(self):
@@ -92,10 +92,10 @@ class TestPreviewFontAndColorConsistency:
 class TestSimpleGridResponsiveLayout:
     def test_simple_grid_responsive_columns(self):
         test_cards = [{'hanzi': f'字{i}', 'pinyin': f'zì{i}', 'english': f'word{i}'} for i in range(12)]
-        rows, cols = 2, 6
-        card_size, auto_fill = 6.0, False
+        layout_rows, layout_cols = 2, 6
+        card_size, layout_auto_fill = 6.0, False
         html = create_simple_grid_html_immediate(
-            test_cards, 'SimHei', '#ffffff', rows, cols,
+            test_cards, 'SimHei', '#ffffff', layout_rows, layout_cols,
             48, 18, 14, card_size, auto_fill
         )
         responsive_patterns = [
@@ -107,12 +107,12 @@ class TestSimpleGridResponsiveLayout:
 
     def test_simple_grid_container_constraints(self):
         test_cards = [{'hanzi': f'字{i}', 'pinyin': f'zì{i}', 'english': f'word{i}'} for i in range(40)]
-        rows, cols = 5, 8
+        layout_rows, layout_cols = 5, 8
         html = create_simple_grid_html_immediate(
-            test_cards, 'SimHei', '#ffffff', rows, cols,
+            test_cards, 'SimHei', '#ffffff', layout_rows, layout_cols,
             48, 18, 14, 5.5, False
         )
-        container_patterns = [r'max-width:\s*(\d+)px', r'width:\s*100%', r'overflow:\s*hidden', r'overflow-x:\s*auto']
+        container_patterns = [r'max-width_cm:\s*(\d+)px', r'width_cm:\s*100%', r'overflow:\s*hidden', r'overflow-x:\s*auto']
         assert any(re.search(p, html) for p in container_patterns)
 
 
@@ -126,27 +126,27 @@ def test_pdf_card_generator_unsupported_page_size():
             card_size_cm=5.5,
             gap_cm=0.5,
             margin_cm=1.0,
-            rows=2,
-            cols=3,
-            auto_fill=False
+            layout_rows=2,
+            layout_cols=3,
+            layout_auto_fill=False
         )
 
 
 def test_pdf_card_generator_manual_card_size():
-    """Test manual card size calculation (auto_fill=False)."""
+    """Test manual card size calculation (layout_auto_fill=False)."""
     from src.layout_pdf import PDFCardGenerator
     generator = PDFCardGenerator(
         page_size="A4",
         card_size_cm=6.0,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=2,
-        cols=3,
-        auto_fill=False
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=False
     )
     # Should use manual card size
     expected_size = 6.0 * 28.35  # cm to points conversion
-    assert abs(generator.card_size - expected_size) < 1.0
+    assert abs(generator.card_size_cm - expected_size) < 1.0
 
 
 def test_pdf_card_generator_letter_page_size():
@@ -159,9 +159,9 @@ def test_pdf_card_generator_letter_page_size():
         card_size_cm=5.5,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=2,
-        cols=3,
-        auto_fill=True
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=True
     )
 
     # Letter size is different from A4
@@ -179,11 +179,11 @@ def test_pdf_card_generator_zero_rows_cols():
         card_size_cm=5.5,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=2,
-        cols=0,  # Zero cols
-        auto_fill=True
+        layout_rows=2,
+        layout_cols=0,  # Zero cols
+        layout_auto_fill=True
     )
-    assert generator.card_size >= 0
+    assert generator.card_size_cm >= 0
 
     # Test with zero rows
     generator = PDFCardGenerator(
@@ -191,11 +191,11 @@ def test_pdf_card_generator_zero_rows_cols():
         card_size_cm=5.5,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=0,  # Zero rows
-        cols=3,
-        auto_fill=True
+        layout_rows=0,  # Zero rows
+        layout_cols=3,
+        layout_auto_fill=True
     )
-    assert generator.card_size >= 0
+    assert generator.card_size_cm >= 0
 
 
 # Additional high-priority tests for src/layout_pdf.py core business logic
@@ -208,18 +208,18 @@ def test_pdf_card_generator_grid_scaling():
         card_size_cm=15.0,  # Very large cards that will exceed bounds
         gap_cm=2.0,
         margin_cm=1.0,
-        rows=3,
-        cols=3,
-        auto_fill=False
+        layout_rows=3,
+        layout_cols=3,
+        layout_auto_fill=False
     )
 
     # Grid should be scaled down to fit within page bounds
-    assert generator.card_size < 15.0 * 28.35  # Should be smaller than original
+    assert generator.card_size_cm < 15.0 * 28.35  # Should be smaller than original
     # The grid scaling should ensure it fits within available space
-    available_width = generator.page_width - 2 * generator.margin
-    available_height = generator.page_height - 2 * generator.margin
+    available_width = generator.page_width - 2 * generator.margin_cm
+    available_height = generator.page_height - 2 * generator.margin_cm
     # Just check that scaling occurred (card size was reduced)
-    assert generator.card_size < 15.0 * 28.35
+    assert generator.card_size_cm < 15.0 * 28.35
 
 
 def test_pdf_card_generator_font_registration_paths():
@@ -239,16 +239,16 @@ def test_pdf_card_generator_font_registration_paths():
             card_size_cm=5.5,
             gap_cm=0.5,
             margin_cm=1.0,
-            rows=2,
-            cols=3,
-            auto_fill=True
+            layout_rows=2,
+            layout_cols=3,
+            layout_auto_fill=True
         )
 
         # Should attempt to register fonts (the method tries multiple font paths)
         assert mock_register.call_count >= 1
         # Should have font names set (either registered or fallback)
         assert generator.chinese_font is not None
-        assert generator.pinyin_font is not None
+        assert generator.pinyin_font_family is not None
 
 
 def test_pdf_card_generator_draw_card_text():
@@ -261,9 +261,9 @@ def test_pdf_card_generator_draw_card_text():
         card_size_cm=5.5,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=2,
-        cols=3,
-        auto_fill=True
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=True
     )
 
     # Mock canvas
@@ -294,9 +294,9 @@ def test_pdf_card_generator_add_single_card():
         card_size_cm=5.5,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=2,
-        cols=3,
-        auto_fill=True
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=True
     )
 
     # Mock canvas
@@ -329,9 +329,9 @@ def test_pdf_card_generator_empty_text_handling():
         card_size_cm=5.5,
         gap_cm=0.5,
         margin_cm=1.0,
-        rows=2,
-        cols=3,
-        auto_fill=True
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=True
     )
 
     # Mock canvas
@@ -365,12 +365,12 @@ def test_pdf_card_generator_font_fallback():
             card_size_cm=5.5,
             gap_cm=0.5,
             margin_cm=1.0,
-            rows=2,
-            cols=3,
-            auto_fill=True
+            layout_rows=2,
+            layout_cols=3,
+            layout_auto_fill=True
         )
 
         # Should fall back to default fonts
         assert generator.chinese_font == "Helvetica"
-        assert generator.pinyin_font == "Helvetica"
+        assert generator.pinyin_font_family == "Helvetica"
 

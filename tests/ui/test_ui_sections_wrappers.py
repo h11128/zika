@@ -20,14 +20,14 @@ class DummySt:
         self.session_state.last_params = {}
         self.session_state.export_ready = {}
         self.session_state.export_data = {}
-        self.session_state.hanzi_font = "SimHei"
+        self.session_state.hanzi_font_family = "SimHei"
         self.session_state.export_history = []
         self.session_state.total_cards_generated = 0
 
         self.session_state.background_color = "#FFFFFF"
-        self.session_state.rows = 2
-        self.session_state.cols = 3
-        self.session_state.auto_fill = True
+        self.session_state.layout_rows = 2
+        self.session_state.layout_cols = 3
+        self.session_state.layout_auto_fill = True
 
     # Streamlit surface used in sections
     def markdown(self, *a, **k):
@@ -82,9 +82,9 @@ class DummySt:
     class components:
         class v1:
             @staticmethod
-            def html(html, height=0):
+            def html(html, height_cm=0):
                 pass
-            def html(html, height=0):
+            def html(html, height_cm=0):
                 pass
 
 
@@ -106,10 +106,10 @@ def test_render_preview_section_wrapper_param_change_and_empty(monkeypatch):
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     us.render_preview_section_wrapper(
         processed_cards=cards,
-        card_size=5.5, gap=0.5, margin=1.0,
-        font_hanzi=48, font_pinyin=18, font_english=14,
-        page_size="A4", hanzi_font="SimHei", background_color="#FFFFFF",
-        rows=2, cols=3, auto_fill=True,
+        card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+        hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+        page_size="A4", hanzi_font_family="SimHei", background_color="#FFFFFF",
+        layout_rows=2, layout_cols=3, layout_auto_fill=True,
     )
     # last_params set and current_page reset has occurred
     assert st.session_state.current_page == 0
@@ -124,10 +124,10 @@ def test_render_preview_section_wrapper_param_change_and_empty(monkeypatch):
 
     us.render_preview_section_wrapper(
         processed_cards=[],
-        card_size=5.5, gap=0.5, margin=1.0,
-        font_hanzi=48, font_pinyin=18, font_english=14,
-        page_size="A4", hanzi_font="SimHei", background_color="#FFFFFF",
-        rows=2, cols=3, auto_fill=True,
+        card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+        hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+        page_size="A4", hanzi_font_family="SimHei", background_color="#FFFFFF",
+        layout_rows=2, layout_cols=3, layout_auto_fill=True,
     )
     assert called["html"] is True
 

@@ -272,7 +272,7 @@ class TestExportFileIntegration:
         # Generate PPTX content
         pptx_content = export_cards(
             self.sample_cards, 'pptx',
-            page_size='A4', card_size=5.5, gap=0.5, margin=1.0
+            page_size='A4', card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0
         )
         
         # Save to file
@@ -297,7 +297,7 @@ class TestExportFileIntegration:
         # Generate PDF content
         pdf_content = export_cards(
             self.sample_cards, 'pdf',
-            page_size='A4', card_size=5.5, gap=0.5, margin=1.0
+            page_size='A4', card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0
         )
         
         # Save to file
@@ -400,13 +400,13 @@ class TestTemporaryFileHandling:
         initial_files = set(os.listdir(temp_dir))
 
         # This should work normally
-        content = export_cards(cards, 'pptx', card_size=5.5)
+        content = export_cards(cards, 'pptx', card_size_cm=5.5)
         assert content
 
         # Test with potentially problematic parameters
         try:
             # Very small card size might cause issues
-            content = export_cards(cards, 'pptx', card_size=0.1)
+            content = export_cards(cards, 'pptx', card_size_cm=0.1)
             assert content  # Should still work or handle gracefully
         except Exception:
             pass  # If it fails, that's okay, but shouldn't leave temp files

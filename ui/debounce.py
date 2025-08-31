@@ -12,6 +12,7 @@ import streamlit as st
 
 from core.feature_flags import get_feature_flag
 from ui.state import set_options_batch, ChangeSet
+from ui.ports import get_ui_adapter, ComponentConfig
 
 
 @dataclass
@@ -311,9 +312,14 @@ def debounced_slider(label: str, key: str, min_value: float, max_value: float,
     current_value = get_pending_value(key, value or min_value)
     
     # Render slider
-    new_value = st.slider(
-        label, min_value, max_value, current_value, step, 
-        key=f"{key}_widget", **kwargs
+    adapter = get_ui_adapter()
+    slider_config = ComponentConfig(
+        key=f"{key}_widget",
+        label=label
+    )
+    new_value = adapter.inputs.slider(
+        slider_config, min_value=min_value, max_value=max_value,
+        value=current_value, step=step, **kwargs
     )
     
     # Schedule debounced update if changed
@@ -329,9 +335,14 @@ def debounced_number_input(label: str, key: str, value: float = None,
     """Number input with debounced state updates."""
     current_value = get_pending_value(key, value or 0.0)
     
-    new_value = st.number_input(
-        label, value=current_value, min_value=min_value,
-        max_value=max_value, step=step, key=f"{key}_widget", **kwargs
+    adapter = get_ui_adapter()
+    number_config = ComponentConfig(
+        key=f"{key}_widget",
+        label=label
+    )
+    new_value = adapter.inputs.number_input(
+        number_config, value=current_value, min_value=min_value,
+        max_value=max_value, step=step, **kwargs
     )
     
     if new_value != current_value:
@@ -350,8 +361,13 @@ def debounced_selectbox(label: str, key: str, options: list, index: int = 0,
     except (ValueError, TypeError):
         current_index = index
     
-    new_value = st.selectbox(
-        label, options, index=current_index, key=f"{key}_widget", **kwargs
+    adapter = get_ui_adapter()
+    selectbox_config = ComponentConfig(
+        key=f"{key}_widget",
+        label=label
+    )
+    new_value = adapter.inputs.selectbox(
+        selectbox_config, options=options, index=current_index, **kwargs
     )
     
     if new_value != current_value:

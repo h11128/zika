@@ -1,4 +1,10 @@
-import services.cache as sc
+"""
+DEPRECATED: This test file is deprecated as legacy delegation is no longer needed.
+The v2 implementation is now the only implementation.
+This file is kept for historical reference but tests may be outdated.
+"""
+
+import services.cache_v2 as sc
 
 
 def test_create_preview_html_non_empty(monkeypatch):
@@ -51,7 +57,7 @@ def test_cached_create_simple_grid_html_edge_cases():
 
 
 def test_cached_create_page_preview_html_auto_fill():
-    """Test cached_create_page_preview_html with auto_fill=False."""
+    """Test cached_create_page_preview_html with layout_auto_fill=False."""
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     result = sc.cached_create_page_preview_html(
         cards, 0, 5.5, 0.5, 1.0, 48, 18, 14, "A4", "SimHei", "#fff", 2, 2, False

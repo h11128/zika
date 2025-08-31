@@ -1,0 +1,30 @@
+Test Name,Category,Success,Compatibility Level,Duration (ms),Issues Count,Warnings Count,Details
+browser_chrome_120.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: chrome 120.0
+browser_chrome_119.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: chrome 119.0
+browser_chrome_118.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: chrome 118.0
+browser_chrome_110.0,Browser,True,CompatibilityLevel.PARTIAL,0.0,0,1,Browser: chrome 110.0
+browser_chrome_100.0,Browser,False,CompatibilityLevel.MINIMAL,0.0,1,3,Browser: chrome 100.0
+browser_firefox_121.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: firefox 121.0
+browser_firefox_120.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: firefox 120.0
+browser_firefox_115.0,Browser,True,CompatibilityLevel.PARTIAL,0.0,0,1,Browser: firefox 115.0
+browser_firefox_102.0,Browser,False,CompatibilityLevel.MINIMAL,0.0,1,3,Browser: firefox 102.0
+browser_safari_17.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: safari 17.0
+browser_safari_16.0,Browser,True,CompatibilityLevel.PARTIAL,0.0,0,1,Browser: safari 16.0
+browser_safari_15.0,Browser,False,CompatibilityLevel.MINIMAL,0.0,1,3,Browser: safari 15.0
+browser_edge_120.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: edge 120.0
+browser_edge_119.0,Browser,True,CompatibilityLevel.FULL,0.0,0,0,Browser: edge 119.0
+browser_edge_110.0,Browser,True,CompatibilityLevel.PARTIAL,0.0,0,1,Browser: edge 110.0
+streamlit_1.29.0,Streamlit,True,CompatibilityLevel.FULL,0.0,0,0,Streamlit: 1.29.0
+streamlit_1.28.0,Streamlit,True,CompatibilityLevel.FULL,0.0,0,0,Streamlit: 1.28.0
+streamlit_1.27.0,Streamlit,True,CompatibilityLevel.FULL,0.0,0,0,Streamlit: 1.27.0
+streamlit_1.26.0,Streamlit,True,CompatibilityLevel.PARTIAL,0.0,0,3,Streamlit: 1.26.0
+streamlit_1.25.0,Streamlit,True,CompatibilityLevel.PARTIAL,0.0,0,2,Streamlit: 1.25.0
+streamlit_1.20.0,Streamlit,True,CompatibilityLevel.MINIMAL,0.0,0,2,Streamlit: 1.20.0
+streamlit_1.15.0,Streamlit,True,CompatibilityLevel.MINIMAL,0.0,0,3,Streamlit: 1.15.0
+data_format_snapshot_3.0.0,Data Format,False,CompatibilityLevel.FULL,0.0,3,0,Format: snapshot 3.0.0
+data_format_snapshot_2.0.0,Data Format,False,CompatibilityLevel.FULL,0.0,2,0,Format: snapshot 2.0.0
+data_format_snapshot_1.0.0,Data Format,False,CompatibilityLevel.FULL,0.0,1,0,Format: snapshot 1.0.0
+data_format_legacy_legacy,Data Format,True,CompatibilityLevel.PARTIAL,0.0,0,0,Format: legacy legacy
+data_format_export_pdf_v1,Data Format,False,CompatibilityLevel.FULL,0.0,1,0,Format: export pdf_v1
+data_format_export_pptx_v1,Data Format,False,CompatibilityLevel.FULL,0.0,1,0,Format: export pptx_v1
+data_format_export_csv_v1,Data Format,False,CompatibilityLevel.FULL,0.0,1,0,Format: export csv_v1

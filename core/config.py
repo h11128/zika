@@ -10,7 +10,7 @@ from typing import Dict, Any
 @dataclass
 class UIConfig:
     """Configuration for UI appearance and behavior."""
-    hanzi_font: str = 'SimHei'
+    hanzi_font_family: str = 'SimHei'
     background_color: str = '#ffffff'
     preview_mode: str = '📄 完整页面'
     
@@ -22,7 +22,7 @@ class UIConfig:
             return value if isinstance(value, str) and value else default
 
         return cls(
-            hanzi_font=safe_get_str('hanzi_font', 'SimHei'),
+            hanzi_font_family=safe_get_str('hanzi_font_family', 'SimHei'),
             background_color=safe_get_str('background_color', '#ffffff'),
             preview_mode=safe_get_str('preview_mode', '📄 完整页面')
         )
@@ -30,7 +30,7 @@ class UIConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert UIConfig to dictionary."""
         return {
-            'hanzi_font': self.hanzi_font,
+            'hanzi_font_family': self.hanzi_font_family,
             'background_color': self.background_color,
             'preview_mode': self.preview_mode
         }
@@ -39,32 +39,32 @@ class UIConfig:
 @dataclass
 class LayoutConfig:
     """Configuration for layout and typography."""
-    card_size: float = 5.5
-    gap: float = 0.5
-    margin: float = 1.0
-    font_hanzi: int = 48
-    font_pinyin: int = 18
-    font_english: int = 14
+    card_size_cm: float = 5.5
+    gap_cm: float = 0.5
+    margin_cm: float = 1.0
+    hanzi_font_size: int = 48
+    pinyin_font_size: int = 18
+    english_font_size: int = 14
     page_size: str = 'A4'
-    rows: int = 2
-    cols: int = 3
-    auto_fill: bool = True
+    layout_rows: int = 2
+    layout_cols: int = 3
+    layout_auto_fill: bool = True
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'LayoutConfig':
         """Create LayoutConfig from dictionary with validation."""
         try:
             return cls(
-                card_size=float(data.get('card_size') or 5.5),
-                gap=float(data.get('gap') or 0.5),
-                margin=float(data.get('margin') or 1.0),
-                font_hanzi=int(data.get('font_hanzi') or 48),
-                font_pinyin=int(data.get('font_pinyin') or 18),
-                font_english=int(data.get('font_english') or 14),
+                card_size_cm=float(data.get('card_size_cm') or 5.5),
+                gap_cm=float(data.get('gap_cm') or 0.5),
+                margin_cm=float(data.get('margin_cm') or 1.0),
+                hanzi_font_size=int(data.get('hanzi_font_size') or 48),
+                pinyin_font_size=int(data.get('pinyin_font_size') or 18),
+                english_font_size=int(data.get('english_font_size') or 14),
                 page_size=str(data.get('page_size') or 'A4'),
-                rows=max(1, int(data.get('rows') or 2)),  # Ensure positive
-                cols=max(1, int(data.get('cols') or 3)),  # Ensure positive
-                auto_fill=bool(data.get('auto_fill', True))
+                layout_rows=max(1, int(data.get('layout_rows') or 2)),  # Ensure positive
+                layout_cols=max(1, int(data.get('layout_cols') or 3)),  # Ensure positive
+                layout_auto_fill=bool(data.get('layout_auto_fill', True))
             )
         except (ValueError, TypeError):
             # Return default config if conversion fails
@@ -73,16 +73,16 @@ class LayoutConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert LayoutConfig to dictionary."""
         return {
-            'card_size': self.card_size,
-            'gap': self.gap,
-            'margin': self.margin,
-            'font_hanzi': self.font_hanzi,
-            'font_pinyin': self.font_pinyin,
-            'font_english': self.font_english,
+            'card_size_cm': self.card_size_cm,
+            'gap_cm': self.gap_cm,
+            'margin_cm': self.margin_cm,
+            'hanzi_font_size': self.hanzi_font_size,
+            'pinyin_font_size': self.pinyin_font_size,
+            'english_font_size': self.english_font_size,
             'page_size': self.page_size,
-            'rows': self.rows,
-            'cols': self.cols,
-            'auto_fill': self.auto_fill
+            'layout_rows': self.layout_rows,
+            'layout_cols': self.layout_cols,
+            'layout_auto_fill': self.layout_auto_fill
         }
 
 
@@ -113,28 +113,28 @@ class AppConfig:
         return self.ui.to_dict(), self.layout.to_dict()
 
 
-def create_config_from_params(card_size: float, gap: float, margin: float, page_size: str,
-                             font_hanzi: int, font_pinyin: int, font_english: int,
-                             hanzi_font: str, background_color: str, preview_mode: str,
-                             rows: int, cols: int, auto_fill: bool) -> AppConfig:
+def create_config_from_params(card_size_cm: float, gap_cm: float, margin_cm: float, page_size: str,
+                             hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                             hanzi_font_family: str, background_color: str, preview_mode: str,
+                             layout_rows: int, layout_cols: int, layout_auto_fill: bool) -> AppConfig:
     """Create AppConfig from individual parameters (for migration)."""
     ui_config = UIConfig(
-        hanzi_font=hanzi_font,
+        hanzi_font_family=hanzi_font_family,
         background_color=background_color,
         preview_mode=preview_mode
     )
     
     layout_config = LayoutConfig(
-        card_size=card_size,
-        gap=gap,
-        margin=margin,
-        font_hanzi=font_hanzi,
-        font_pinyin=font_pinyin,
-        font_english=font_english,
+        card_size_cm=card_size,
+        gap_cm=gap,
+        margin_cm=margin,
+        hanzi_font_size=hanzi_font_size,
+        pinyin_font_size=pinyin_font_size,
+        english_font_size=english_font_size,
         page_size=page_size,
-        rows=rows,
-        cols=cols,
-        auto_fill=auto_fill
+        layout_rows=layout_rows,
+        layout_cols=layout_cols,
+        layout_auto_fill=auto_fill
     )
     
     return AppConfig(ui=ui_config, layout=layout_config)

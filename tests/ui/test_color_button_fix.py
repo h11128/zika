@@ -33,13 +33,13 @@ def create_color_button_test():
         }
         
         .color-button {
-            width: 60px;
-            height: 40px;
+            width_cm: 60px;
+            height_cm: 40px;
             border-radius: 8px;
             border: 2px solid #ddd;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin: 5px;
+            margin_cm: 5px;
             display: inline-block;
             color: transparent;
             font-size: 0;
@@ -59,13 +59,13 @@ def create_color_button_test():
             background: white;
             padding: 20px;
             border-radius: 10px;
-            margin: 20px 0;
+            margin_cm: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .color-row {
             text-align: center;
-            margin: 10px 0;
+            margin_cm: 10px 0;
         }
         </style>
     </head>
@@ -123,13 +123,13 @@ def create_color_button_test():
             </div>
             
             <p><strong>当前选中颜色:</strong> <span id="current-color">#FF4444</span></p>
-            <div id="current-color-preview" style="width: 100px; height: 50px; background-color: #FF4444; border: 2px solid #333; margin: 10px 0; display: inline-block;"></div>
+            <div id="current-color-preview" style="width_cm: 100px; height_cm: 50px; background-color: #FF4444; border: 2px solid #333; margin_cm: 10px 0; display: inline-block;"></div>
         </div>
         
         <div class="test-section">
             <h3>JavaScript 测试：</h3>
-            <button onclick="testColorApplication()" style="padding: 10px 20px; margin: 10px;">测试颜色应用</button>
-            <button onclick="testColorSelection()" style="padding: 10px 20px; margin: 10px;">测试颜色选择</button>
+            <button onclick="testColorApplication()" style="padding: 10px 20px; margin_cm: 10px;">测试颜色应用</button>
+            <button onclick="testColorSelection()" style="padding: 10px 20px; margin_cm: 10px;">测试颜色选择</button>
             <div id="js-test-results"></div>
         </div>
         

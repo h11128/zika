@@ -33,7 +33,7 @@ class DummySt:
     class components:
         class v1:
             @staticmethod
-            def html(html, height=0):
+            def html(html, height_cm=0):
                 pass
 
     def empty(self):
@@ -72,19 +72,19 @@ def test_render_preview_section_calls_html(monkeypatch):
 
     # Initialize session state with required keys
     st.session_state.current_page = 0
-    st.session_state.rows = 2
-    st.session_state.cols = 3
-    st.session_state.auto_fill = True
-    st.session_state.hanzi_font = "SimHei"
+    st.session_state.layout_rows = 2
+    st.session_state.layout_cols = 3
+    st.session_state.layout_auto_fill = True
+    st.session_state.hanzi_font_family = "SimHei"
     st.session_state.background_color = "#FFFFFF"
 
     # Monkeypatch cached HTML creators to avoid heavy logic
     monkeypatch.setattr(uc, "cached_create_page_preview_html", lambda *a, **k: "<html></html>")
     monkeypatch.setattr(uc, "cached_create_simple_grid_html", lambda *a, **k: "<html></html>")
 
-    # Mock the immediate rendering functions from services.cache
-    monkeypatch.setattr("services.cache.create_page_preview_html_immediate", lambda *a, **k: "<html></html>")
-    monkeypatch.setattr("services.cache.create_simple_grid_html_immediate", lambda *a, **k: "<html></html>")
+    # Mock the immediate rendering functions from services.cache_v2
+    monkeypatch.setattr("services.cache_v2.create_page_preview_html_immediate", lambda *a, **k: "<html></html>")
+    monkeypatch.setattr("services.cache_v2.create_simple_grid_html_immediate", lambda *a, **k: "<html></html>")
 
     # Mock the state functions to avoid complex dependencies
     monkeypatch.setattr("core.state.get_all_ui_params", lambda *a, **k: {})
@@ -94,18 +94,18 @@ def test_render_preview_section_calls_html(monkeypatch):
     uc.render_preview_section(
         processed_cards=cards,
         preview_mode="📄 完整页面",
-        card_size=5.5,
-        gap=0.5,
-        margin=1.0,
-        font_hanzi=48,
-        font_pinyin=18,
-        font_english=14,
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        hanzi_font_size=48,
+        pinyin_font_size=18,
+        english_font_size=14,
         page_size="A4",
-        hanzi_font="SimHei",
+        hanzi_font_family="SimHei",
         background_color="#FFFFFF",
-        rows=2,
-        cols=3,
-        auto_fill=True,
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=True,
     )
 
 

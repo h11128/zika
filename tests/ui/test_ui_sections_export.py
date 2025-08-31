@@ -15,18 +15,18 @@ class SS(dict):
 class DummySt:
     def __init__(self):
         self.session_state = SS()
-        self.session_state.card_size = 5.5
+        self.session_state.card_size_cm = 5.5
         self.session_state.gap_cm = 0.5
         self.session_state.margin_cm = 1.0
-        self.session_state.font_hanzi = 48
-        self.session_state.font_pinyin = 18
-        self.session_state.font_english = 14
+        self.session_state.hanzi_font_size = 48
+        self.session_state.pinyin_font_size = 18
+        self.session_state.english_font_size = 14
         self.session_state.page_size = "A4"
-        self.session_state.hanzi_font = "SimHei"
+        self.session_state.hanzi_font_family = "SimHei"
         self.session_state.background_color = "#fff"
-        self.session_state.rows = 2
-        self.session_state.cols = 2
-        self.session_state.auto_fill = True
+        self.session_state.layout_rows = 2
+        self.session_state.layout_cols = 2
+        self.session_state.layout_auto_fill = True
         self.session_state.export_ready = {}
         self.session_state.export_data = {}
         self.session_state.export_history = []
@@ -57,8 +57,8 @@ class DummySt:
                     def __exit__(self, a,b,c): return False
                 return Spinner()
             def error(self, *a, **k): pass
-        cols = [Col() for _ in range(n)]
-        for col in cols:
+        layout_cols = [Col() for _ in range(n)]
+        for col in layout_cols:
             col._parent = self
         return cols
 
@@ -107,7 +107,7 @@ def test_render_export_section_pptx_and_pdf(monkeypatch):
     us.render_export_section(cards)
 
     # Verify export data was stored and download button called
-    export_params = {'card_size': 5.5, 'gap': 0.5, 'margin': 1.0, 'font_hanzi': 48, 'font_pinyin': 18, 'font_english': 14, 'page_size': 'A4', 'hanzi_font': 'SimHei', 'background_color': '#fff', 'rows': 2, 'cols': 2, 'auto_fill': True}
+    export_params = {'card_size_cm': 5.5, 'gap_cm': 0.5, 'margin_cm': 1.0, 'hanzi_font_size': 48, 'pinyin_font_size': 18, 'english_font_size': 14, 'page_size': 'A4', 'hanzi_font_family': 'SimHei', 'background_color': '#fff', 'layout_rows': 2, 'layout_cols': 2, 'layout_auto_fill': True}
     export_key = f"1_{hash(str(export_params))}"
     assert export_key in st.session_state.export_data
     assert st.session_state.export_ready[export_key] == 'pptx'
@@ -151,7 +151,7 @@ def test_render_export_section_error_handling(monkeypatch):
     us.render_export_section(cards)
 
     # Should not have any export data due to error
-    export_params = {'card_size': 5.5, 'gap': 0.5, 'margin': 1.0, 'font_hanzi': 48, 'font_pinyin': 18, 'font_english': 14, 'page_size': 'A4', 'hanzi_font': 'SimHei', 'background_color': '#fff', 'rows': 2, 'cols': 2, 'auto_fill': True}
+    export_params = {'card_size_cm': 5.5, 'gap_cm': 0.5, 'margin_cm': 1.0, 'hanzi_font_size': 48, 'pinyin_font_size': 18, 'english_font_size': 14, 'page_size': 'A4', 'hanzi_font_family': 'SimHei', 'background_color': '#fff', 'layout_rows': 2, 'layout_cols': 2, 'layout_auto_fill': True}
     export_key = f"1_{hash(str(export_params))}"
     assert export_key not in st.session_state.export_data
 

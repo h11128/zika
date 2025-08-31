@@ -16,7 +16,7 @@ class PPTXCardGenerator:
 
     def __init__(self, page_size: str = "A4", card_size_cm: float = 6.0,
                  gap_cm: float = 0.6, margin_cm: float = 1.0,
-                 rows: int = 3, cols: int = 3, auto_fill: bool = True):
+                 layout_rows: int = 3, layout_cols: int = 3, layout_auto_fill: bool = True):
         """
         Initialize the PPTX generator.
 
@@ -25,16 +25,16 @@ class PPTXCardGenerator:
             card_size_cm: Size of each card in cm (used when auto_fill is False)
             gap_cm: Gap between cards in cm
             margin_cm: Page margin in cm
-            rows: Number of rows per page
-            cols: Number of columns per page
-            auto_fill: If True, compute max card size to fill page within margins
+            layout_rows: Number of rows per page
+            layout_cols: Number of columns per page
+            layout_auto_fill: If True, compute max card size to fill page within margins
         """
         self.page_size = page_size
         self.gap_cm = gap_cm
         self.margin_cm = margin_cm
-        self.rows = max(1, int(rows or 3))
-        self.cols = max(1, int(cols or 3))
-        self.auto_fill = bool(auto_fill)
+        self.layout_rows = max(1, int(rows or 3))
+        self.layout_cols = max(1, int(cols or 3))
+        self.layout_auto_fill = bool(auto_fill)
 
         # Set page dimensions
         if page_size.upper() == "A4":
@@ -53,16 +53,16 @@ class PPTXCardGenerator:
         max_h = max(0.0, page_height_cm - 2 * self.margin_cm)
 
         # Determine card size
-        if self.auto_fill:
-            size_w = (max_w - max(0, self.cols - 1) * self.gap_cm) / self.cols if self.cols > 0 else 0
-            size_h = (max_h - max(0, self.rows - 1) * self.gap_cm) / self.rows if self.rows > 0 else 0
+        if self.layout_auto_fill:
+            size_w = (max_w - max(0, self.layout_cols - 1) * self.gap_cm) / self.layout_cols if self.layout_cols > 0 else 0
+            size_h = (max_h - max(0, self.layout_rows - 1) * self.gap_cm) / self.layout_rows if self.layout_rows > 0 else 0
             self.card_size_cm = max(0.0, min(size_w, size_h))
         else:
             self.card_size_cm = card_size_cm
 
         # Calculate grid layout and ensure it fits; shrink if needed
-        self.grid_width = self.cols * self.card_size_cm + max(0, self.cols - 1) * self.gap_cm
-        self.grid_height = self.rows * self.card_size_cm + max(0, self.rows - 1) * self.gap_cm
+        self.grid_width = self.layout_cols * self.card_size_cm + max(0, self.layout_cols - 1) * self.gap_cm
+        self.grid_height = self.layout_rows * self.card_size_cm + max(0, self.layout_rows - 1) * self.gap_cm
 
         tolerance = 0.1
         if self.grid_width + 2 * self.margin_cm > page_width_cm + tolerance or \
@@ -72,8 +72,8 @@ class PPTXCardGenerator:
             scale_h = max_h / self.grid_height if self.grid_height > 0 else 1.0
             scale = min(scale_w, scale_h) * 0.995
             self.card_size_cm *= max(0.0, scale)
-            self.grid_width = self.cols * self.card_size_cm + max(0, self.cols - 1) * self.gap_cm
-            self.grid_height = self.rows * self.card_size_cm + max(0, self.rows - 1) * self.gap_cm
+            self.grid_width = self.layout_cols * self.card_size_cm + max(0, self.layout_cols - 1) * self.gap_cm
+            self.grid_height = self.layout_rows * self.card_size_cm + max(0, self.layout_rows - 1) * self.gap_cm
 
     def create_presentation(self) -> Presentation:
         """Create a new presentation with custom page size."""
@@ -86,33 +86,33 @@ class PPTXCardGenerator:
         return prs
     
     def add_cards_page(self, prs: Presentation, cards: List[Dict[str, str]],
-                      font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
-                      hanzi_font: str = "Microsoft YaHei", background_color: str = "#FFFFFF") -> None:
+                      hanzi_font_size: int = 48, pinyin_font_size: int = 18, english_font_size: int = 14,
+                      hanzi_font_family: str = "Microsoft YaHei", background_color: str = "#FFFFFF") -> None:
         """
         Add a page with up to rows*cols cards in a grid.
 
         Args:
             prs: Presentation object
             cards: List of card dictionaries with 'hanzi', 'pinyin', 'english' keys
-            font_hanzi: Font size for Chinese characters
-            font_pinyin: Font size for pinyin
-            font_english: Font size for English
+            hanzi_font_size: Font size for Chinese characters
+            pinyin_font_size: Font size for pinyin
+            english_font_size: Font size for English
         """
         # Use blank slide layout
         slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
 
         # Add up to rows*cols cards
-        max_cards = self.rows * self.cols
+        max_cards = self.layout_rows * self.layout_cols
         for i, card in enumerate(cards[:max_cards]):
-            row = i // self.cols
-            col = i % self.cols
-            self._add_single_card(slide, card, row, col, font_hanzi, font_pinyin, font_english,
-                                hanzi_font, background_color)
+            row = i // self.layout_cols
+            col = i % self.layout_cols
+            self._add_single_card(slide, card, row, col, hanzi_font_size, pinyin_font_size, english_font_size,
+                                hanzi_font_family, background_color)
 
     def _add_single_card(self, slide, card: Dict[str, str], row: int, col: int,
-                        font_hanzi: int, font_pinyin: int, font_english: int,
-                        hanzi_font: str = "Microsoft YaHei", background_color: str = "#FFFFFF") -> None:
+                        hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                        hanzi_font_family: str = "Microsoft YaHei", background_color: str = "#FFFFFF") -> None:
         """
         Add a single card to the slide.
         
@@ -121,24 +121,24 @@ class PPTXCardGenerator:
             card: Card data dictionary
             row: Grid row (0-based)
             col: Grid column (0-based)
-            font_hanzi: Font size for Chinese characters
-            font_pinyin: Font size for pinyin
-            font_english: Font size for English
+            hanzi_font_size: Font size for Chinese characters
+            pinyin_font_size: Font size for pinyin
+            english_font_size: Font size for English
         """
         # Calculate position (center grid within margins)
         page_width_cm = self.page_width.cm if hasattr(self.page_width, 'cm') else self.page_width / 914400 * 2.54
         page_height_cm = self.page_height.cm if hasattr(self.page_height, 'cm') else self.page_height / 914400 * 2.54
         avail_w = max(0.0, page_width_cm - 2 * self.margin_cm)
         avail_h = max(0.0, page_height_cm - 2 * self.margin_cm)
-        grid_width = self.cols * self.card_size_cm + max(0, self.cols - 1) * self.gap_cm
-        grid_height = self.rows * self.card_size_cm + max(0, self.rows - 1) * self.gap_cm
+        grid_width = self.layout_cols * self.card_size_cm + max(0, self.layout_cols - 1) * self.gap_cm
+        grid_height = self.layout_rows * self.card_size_cm + max(0, self.layout_rows - 1) * self.gap_cm
         start_x_cm = self.margin_cm + max(0.0, (avail_w - grid_width) / 2)
         start_y_cm = self.margin_cm + max(0.0, (avail_h - grid_height) / 2)
 
         left = Cm(start_x_cm + col * (self.card_size_cm + self.gap_cm))
         top = Cm(start_y_cm + row * (self.card_size_cm + self.gap_cm))
-        width = Cm(self.card_size_cm)
-        height = Cm(self.card_size_cm)
+        width_cm = Cm(self.card_size_cm)
+        height_cm = Cm(self.card_size_cm)
 
         # Create rectangle shape
         shape = slide.shapes.add_shape(
@@ -147,7 +147,7 @@ class PPTXCardGenerator:
         
         # Set border
         shape.line.color.rgb = RGBColor(0, 0, 0)  # Black border
-        shape.line.width = Pt(2)
+        shape.line.width_cm = Pt(2)
         
         # Set fill color
         shape.fill.solid()
@@ -167,26 +167,26 @@ class PPTXCardGenerator:
         text_frame.text = ""
         text_frame.margin_left = Cm(0.2)
         text_frame.margin_right = Cm(0.2)
-        text_frame.margin_top = Cm(0.2)
-        text_frame.margin_bottom = Cm(0.2)
+        text_frame.margin_top_px = Cm(0.2)
+        text_frame.margin_bottom_px = Cm(0.2)
         text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
         text_frame.word_wrap = True
         
         # Add text content
-        self._add_card_text(text_frame, card, font_hanzi, font_pinyin, font_english, hanzi_font)
+        self._add_card_text(text_frame, card, hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font)
     
     def _add_card_text(self, text_frame, card: Dict[str, str],
-                      font_hanzi: int, font_pinyin: int, font_english: int,
-                      hanzi_font: str = "Microsoft YaHei") -> None:
+                      hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                      hanzi_font_family: str = "Microsoft YaHei") -> None:
         """
         Add formatted text to a card's text frame.
 
         Args:
             text_frame: Text frame object
             card: Card data dictionary
-            font_hanzi: Font size for Chinese characters
-            font_pinyin: Font size for pinyin
-            font_english: Font size for English
+            hanzi_font_size: Font size for Chinese characters
+            pinyin_font_size: Font size for pinyin
+            english_font_size: Font size for English
         """
         # Get text content
         hanzi = card.get('hanzi', '').strip()
@@ -209,7 +209,7 @@ class PPTXCardGenerator:
             first_used = True
             p.text = hanzi
             p.alignment = PP_ALIGN.CENTER
-            p.font.size = Pt(font_hanzi)
+            p.font.size = Pt(hanzi_font_size)
             p.font.bold = True
             p.font.color.rgb = RGBColor(0, 0, 0)
             # Use custom font for Chinese characters
@@ -233,7 +233,7 @@ class PPTXCardGenerator:
             first_used = True
             p.text = pinyin
             p.alignment = PP_ALIGN.CENTER
-            p.font.size = Pt(font_pinyin)
+            p.font.size = Pt(pinyin_font_size)
             p.font.italic = True
             p.font.color.rgb = RGBColor(0, 0, 0)
             # Use fonts that handle pinyin tone marks well
@@ -254,23 +254,23 @@ class PPTXCardGenerator:
             first_used = True
             p.text = english
             p.alignment = PP_ALIGN.CENTER
-            p.font.size = Pt(font_english)
+            p.font.size = Pt(english_font_size)
             p.font.name = "Arial"
             p.font.color.rgb = RGBColor(0, 0, 0)
             p.line_spacing = 1.0
     
     def generate_pptx(self, cards: List[Dict[str, str]], output_path: str,
-                     font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
-                     hanzi_font: str = "Microsoft YaHei", background_color: str = "#FFFFFF") -> bool:
+                     hanzi_font_size: int = 48, pinyin_font_size: int = 18, english_font_size: int = 14,
+                     hanzi_font_family: str = "Microsoft YaHei", background_color: str = "#FFFFFF") -> bool:
         """
         Generate complete PPTX file with all cards.
         
         Args:
             cards: List of all card data
             output_path: Output file path
-            font_hanzi: Font size for Chinese characters
-            font_pinyin: Font size for pinyin
-            font_english: Font size for English
+            hanzi_font_size: Font size for Chinese characters
+            pinyin_font_size: Font size for pinyin
+            english_font_size: Font size for English
             
         Returns:
             True if successful
@@ -279,11 +279,11 @@ class PPTXCardGenerator:
             prs = self.create_presentation()
 
             # Split cards into pages of rows*cols
-            page_size = max(1, self.rows * self.cols)
+            page_size = max(1, self.layout_rows * self.layout_cols)
             for i in range(0, len(cards), page_size):
                 page_cards = cards[i:i+page_size]
-                self.add_cards_page(prs, page_cards, font_hanzi, font_pinyin, font_english,
-                                  hanzi_font, background_color)
+                self.add_cards_page(prs, page_cards, hanzi_font_size, pinyin_font_size, english_font_size,
+                                  hanzi_font_family, background_color)
 
             # Save presentation
             prs.save(output_path)
@@ -302,11 +302,11 @@ class PPTXCardGenerator:
             'card_size_cm': self.card_size_cm,
             'gap_cm': self.gap_cm,
             'margin_cm': self.margin_cm,
-            'rows': self.rows,
-            'cols': self.cols,
+            'layout_rows': self.layout_rows,
+            'layout_cols': self.layout_cols,
             'grid_width_cm': self.grid_width,
             'grid_height_cm': self.grid_height,
-            'cards_per_page': self.rows * self.cols
+            'cards_per_page': self.layout_rows * self.layout_cols
         }
 
 

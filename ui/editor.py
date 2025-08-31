@@ -49,7 +49,7 @@ def render_improved_card_editor(processed_cards: List[Dict[str, str]]) -> None:
 
                 # Clear preview cache
                 try:
-                    from services.cache import clear_preview_cache
+                    from services.cache_v2 import clear_preview_cache
                     clear_preview_cache()
                 except Exception:
                     pass
@@ -236,7 +236,7 @@ def render_single_card_editor(card: Dict[str, str], actual_idx: int) -> None:
 
             # Clear preview cache to force regeneration
             try:
-                from services.cache import clear_preview_cache
+                from services.cache_v2 import clear_preview_cache
                 clear_preview_cache()
             except Exception:
                 pass
@@ -254,7 +254,7 @@ def render_single_card_editor(card: Dict[str, str], actual_idx: int) -> None:
 
             # Clear preview cache
             try:
-                from services.cache import clear_preview_cache
+                from services.cache_v2 import clear_preview_cache
                 clear_preview_cache()
             except Exception:
                 pass
@@ -560,7 +560,7 @@ def render_single_card_editor_adapted(adapter: UIAdapter, card: Dict[str, str],
 
 def use_adapted_editor() -> bool:
     """Check if adapted editor should be used."""
-    return get_feature_flag('adapted_editor', False)
+    return True
 
 
 def render_card_editor_unified(processed_cards: List[Dict[str, str]]) -> None:

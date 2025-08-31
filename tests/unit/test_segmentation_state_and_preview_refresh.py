@@ -43,7 +43,7 @@ def test_segmentation_no_text_change_does_not_refresh_preview_nor_change_checkbo
     called = {'v': False}
     def _clear_cache():
         called['v'] = True
-    monkeypatch.setattr('services.cache.clear_preview_cache', _clear_cache, raising=True)
+    monkeypatch.setattr('services.cache_v2.clear_preview_cache', _clear_cache, raising=True)
 
     # Execute
     us.render_input_section()
@@ -82,7 +82,7 @@ def test_segmentation_text_change_refreshes_preview_but_does_not_change_checkbox
     called = {'v': False}
     def _clear_cache():
         called['v'] = True
-    monkeypatch.setattr('services.cache.clear_preview_cache', _clear_cache, raising=True)
+    monkeypatch.setattr('services.cache_v2.clear_preview_cache', _clear_cache, raising=True)
 
     # Execute
     us.render_input_section()

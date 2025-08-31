@@ -45,7 +45,7 @@ def render_improved_card_editor_unified(processed_cards: List[Dict[str, str]]) -
                 except ImportError:
                     # Fallback to legacy cache clearing
                     try:
-                        from services.cache import clear_preview_cache
+                        from services.cache_v2 import clear_preview_cache
                         clear_preview_cache()
                     except ImportError:
                         pass
@@ -242,7 +242,7 @@ def render_single_card_editor_unified(card: Dict[str, str], actual_idx: int) -> 
                 except ImportError:
                     # Fallback to legacy cache clearing
                     try:
-                        from services.cache import clear_preview_cache
+                        from services.cache_v2 import clear_preview_cache
                         clear_preview_cache()
                     except ImportError:
                         pass
@@ -268,7 +268,7 @@ def render_single_card_editor_unified(card: Dict[str, str], actual_idx: int) -> 
                 except ImportError:
                     # Fallback to legacy cache clearing
                     try:
-                        from services.cache import clear_preview_cache
+                        from services.cache_v2 import clear_preview_cache
                         clear_preview_cache()
                     except ImportError:
                         pass

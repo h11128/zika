@@ -38,7 +38,7 @@ class TestEditorFeatures:
             })
         
         # 设置5行6列布局
-        rows, cols = 5, 6
+        layout_rows, layout_cols = 5, 6
         cards_per_page = rows * cols  # 应该是30
         
         # 模拟编辑功能的实现

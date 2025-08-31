@@ -1,4 +1,4 @@
-from services.cache import cached_create_page_preview_html, cached_create_simple_grid_html
+from services.cache_v2 import cached_create_page_preview_html, cached_create_simple_grid_html
 
 
 def test_cached_create_page_preview_html(tmp_path):

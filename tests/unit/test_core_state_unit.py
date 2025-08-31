@@ -80,14 +80,14 @@ def test_update_layout_and_ui_preferences_and_validation(monkeypatch):
     cs.initialize_session_state()
 
     # Update layout
-    cs.update_layout_settings(rows=4, cols=5, auto_fill=False)
+    cs.update_layout_settings(layout_rows=4, layout_cols=5, layout_auto_fill=False)
     layout = cs.get_layout_settings()
-    assert layout["rows"] == 4 and layout["cols"] == 5 and layout["auto_fill"] is False
+    assert layout["layout_rows"] == 4 and layout["layout_cols"] == 5 and layout["layout_auto_fill"] is False
 
     # UI preferences
-    cs.update_ui_preferences(hanzi_font="SimSun", background_color="#123456")
+    cs.update_ui_preferences(hanzi_font_family="SimSun", background_color="#123456")
     prefs = cs.get_ui_preferences()
-    assert prefs["hanzi_font"] == "SimSun"
+    assert prefs["hanzi_font_family"] == "SimSun"
     assert prefs["background_color"] == "#123456"
 
     # Invalid color should be reset by validation

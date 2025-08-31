@@ -58,39 +58,39 @@ class StateRules(StateValidationPort):
         """Setup default validation rules."""
         # Font size rules
         self.add_rule(
-            "font_hanzi",
+            "hanzi_font_size",
             lambda x: isinstance(x, (int, float)) and 20 <= x <= 80,
             "汉字字体大小必须在20-80之间"
         )
         
         self.add_rule(
-            "font_pinyin", 
+            "pinyin_font_size", 
             lambda x: isinstance(x, (int, float)) and 10 <= x <= 40,
             "拼音字体大小必须在10-40之间"
         )
         
         self.add_rule(
-            "font_english",
+            "english_font_size",
             lambda x: isinstance(x, (int, float)) and 8 <= x <= 30,
             "英文字体大小必须在8-30之间"
         )
         
         # Layout rules
         self.add_rule(
-            "rows",
+            "layout_rows",
             lambda x: isinstance(x, int) and 1 <= x <= 10,
             "行数必须在1-10之间"
         )
         
         self.add_rule(
-            "cols",
+            "layout_cols",
             lambda x: isinstance(x, int) and 1 <= x <= 10,
             "列数必须在1-10之间"
         )
         
         # Card size rules
         self.add_rule(
-            "card_size",
+            "card_size_cm",
             lambda x: isinstance(x, (int, float)) and 3.0 <= x <= 10.0,
             "卡片大小必须在3.0-10.0cm之间"
         )

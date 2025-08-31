@@ -60,9 +60,9 @@ def test_export_workflow():
         success = pptx_generator.generate_pptx(
             cards, 
             "out/test_export_fix.pptx",
-            font_hanzi=48,
-            font_pinyin=18,
-            font_english=14
+            hanzi_font_size=48,
+            pinyin_font_size=18,
+            english_font_size=14
         )
         
         if success:
@@ -85,9 +85,9 @@ def test_export_workflow():
         success = pdf_generator.generate_pdf(
             cards, 
             "out/test_export_fix.pdf",
-            font_hanzi=48,
-            font_pinyin=18,
-            font_english=14
+            hanzi_font_size=48,
+            pinyin_font_size=18,
+            english_font_size=14
         )
         
         if success:

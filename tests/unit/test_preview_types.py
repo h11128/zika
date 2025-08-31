@@ -20,14 +20,14 @@ class TestLayoutOptions:
     def test_layout_options_creation(self):
         """Test basic LayoutOptions creation."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         
-        assert layout.rows == 2
-        assert layout.cols == 3
-        assert layout.auto_fill is True
+        assert layout.layout_rows == 2
+        assert layout.layout_cols == 3
+        assert layout.layout_auto_fill is True
         assert layout.card_size_cm == 5.5
         assert layout.gap_cm == 0.5
         assert layout.margin_cm == 1.0
@@ -38,7 +38,7 @@ class TestLayoutOptions:
         # Test negative rows
         with pytest.raises(ValueError, match="Rows and cols must be positive"):
             LayoutOptions(
-                rows=-1, cols=3, auto_fill=True,
+                layout_rows=-1, layout_cols=3, layout_auto_fill=True,
                 card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
                 page_size='A4'
             )
@@ -46,7 +46,7 @@ class TestLayoutOptions:
         # Test negative card size
         with pytest.raises(ValueError, match="Card size must be positive"):
             LayoutOptions(
-                rows=2, cols=3, auto_fill=True,
+                layout_rows=2, layout_cols=3, layout_auto_fill=True,
                 card_size_cm=-1.0, gap_cm=0.5, margin_cm=1.0,
                 page_size='A4'
             )
@@ -54,7 +54,7 @@ class TestLayoutOptions:
         # Test negative gap
         with pytest.raises(ValueError, match="Gap and margin must be non-negative"):
             LayoutOptions(
-                rows=2, cols=3, auto_fill=True,
+                layout_rows=2, layout_cols=3, layout_auto_fill=True,
                 card_size_cm=5.5, gap_cm=-0.1, margin_cm=1.0,
                 page_size='A4'
             )
@@ -62,7 +62,7 @@ class TestLayoutOptions:
     def test_layout_options_float_normalization(self):
         """Test float normalization for stable hashing."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.123456789, gap_cm=0.567891234, margin_cm=1.987654321,
             page_size='A4'
         )
@@ -77,20 +77,20 @@ class TestLayoutOptions:
         # Create a simple object instead of MagicMock to avoid getattr issues
         class MockConfig:
             def __init__(self):
-                self.rows = 3
-                self.cols = 4
-                self.auto_fill = False
-                self.card_size = 6.0
-                self.gap = 0.8
-                self.margin = 1.5
+                self.layout_rows = 3
+                self.layout_cols = 4
+                self.layout_auto_fill = False
+                self.card_size_cm = 6.0
+                self.gap_cm = 0.8
+                self.margin_cm = 1.5
                 self.page_size = 'Letter'
 
         mock_config = MockConfig()
         layout = LayoutOptions.from_layout_config(mock_config)
 
-        assert layout.rows == 3
-        assert layout.cols == 4
-        assert layout.auto_fill is False
+        assert layout.layout_rows == 3
+        assert layout.layout_cols == 4
+        assert layout.layout_auto_fill is False
         assert layout.card_size_cm == 6.0
         assert layout.gap_cm == 0.8
         assert layout.margin_cm == 1.5
@@ -99,7 +99,7 @@ class TestLayoutOptions:
     def test_layout_options_dict_conversion(self):
         """Test dictionary conversion."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
@@ -107,7 +107,7 @@ class TestLayoutOptions:
         # Test to_dict
         data = layout.to_dict()
         expected = {
-            'rows': 2, 'cols': 3, 'auto_fill': True,
+            'layout_rows': 2, 'layout_cols': 3, 'layout_auto_fill': True,
             'card_size_cm': 5.5, 'gap_cm': 0.5, 'margin_cm': 1.0,
             'page_size': 'A4'
         }
@@ -125,13 +125,13 @@ class TestTypography:
         """Test basic Typography creation."""
         typo = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         
         assert typo.font_hanzi_pt == 48
         assert typo.font_pinyin_pt == 18
         assert typo.font_english_pt == 14
-        assert typo.hanzi_font == 'SimHei'
+        assert typo.hanzi_font_family == 'SimHei'
     
     def test_typography_validation(self):
         """Test Typography validation."""
@@ -139,32 +139,32 @@ class TestTypography:
         with pytest.raises(ValueError, match="Font sizes must be positive"):
             Typography(
                 font_hanzi_pt=-1, font_pinyin_pt=18, font_english_pt=14,
-                hanzi_font='SimHei'
+                hanzi_font_family='SimHei'
             )
         
         # Test empty font name
         with pytest.raises(ValueError, match="Hanzi font must not be empty"):
             Typography(
                 font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-                hanzi_font=''
+                hanzi_font_family=''
             )
     
     def test_typography_from_configs(self):
         """Test creation from layout and UI configs."""
         mock_layout = MagicMock()
-        mock_layout.font_hanzi = 50
-        mock_layout.font_pinyin = 20
-        mock_layout.font_english = 16
+        mock_layout.hanzi_font_size = 50
+        mock_layout.pinyin_font_size = 20
+        mock_layout.english_font_size = 16
         
         mock_ui = MagicMock()
-        mock_ui.hanzi_font = 'Arial'
+        mock_ui.hanzi_font_family = 'Arial'
         
         typo = Typography.from_configs(mock_layout, mock_ui)
         
         assert typo.font_hanzi_pt == 50
         assert typo.font_pinyin_pt == 20
         assert typo.font_english_pt == 16
-        assert typo.hanzi_font == 'Arial'
+        assert typo.hanzi_font_family == 'Arial'
 
 
 class TestVisualOptions:
@@ -208,13 +208,13 @@ class TestPreviewParams:
     def test_preview_params_creation(self):
         """Test PreviewParams creation."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
             background_color='#ffffff',
@@ -232,20 +232,20 @@ class TestPreviewParams:
         # Create simple objects instead of MagicMock
         class MockLayoutConfig:
             def __init__(self):
-                self.rows = 2
-                self.cols = 3
-                self.auto_fill = True
-                self.card_size = 5.5
-                self.gap = 0.5
-                self.margin = 1.0
+                self.layout_rows = 2
+                self.layout_cols = 3
+                self.layout_auto_fill = True
+                self.card_size_cm = 5.5
+                self.gap_cm = 0.5
+                self.margin_cm = 1.0
                 self.page_size = 'A4'
-                self.font_hanzi = 48
-                self.font_pinyin = 18
-                self.font_english = 14
+                self.hanzi_font_size = 48
+                self.pinyin_font_size = 18
+                self.english_font_size = 14
 
         class MockUIConfig:
             def __init__(self):
-                self.hanzi_font = 'SimHei'
+                self.hanzi_font_family = 'SimHei'
                 self.background_color = '#ffffff'
                 self.preview_mode = '📄 完整页面'
 
@@ -257,21 +257,21 @@ class TestPreviewParams:
         mock_app_config = MockAppConfig()
         params = PreviewParams.from_app_config(mock_app_config)
 
-        assert params.layout.rows == 2
-        assert params.layout.cols == 3
+        assert params.layout.layout_rows == 2
+        assert params.layout.layout_cols == 3
         assert params.typography.font_hanzi_pt == 48
         assert params.visual.background_color == '#ffffff'
     
     def test_preview_params_json_conversion(self):
         """Test JSON serialization and deserialization."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
             background_color='#ffffff',
@@ -295,10 +295,10 @@ class TestConversionFunctions:
     def test_convert_legacy_params_to_preview_params(self):
         """Test legacy parameter conversion."""
         params = convert_legacy_params_to_preview_params(
-            card_size=5.5, gap=0.5, margin=1.0, page_size='A4',
-            font_hanzi=48, font_pinyin=18, font_english=14,
-            hanzi_font='SimHei', background_color='#ffffff',
-            preview_mode='📄 完整页面', rows=2, cols=3, auto_fill=True
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0, page_size='A4',
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+            hanzi_font_family='SimHei', background_color='#ffffff',
+            preview_mode='📄 完整页面', layout_rows=2, layout_cols=3, layout_auto_fill=True
         )
         
         assert params.layout.card_size_cm == 5.5
@@ -309,13 +309,13 @@ class TestConversionFunctions:
     def test_extract_legacy_params(self):
         """Test legacy parameter extraction."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
             background_color='#ffffff',
@@ -326,10 +326,10 @@ class TestConversionFunctions:
         legacy = extract_legacy_params(params)
         
         expected = {
-            'card_size': 5.5, 'gap': 0.5, 'margin': 1.0, 'page_size': 'A4',
-            'font_hanzi': 48, 'font_pinyin': 18, 'font_english': 14,
-            'hanzi_font': 'SimHei', 'background_color': '#ffffff',
-            'preview_mode': '📄 完整页面', 'rows': 2, 'cols': 3, 'auto_fill': True
+            'card_size_cm': 5.5, 'gap_cm': 0.5, 'margin_cm': 1.0, 'page_size': 'A4',
+            'hanzi_font_size': 48, 'pinyin_font_size': 18, 'english_font_size': 14,
+            'hanzi_font_family': 'SimHei', 'background_color': '#ffffff',
+            'preview_mode': '📄 完整页面', 'layout_rows': 2, 'layout_cols': 3, 'layout_auto_fill': True
         }
         
         assert legacy == expected
@@ -337,13 +337,13 @@ class TestConversionFunctions:
     def test_validate_preview_params(self):
         """Test preview params validation."""
         layout = LayoutOptions(
-            rows=2, cols=3, auto_fill=True,
+            layout_rows=2, layout_cols=3, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         visual = VisualOptions(
             background_color='#ffffff',
@@ -363,13 +363,13 @@ class TestDataclassDeterministicBehavior:
     def test_layout_options_deterministic_hash(self):
         """Test that LayoutOptions produces deterministic hashes."""
         layout1 = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         layout2 = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
@@ -379,7 +379,7 @@ class TestDataclassDeterministicBehavior:
 
         # Different values should have different hashes
         layout3 = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
@@ -390,12 +390,12 @@ class TestDataclassDeterministicBehavior:
         """Test that Typography produces deterministic hashes."""
         typo1 = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         typo2 = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         # Identical dataclasses should have same hash
@@ -404,7 +404,7 @@ class TestDataclassDeterministicBehavior:
         # Different values should have different hashes
         typo3 = Typography(
             font_hanzi_pt=36, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         assert hash(typo1) != hash(typo3)
@@ -435,14 +435,14 @@ class TestDataclassDeterministicBehavior:
     def test_preview_params_deterministic_hash(self):
         """Test that PreviewParams produces deterministic hashes."""
         layout = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(
@@ -459,14 +459,14 @@ class TestDataclassDeterministicBehavior:
     def test_json_serialization_deterministic(self):
         """Test that JSON serialization is deterministic and reversible."""
         layout = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(
@@ -494,19 +494,19 @@ class TestDataclassDeterministicBehavior:
     def test_dataclass_equality_semantics(self):
         """Test that dataclass equality works correctly for caching."""
         layout1 = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         layout2 = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         layout3 = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )

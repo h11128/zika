@@ -24,7 +24,7 @@ def test_pdf_generate_smoke(monkeypatch, tmp_path):
     # Patch canvas to dummy to avoid file IO
     monkeypatch.setattr(ld, "canvas", types.SimpleNamespace(Canvas=lambda *a, **k: DummyCanvas()))
 
-    gen = ld.PDFCardGenerator(page_size="A4", rows=1, cols=1, auto_fill=True)
+    gen = ld.PDFCardGenerator(page_size="A4", layout_rows=1, layout_cols=1, layout_auto_fill=True)
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     ok = gen.generate_pdf(cards, str(tmp_path / "out.pdf"))
     assert ok is True
@@ -44,7 +44,7 @@ def test_pptx_generate_smoke(monkeypatch, tmp_path):
                 class TF:
                     def __init__(self):
                         self.paragraphs = [P()]
-                        self.margin_left = self.margin_right = self.margin_top = self.margin_bottom = 0
+                        self.margin_left = self.margin_right = self.margin_top_px = self.margin_bottom_px = 0
                         self.vertical_anchor = None
                         self.word_wrap = True
                     def add_paragraph(self):
@@ -60,7 +60,7 @@ def test_pptx_generate_smoke(monkeypatch, tmp_path):
                 class S:
                     def __init__(self):
                         self.fill = type("F", (), {"solid": lambda self: None, "fore_color": type("C", (), {"rgb": None})()})()
-                        self.line = type("L", (), {"width": 0, "color": type("C", (), {"rgb": None})()})()
+                        self.line = type("L", (), {"width_cm": 0, "color": type("C", (), {"rgb": None})()})()
                         self.text_frame = TF()
                 return S()
             def add_textbox(self, *a, **k):
@@ -108,7 +108,7 @@ def test_pptx_generate_smoke(monkeypatch, tmp_path):
 
     monkeypatch.setattr(lp, "Presentation", lambda: DummyPresentation())
 
-    gen = lp.PPTXCardGenerator(page_size="A4", rows=1, cols=1, auto_fill=True)
+    gen = lp.PPTXCardGenerator(page_size="A4", layout_rows=1, layout_cols=1, layout_auto_fill=True)
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     ok = gen.generate_pptx(cards, str(tmp_path / "out.pptx"))
     assert ok is True

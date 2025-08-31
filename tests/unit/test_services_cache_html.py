@@ -1,4 +1,4 @@
-from services.cache import (
+from services.cache_v2 import (
     create_page_preview_html,
     create_simple_grid_html,
 )
@@ -8,10 +8,10 @@ def test_create_page_preview_html_auto_fill_and_letter():
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     html = create_page_preview_html(
         cards, page_num=0,
-        card_size=5.5, gap=0.5, margin=1.0,
-        font_hanzi=48, font_pinyin=18, font_english=14,
-        page_size="Letter", hanzi_font="SimHei", background_color="#FFFFFF",
-        rows=2, cols=2, auto_fill=True,
+        card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+        hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+        page_size="Letter", hanzi_font_family="SimHei", background_color="#FFFFFF",
+        layout_rows=2, layout_cols=2, layout_auto_fill=True,
     )
     assert "page-container" in html and "grid-template-columns" in html
     assert "第 1 页" in html
@@ -21,20 +21,20 @@ def test_create_page_preview_html_page_out_of_range():
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     html = create_page_preview_html(
         cards, page_num=5,
-        card_size=5.5, gap=0.5, margin=1.0,
-        font_hanzi=48, font_pinyin=18, font_english=14,
-        page_size="A4", hanzi_font="SimHei", background_color="#FFFFFF",
-        rows=2, cols=2, auto_fill=False,
+        card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+        hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+        page_size="A4", hanzi_font_family="SimHei", background_color="#FFFFFF",
+        layout_rows=2, layout_cols=2, layout_auto_fill=False,
     )
     assert "页面不存在" in html
 
 
 def test_create_simple_grid_html_empty_and_nonempty():
-    empty_html = create_simple_grid_html([], hanzi_font="SimHei", background_color="#FFFFFF", rows=2, cols=2)
+    empty_html = create_simple_grid_html([], hanzi_font_family="SimHei", background_color="#FFFFFF", layout_rows=2, layout_cols=2)
     assert "输入汉字以查看预览" in empty_html
 
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
-    html = create_simple_grid_html(cards, hanzi_font="SimHei", background_color="#FFFFFF", rows=2, cols=2)
+    html = create_simple_grid_html(cards, hanzi_font_family="SimHei", background_color="#FFFFFF", layout_rows=2, layout_cols=2)
     assert "simple-card" in html and "simple-grid" in html
 
 
@@ -117,7 +117,7 @@ def test_render_preview_section_immediate_mode():
         # Mock the state check functions
         with patch('core.state.check_params_changed') as mock_check, \
              patch('core.state.get_all_ui_params') as mock_get_params, \
-             patch('services.cache.create_page_preview_html_immediate') as mock_create_page:
+             patch('services.cache_v2.create_page_preview_html_immediate') as mock_create_page:
 
             mock_check.return_value = True  # Force immediate mode
             mock_get_params.return_value = {}
@@ -159,7 +159,7 @@ def test_render_preview_section_empty_cards():
 
         with patch('core.state.check_params_changed') as mock_check, \
              patch('core.state.get_all_ui_params') as mock_get_params, \
-             patch('services.cache.create_simple_grid_html_immediate') as mock_create_grid:
+             patch('services.cache_v2.create_simple_grid_html_immediate') as mock_create_grid:
 
             mock_check.return_value = True
             mock_get_params.return_value = {}
@@ -248,7 +248,7 @@ def test_render_improved_card_editor_basic():
 # Comprehensive preview functionality tests
 def test_create_page_preview_html_zero_rows_cols():
     """Test page preview with zero rows or cols (edge case coverage)."""
-    from services.cache import create_page_preview_html
+    from services.cache_v2 import create_page_preview_html
 
     cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
 
@@ -270,12 +270,12 @@ def test_create_page_preview_html_zero_rows_cols():
 
 
 def test_create_page_preview_html_manual_card_size():
-    """Test page preview with manual card size (auto_fill=False)."""
-    from services.cache import create_page_preview_html
+    """Test page preview with manual card size (layout_auto_fill=False)."""
+    from services.cache_v2 import create_page_preview_html
 
     cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
 
-    # Test with auto_fill=False (manual card size)
+    # Test with layout_auto_fill=False (manual card size)
     html = create_page_preview_html(
         cards, 0, 6.0, 0.5, 1.0, 48, 18, 14,
         "A4", "SimHei", "#ffffff", 2, 3, False
@@ -283,12 +283,12 @@ def test_create_page_preview_html_manual_card_size():
     assert isinstance(html, str)
     assert len(html) > 0
     # Should contain the manual card size calculation
-    assert "card-size" in html or "width" in html
+    assert "card-size" in html or "width_cm" in html
 
 
 def test_create_simple_grid_html_font_size_calculations():
     """Test simple grid HTML with various font size calculations."""
-    from services.cache import create_simple_grid_html
+    from services.cache_v2 import create_simple_grid_html
 
     cards = [
         {'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'},
@@ -298,8 +298,8 @@ def test_create_simple_grid_html_font_size_calculations():
     # Test with different font sizes
     html = create_simple_grid_html(
         cards, "SimHei", "#ffffff", 2, 2,
-        font_hanzi=26, font_pinyin=12, font_english=14,
-        card_size=5.5, auto_fill=True
+        hanzi_font_size=26, pinyin_font_size=12, english_font_size=14,
+        card_size_cm=5.5, layout_auto_fill=True
     )
 
     assert isinstance(html, str)
@@ -326,7 +326,7 @@ def test_create_simple_grid_html_font_size_calculations():
 
 def test_clear_preview_cache_exception_handling():
     """Test cache clearing exception handling."""
-    from services.cache import clear_preview_cache
+    from services.cache_v2 import clear_preview_cache
 
     # Should not raise exception even if cache functions haven't been called
     clear_preview_cache()  # Should complete without error
@@ -338,7 +338,7 @@ def test_clear_preview_cache_exception_handling():
 
 def test_create_preview_html_legacy_function():
     """Test legacy create_preview_html function."""
-    from services.cache import create_preview_html
+    from services.cache_v2 import create_preview_html
 
     # Test with empty cards
     html = create_preview_html([])
@@ -354,7 +354,7 @@ def test_create_preview_html_legacy_function():
 
 def test_preview_html_structure_validation():
     """Test that preview HTML has proper structure."""
-    from services.cache import create_page_preview_html, create_simple_grid_html
+    from services.cache_v2 import create_page_preview_html, create_simple_grid_html
 
     cards = [
         {'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'},
@@ -388,7 +388,7 @@ def test_preview_html_structure_validation():
 
 def test_preview_background_color_handling():
     """Test preview with different background colors."""
-    from services.cache import create_simple_grid_html
+    from services.cache_v2 import create_simple_grid_html
 
     cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
 
@@ -407,7 +407,7 @@ def test_preview_background_color_handling():
 
 def test_preview_with_missing_card_fields():
     """Test preview with cards that have missing fields."""
-    from services.cache import create_simple_grid_html, create_page_preview_html
+    from services.cache_v2 import create_simple_grid_html, create_page_preview_html
 
     # Cards with missing fields
     cards = [
@@ -434,7 +434,7 @@ def test_preview_with_missing_card_fields():
 # Comprehensive cached preview function tests
 def test_cached_create_simple_grid_html_caching_behavior():
     """Test that cached function actually caches results."""
-    from services.cache import cached_create_simple_grid_html
+    from services.cache_v2 import cached_create_simple_grid_html
 
     cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
 
@@ -457,7 +457,7 @@ def test_cached_create_simple_grid_html_caching_behavior():
 
 def test_cached_create_page_preview_html_caching_behavior():
     """Test that cached page preview function caches results."""
-    from services.cache import cached_create_page_preview_html
+    from services.cache_v2 import cached_create_page_preview_html
 
     cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
 
@@ -481,7 +481,7 @@ def test_cached_create_page_preview_html_caching_behavior():
 
 def test_cached_functions_different_parameters():
     """Test that cached functions return different results for different parameters."""
-    from services.cache import cached_create_simple_grid_html
+    from services.cache_v2 import cached_create_simple_grid_html
 
     cards = [{'hanzi': '你好', 'pinyin': 'ni3hao3', 'english': 'hello'}]
 
@@ -502,7 +502,7 @@ def test_cached_functions_different_parameters():
 
 def test_immediate_vs_cached_preview_consistency():
     """Test that immediate and cached preview functions produce consistent results."""
-    from services.cache import (
+    from services.cache_v2 import (
         create_simple_grid_html_immediate,
         cached_create_simple_grid_html,
         create_page_preview_html_immediate,
@@ -551,7 +551,7 @@ def test_immediate_vs_cached_preview_consistency():
 
 def test_preview_html_with_special_characters():
     """Test preview HTML generation with special characters and edge cases."""
-    from services.cache import create_simple_grid_html
+    from services.cache_v2 import create_simple_grid_html
 
     # Cards with special characters
     cards = [
@@ -576,7 +576,7 @@ def test_preview_html_with_special_characters():
 
 def test_preview_performance_with_large_card_sets():
     """Test preview generation performance with larger card sets."""
-    from services.cache import create_simple_grid_html
+    from services.cache_v2 import create_simple_grid_html
 
     # Generate larger set of cards
     cards = []
@@ -601,7 +601,7 @@ def test_preview_performance_with_large_card_sets():
 
 def test_preview_grid_layout_calculations():
     """Test preview grid layout calculations with various configurations."""
-    from services.cache import create_simple_grid_html
+    from services.cache_v2 import create_simple_grid_html
 
     cards = [{'hanzi': f'字{i}', 'pinyin': f'zi{i}', 'english': f'word{i}'} for i in range(6)]
 
@@ -613,9 +613,9 @@ def test_preview_grid_layout_calculations():
         (3, 2),  # 3x2 grid
     ]
 
-    for rows, cols in configurations:
+    for layout_rows, cols in configurations:
         html = create_simple_grid_html(
-            cards, "SimHei", "#ffffff", rows, cols, 48, 18, 14, 5.5, True
+            cards, "SimHei", "#ffffff", layout_rows, layout_cols, 48, 18, 14, 5.5, True
         )
 
         assert isinstance(html, str)

@@ -46,14 +46,14 @@
 - 域划分：
   - Processing：input_text、auto_pinyin、auto_translate、translate_order、segmentation
   - Layout：rows、cols、gap_cm、margin_cm、page_size、auto_fill、card_size
-  - Style：font_hanzi、font_pinyin、font_english、hanzi_font、background_color
+  - Style：hanzi_font_size_pt、pinyin_font_size_pt、english_font_size_pt、hanzi_font、background_color
   - Navigation：current_page（nav_index）
 
 #### 4.2 摘要与失效
 - 归一化后再哈希：浮点四舍五入至 4 位、集合排序、Decimal 字符串化
 - processing_digest = stable_digest({input_text, auto_pinyin, auto_translate, translate_order})
 - layout_digest = stable_digest({rows, cols, gap_cm, margin_cm, page_size, auto_fill, card_size})
-- style_digest = stable_digest({font_hanzi, font_pinyin, font_english, hanzi_font, background_color})
+- style_digest = stable_digest({hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font, background_color})
 - preview_params_digest = stable_digest({layout_digest, style_digest, preview_mode, cards_count, PREVIEW_CACHE_SCHEMA_VERSION, code_version})
 - 页面切片缓存键 = (preview_params_digest, nav_index)
 - 重置规则：仅当 cards_per_page（布局改变）或 cards_count（处理改变）变化时重置/钳制 nav_index；Style 变更不重置页码
@@ -108,7 +108,7 @@
 #### 4.10 命名 / 单位 / 一致性
 - 统一使用 layout.rows/layout.cols；单位：尺寸用 cm，字体用 pt
 - 目录/命名：services/cache_v2，ui/inputs.py（避免与内置 input 冲突）
-- compute_export_key(export_params, cards_count) 替代易混淆的 export_key()
+- compute_export_key(export_params, cards_count) 替代易混淆的 compute_export_key()
 
 ### 5. 实施计划（Implementation Plan）
 - P1 基础：ui/state.py（服务）、normalize_for_digest/stable_digest/invalidate_preview_cache/generation；在 2–3 个热点替换分散写与清缓存

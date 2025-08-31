@@ -17,6 +17,8 @@ from core.constants import (
     PAGE_PADDING_RATIO, PAGE_PADDING_MIN_PX, SIMPLE_PADDING_RATIO, SIMPLE_PADDING_MIN_PX,
 )
 
+from services.typography import get_typography_manager, RenderTarget
+
 
 from dataclasses import dataclass
 
@@ -47,16 +49,16 @@ class FontMetrics:
 @dataclass
 class PageTemplateContext:
     page_num: int
-    rows: int
-    cols: int
-    hanzi_font: str
+    layout_rows: int
+    layout_cols: int
+    hanzi_font_family: str
     background_color: str
 
 @dataclass
 class SimpleGridTemplateContext:
-    rows: int
-    cols: int
-    hanzi_font: str
+    layout_rows: int
+    layout_cols: int
+    hanzi_font_family: str
     background_color: str
 
 
@@ -77,8 +79,8 @@ class SimpleGridCSSParams:
 # --- Layout helpers (extracted) ---
 
 def _compute_page_layout_metrics(page_size: str, gap_cm: float, margin_cm: float,
-                                 rows: int, cols: int, card_size_cm: float,
-                                 auto_fill: bool) -> PageLayoutMetrics:
+                                 layout_rows: int, layout_cols: int, card_size_cm: float,
+                                 layout_auto_fill: bool) -> PageLayoutMetrics:
     """Compute pixel-based layout metrics for full-page preview.
     Returns dict with: page_width_px, page_height_px, gap_px, margin_px,
     card_size_px, grid_width, grid_height, start_x, start_y, scale_factor.
@@ -94,7 +96,7 @@ def _compute_page_layout_metrics(page_size: str, gap_cm: float, margin_cm: float
     avail_w = max(0, page_width_px - 2 * margin_px)
     avail_h = max(0, page_height_px - 2 * margin_px)
     # Card size
-    if auto_fill:
+    if layout_auto_fill:
         size_w = (avail_w - max(0, cols - 1) * gap_px) / max(1, cols)
         size_h = (avail_h - max(0, rows - 1) * gap_px) / max(1, rows)
         card_size_px = max(0, min(size_w, size_h))
@@ -122,7 +124,7 @@ def _compute_page_layout_metrics(page_size: str, gap_cm: float, margin_cm: float
     )
 
 
-def _compute_simple_grid_css(cols: int, card_size_cm: float, auto_fill: bool) -> SimpleGridCSSParams:
+def _compute_simple_grid_css(layout_cols: int, card_size_cm: float, layout_auto_fill: bool) -> SimpleGridCSSParams:
     """Return responsive CSS params for simple grid (no fixed 900px branch)."""
     # Base sizes
     card_size_px_calc = card_size_cm * CM_TO_MM * MM_TO_PX
@@ -145,33 +147,64 @@ def _compute_simple_grid_css(cols: int, card_size_cm: float, auto_fill: bool) ->
 
 
 
-def _slice_cards_for_page(cards: List[Dict[str, str]], page_num: int, rows: int, cols: int) -> Tuple[int, List[Dict[str, str]]]:
+def _slice_cards_for_page(cards: List[Dict[str, str]], page_num: int, layout_rows: int, layout_cols: int) -> Tuple[int, List[Dict[str, str]]]:
     """Return (cards_per_page, page_cards) for the given page."""
-    cards_per_page = max(1, rows * cols)
+    cards_per_page = max(1, layout_rows * layout_cols)
     start_idx = page_num * cards_per_page
     end_idx = min(start_idx + cards_per_page, len(cards))
     return cards_per_page, cards[start_idx:end_idx]
 
 
-def _compute_font_px(font_hanzi: int, font_pinyin: int, font_english: int, scale: float = 1.0) -> FontMetrics:
-    """Convert pt to px with optional scale, also compute default margins used in page preview."""
+def _compute_font_px(hanzi_font_size: int, pinyin_font_size: int, english_font_size: int, scale: float = 1.0,
+                     hanzi_font_family: str = DEFAULT_HANZI_FONT, render_target: RenderTarget = RenderTarget.SCREEN) -> FontMetrics:
+    """
+    Convert pt to px with optional scale, using typography manager for consistency.
+
+    Args:
+        hanzi_font_size: Hanzi font size in points
+        pinyin_font_size: Pinyin font size in points
+        english_font_size: English font size in points
+        scale: Additional scale factor to apply
+        hanzi_font_family: Hanzi font family name
+        render_target: Target renderer for adjustments
+
+    Returns:
+        FontMetrics with normalized typography values
+    """
+    # Use typography manager for consistent calculations
+    typography_manager = get_typography_manager()
+    normalized = typography_manager.normalize_typography_params(
+        hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family, render_target
+    )
+
+    # Apply additional scale factor if provided
     return FontMetrics(
-        hanzi_px=font_hanzi * PT_TO_PX * scale,
-        pinyin_px=font_pinyin * PT_TO_PX * scale,
-        english_px=font_english * PT_TO_PX * scale,
-        hanzi_margin_px=max(PAGE_MARGIN_MIN_PX, font_hanzi * PAGE_MARGIN_RATIO) * scale,
-        pinyin_margin_px=max(PAGE_MARGIN_MIN_PX, font_pinyin * PAGE_MARGIN_RATIO) * scale,
+        hanzi_px=int(normalized["hanzi_px"] * scale),
+        pinyin_px=int(normalized["pinyin_px"] * scale),
+        english_px=int(normalized["english_px"] * scale),
+        hanzi_margin_px=int(normalized["hanzi_margin_px"] * scale),
+        pinyin_margin_px=int(normalized["pinyin_margin_px"] * scale),
     )
 
 
-def _compute_simple_grid_font_px(font_hanzi: int, font_pinyin: int, font_english: int) -> FontMetrics:
-    """Font sizes for simple grid (no page scale); margins per existing UI design."""
+def _compute_simple_grid_font_px(hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                                 hanzi_font_family: str = DEFAULT_HANZI_FONT) -> FontMetrics:
+    """
+    Font sizes for simple grid (no page scale); margins per existing UI design.
+    Uses typography manager for consistent calculations.
+    """
+    # Use typography manager for consistent calculations
+    typography_manager = get_typography_manager()
+    normalized = typography_manager.normalize_typography_params(
+        hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family, RenderTarget.SCREEN
+    )
+
     return FontMetrics(
-        hanzi_px=font_hanzi * PT_TO_PX,
-        pinyin_px=font_pinyin * PT_TO_PX,
-        english_px=font_english * PT_TO_PX,
-        hanzi_margin_px=max(SIMPLE_MARGIN_MIN_HANZI_PX, font_hanzi * SIMPLE_MARGIN_RATIO),
-        pinyin_margin_px=max(SIMPLE_MARGIN_MIN_PINYIN_PX, font_pinyin * SIMPLE_MARGIN_RATIO),
+        hanzi_px=normalized["hanzi_px"],
+        pinyin_px=normalized["pinyin_px"],
+        english_px=normalized["english_px"],
+        hanzi_margin_px=normalized["hanzi_margin_px"],
+        pinyin_margin_px=normalized["pinyin_margin_px"],
     )
 
 
@@ -185,24 +218,65 @@ def _compute_simple_card_box(card_size_baseline_px: float) -> CardBox:
     return CardBox(padding_px=max(SIMPLE_PADDING_MIN_PX, card_size_baseline_px * SIMPLE_PADDING_RATIO))
 
 def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
-                           card_size: float, gap: float, margin: float,
-                           font_hanzi: int, font_pinyin: int, font_english: int,
-                           page_size: str = "A4", hanzi_font: str = DEFAULT_HANZI_FONT,
+                           card_size_cm: float, gap_cm: float, margin_cm: float,
+                           hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                           page_size: str = "A4", hanzi_font_family: str = DEFAULT_HANZI_FONT,
                            background_color: str = DEFAULT_BACKGROUND_COLOR,
-                           rows: int = 3, cols: int = 3, auto_fill: bool = True) -> str:
-    """Create HTML preview of a specific page with realistic layout (template only)."""
+                           layout_rows: int = 3, layout_cols: int = 3, layout_auto_fill: bool = True) -> str:
+    """
+    Create HTML preview of a specific page with realistic layout (LEGACY).
+
+    DEPRECATED: This function is deprecated. Use create_page_preview_html_v2() instead.
+    This function now delegates to the v2 implementation for consistency.
+    """
+    import warnings
+    warnings.warn(
+        "create_page_preview_html() is deprecated. Use create_page_preview_html_v2() with dataclasses instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    # Try to use v2 implementation if available
+    try:
+        from core.feature_flags import get_feature_flag
+
+        if get_feature_flag('preview_dataclasses_v2', True):
+            from services.cache_v2 import create_page_preview_html_v2
+            from services.preview_types import convert_legacy_params_to_preview_params
+
+            # Convert legacy parameters to dataclasses
+            preview_params = convert_legacy_params_to_preview_params(
+                card_size, gap, margin, page_size,
+                hanzi_font_size, pinyin_font_size, english_font_size,
+                hanzi_font_family, background_color, '📄 完整页面',
+                layout_rows, layout_cols, auto_fill
+            )
+
+            # Delegate to v2 implementation
+            return create_page_preview_html_v2(
+                cards, page_num,
+                preview_params.layout,
+                preview_params.typography,
+                preview_params.visual
+            )
+    except Exception as e:
+        # Fall back to legacy implementation
+        import logging
+        logging.warning(f"V2 delegation failed, using legacy implementation: {e}")
+
+    # Legacy implementation fallback
     # Safety guards
-    rows = max(1, int(rows or 3))
-    cols = max(1, int(cols or 3))
+    layout_rows = max(1, int(layout_rows or 3))
+    layout_cols = max(1, int(layout_cols or 3))
 
     # Compute inputs via helpers
-    cards_per_page, page_cards = _slice_cards_for_page(cards, page_num, rows, cols)
+    cards_per_page, page_cards = _slice_cards_for_page(cards, page_num, layout_rows, layout_cols)
     if not page_cards and page_num > 0:
         return "<div style='text-align: center; color: #666; padding: 50px;'>页面不存在</div>"
 
-    M = _compute_page_layout_metrics(page_size, gap, margin, rows, cols, card_size, auto_fill)
+    M = _compute_page_layout_metrics(page_size, gap, margin, layout_rows, layout_cols, card_size, auto_fill)
     card_box = _compute_page_card_box(M)
-    font_px = _compute_font_px(font_hanzi, font_pinyin, font_english, M.scale_factor)
+    font_px = _compute_font_px(hanzi_font_size, pinyin_font_size, english_font_size, M.scale_factor)
 
     from jinja2 import Environment, FileSystemLoader, select_autoescape
     env = Environment(
@@ -211,29 +285,60 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
     )
     template = env.get_template('page_preview.html.j2')
 
-    ctx = PageTemplateContext(page_num=page_num, rows=rows, cols=cols, hanzi_font=hanzi_font, background_color=background_color)
+    ctx = PageTemplateContext(page_num=page_num, layout_rows=layout_rows, layout_cols=layout_cols, hanzi_font_family=hanzi_font_family, background_color=background_color)
 
     page_cards_ctx = [(page_cards[i] if i < len(page_cards) else None) for i in range(cards_per_page)]
     return template.render(M=M, font=font_px, card_box=card_box, ctx=ctx, page_cards=page_cards_ctx)
 
-def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAULT_HANZI_FONT,
+def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font_family: str = DEFAULT_HANZI_FONT,
                            background_color: str = DEFAULT_BACKGROUND_COLOR,
-                           rows: int = 3, cols: int = 3,
-                           font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
-                           card_size: float = 5.5, auto_fill: bool = True) -> str:
-    """Create simple HTML preview of cards (template via Jinja2)."""
-    rows = max(1, int(rows or 3))
-    cols = max(1, int(cols or 3))
+                           layout_rows: int = 3, layout_cols: int = 3,
+                           hanzi_font_size: int = 48, pinyin_font_size: int = 18, english_font_size: int = 14,
+                           card_size_cm: float = 5.5, layout_auto_fill: bool = True) -> str:
+    """
+    Create simple HTML preview of cards (LEGACY).
+
+    DEPRECATED: This function is deprecated. Use create_simple_grid_html_v2() instead.
+    This function now delegates to the v2 implementation for consistency.
+    """
+    import warnings
+    warnings.warn(
+        "create_simple_grid_html() is deprecated. Use create_simple_grid_html_v2() with dataclasses instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    # Always use v2 implementation
+    from services.cache_v2 import create_simple_grid_html_v2
+    from services.preview_types import convert_legacy_params_to_preview_params
+
+    # Convert legacy parameters to dataclasses
+    preview_params = convert_legacy_params_to_preview_params(
+        card_size, 0.5, 1.0, 'A4',  # gap and margin defaults for simple grid
+        hanzi_font_size, pinyin_font_size, english_font_size,
+        hanzi_font_family, background_color, '🔲 简单网格',
+        layout_rows, layout_cols, auto_fill
+    )
+
+    # Delegate to v2 implementation
+    return create_simple_grid_html_v2(
+        cards,
+        preview_params.layout,
+        preview_params.typography,
+        preview_params.visual
+    )
+    layout_rows = max(1, int(rows or 3))
+    layout_cols = max(1, int(cols or 3))
 
     if not cards:
         return "<div style='text-align: center; color: #666; padding: 50px;'>输入汉字以查看预览</div>"
 
-    params = _compute_simple_grid_css(cols, card_size, auto_fill)
-    font_px = _compute_simple_grid_font_px(font_hanzi, font_pinyin, font_english)
+    params = _compute_simple_grid_css(layout_cols, card_size, auto_fill)
+    font_px = _compute_simple_grid_font_px(hanzi_font_size, pinyin_font_size, english_font_size)
     card_box = _compute_simple_card_box(params.card_size_px_calc)
 
     # Build grid cards with padding for empty slots
-    cards_per_page = rows * cols
+    cards_per_page = layout_rows * layout_cols
     grid_cards: List[Dict[str, str]] = []
     for i in range(cards_per_page):
         grid_cards.append(cards[i] if i < len(cards) else None)
@@ -245,7 +350,7 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
     )
     template = env.get_template('simple_grid.html.j2')
 
-    ctx = SimpleGridTemplateContext(rows=rows, cols=cols, hanzi_font=hanzi_font, background_color=background_color)
+    ctx = SimpleGridTemplateContext(layout_rows=layout_rows, layout_cols=layout_cols, hanzi_font_family=hanzi_font_family, background_color=background_color)
 
     return template.render(params=params, ctx=ctx, font=font_px, card_box=card_box, grid_cards=grid_cards)
 
@@ -253,49 +358,143 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAU
 # Cached versions of the functions with hash-based cache keys
 @st.cache_data(show_spinner=False)
 def cached_create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
-                           card_size: float, gap: float, margin: float,
-                           font_hanzi: int, font_pinyin: int, font_english: int,
-                           page_size: str = "A4", hanzi_font: str = DEFAULT_HANZI_FONT,
+                           card_size_cm: float, gap_cm: float, margin_cm: float,
+                           hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                           page_size: str = "A4", hanzi_font_family: str = DEFAULT_HANZI_FONT,
                            background_color: str = DEFAULT_BACKGROUND_COLOR,
-                           rows: int = 3, cols: int = 3, auto_fill: bool = True) -> str:
-    """Cached version of create_page_preview_html with proper parameter tracking."""
-    return create_page_preview_html(cards, page_num, card_size, gap, margin,
-                                   font_hanzi, font_pinyin, font_english,
-                                   page_size, hanzi_font, background_color,
-                                   rows, cols, auto_fill)
+                           layout_rows: int = 3, layout_cols: int = 3, layout_auto_fill: bool = True) -> str:
+    """
+    Cached version of create_page_preview_html (LEGACY).
+
+    DEPRECATED: This function is deprecated. Use cached_create_page_preview_html_v2() instead.
+    This function now delegates to the v2 implementation for consistency.
+    """
+    import warnings
+    warnings.warn(
+        "cached_create_page_preview_html() is deprecated. Use cached_create_page_preview_html_v2() with dataclasses instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    # Always use v2 implementation
+    from services.cache_v2 import cached_create_page_preview_html_v2
+    from services.preview_types import convert_legacy_params_to_preview_params
+
+    # Convert legacy parameters to dataclasses
+    preview_params = convert_legacy_params_to_preview_params(
+        card_size, gap, margin, page_size,
+        hanzi_font_size, pinyin_font_size, english_font_size,
+        hanzi_font_family, background_color, '📄 完整页面',
+        layout_rows, layout_cols, auto_fill
+    )
+
+    # Delegate to v2 implementation
+    return cached_create_page_preview_html_v2(
+        cards, page_num,
+        preview_params.layout,
+        preview_params.typography,
+        preview_params.visual
+    )
 
 
 @st.cache_data(show_spinner=False)
-def cached_create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font: str = DEFAULT_HANZI_FONT,
-                           background_color: str = DEFAULT_BACKGROUND_COLOR, rows: int = 3, cols: int = 3,
-                           font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
-                           card_size: float = 5.5, auto_fill: bool = True) -> str:
-    """Cached version of create_simple_grid_html with proper parameter tracking."""
-    return create_simple_grid_html(cards, hanzi_font, background_color, rows, cols,
-                                   font_hanzi, font_pinyin, font_english, card_size, auto_fill)
+def cached_create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font_family: str = DEFAULT_HANZI_FONT,
+                           background_color: str = DEFAULT_BACKGROUND_COLOR, layout_rows: int = 3, layout_cols: int = 3,
+                           hanzi_font_size: int = 48, pinyin_font_size: int = 18, english_font_size: int = 14,
+                           card_size_cm: float = 5.5, layout_auto_fill: bool = True) -> str:
+    """
+    Cached version of create_simple_grid_html (LEGACY).
+
+    DEPRECATED: This function is deprecated. Use cached_create_simple_grid_html_v2() instead.
+    This function now delegates to the v2 implementation for consistency.
+    """
+    import warnings
+    warnings.warn(
+        "cached_create_simple_grid_html() is deprecated. Use cached_create_simple_grid_html_v2() with dataclasses instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    # Try to use v2 implementation if available
+    try:
+        from core.feature_flags import get_feature_flag
+
+        if get_feature_flag('preview_dataclasses_v2', True):
+            from services.cache_v2 import cached_create_simple_grid_html_v2
+            from services.preview_types import convert_legacy_params_to_preview_params
+
+            # Convert legacy parameters to dataclasses
+            preview_params = convert_legacy_params_to_preview_params(
+                card_size, 0.5, 1.0, 'A4',  # gap and margin defaults for simple grid
+                hanzi_font_size, pinyin_font_size, english_font_size,
+                hanzi_font_family, background_color, '🔲 简单网格',
+                layout_rows, layout_cols, auto_fill
+            )
+
+            # Delegate to v2 implementation
+            return cached_create_simple_grid_html_v2(
+                cards,
+                preview_params.layout,
+                preview_params.typography,
+                preview_params.visual
+            )
+    except Exception as e:
+        # Fall back to legacy implementation
+        import logging
+        logging.warning(f"V2 delegation failed, using legacy implementation: {e}")
+
+    # Legacy fallback
+    return create_simple_grid_html(cards, hanzi_font_family, background_color, layout_rows, layout_cols,
+                                   hanzi_font_size, pinyin_font_size, english_font_size, card_size, auto_fill)
 
 
 # Non-cached versions for immediate updates when needed
 def create_page_preview_html_immediate(cards: List[Dict[str, str]], page_num: int,
-                           card_size: float, gap: float, margin: float,
-                           font_hanzi: int, font_pinyin: int, font_english: int,
-                           page_size: str = "A4", hanzi_font: str = DEFAULT_HANZI_FONT,
+                           card_size_cm: float, gap_cm: float, margin_cm: float,
+                           hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                           page_size: str = "A4", hanzi_font_family: str = DEFAULT_HANZI_FONT,
                            background_color: str = DEFAULT_BACKGROUND_COLOR,
-                           rows: int = 3, cols: int = 3, auto_fill: bool = True) -> str:
-    """Non-cached version for immediate preview updates."""
+                           layout_rows: int = 3, layout_cols: int = 3, layout_auto_fill: bool = True) -> str:
+    """
+    Non-cached version for immediate preview updates (LEGACY).
+
+    DEPRECATED: This function is deprecated. Use create_page_preview_html_v2() instead.
+    This function now delegates to the v2 implementation for consistency.
+    """
+    import warnings
+    warnings.warn(
+        "create_page_preview_html_immediate() is deprecated. Use create_page_preview_html_v2() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    # Delegate to the main function which handles v2 delegation
     return create_page_preview_html(cards, page_num, card_size, gap, margin,
-                                   font_hanzi, font_pinyin, font_english,
-                                   page_size, hanzi_font, background_color,
-                                   rows, cols, auto_fill)
+                                   hanzi_font_size, pinyin_font_size, english_font_size,
+                                   page_size, hanzi_font_family, background_color,
+                                   layout_rows, layout_cols, auto_fill)
 
 
-def create_simple_grid_html_immediate(cards: List[Dict[str, str]], hanzi_font: str = DEFAULT_HANZI_FONT,
-                           background_color: str = DEFAULT_BACKGROUND_COLOR, rows: int = 3, cols: int = 3,
-                           font_hanzi: int = 48, font_pinyin: int = 18, font_english: int = 14,
-                           card_size: float = 5.5, auto_fill: bool = True) -> str:
-    """Non-cached version for immediate preview updates."""
-    return create_simple_grid_html(cards, hanzi_font, background_color, rows, cols,
-                                   font_hanzi, font_pinyin, font_english, card_size, auto_fill)
+def create_simple_grid_html_immediate(cards: List[Dict[str, str]], hanzi_font_family: str = DEFAULT_HANZI_FONT,
+                           background_color: str = DEFAULT_BACKGROUND_COLOR, layout_rows: int = 3, layout_cols: int = 3,
+                           hanzi_font_size: int = 48, pinyin_font_size: int = 18, english_font_size: int = 14,
+                           card_size_cm: float = 5.5, layout_auto_fill: bool = True) -> str:
+    """
+    Non-cached version for immediate preview updates (LEGACY).
+
+    DEPRECATED: This function is deprecated. Use create_simple_grid_html_v2() instead.
+    This function now delegates to the v2 implementation for consistency.
+    """
+    import warnings
+    warnings.warn(
+        "create_simple_grid_html_immediate() is deprecated. Use create_simple_grid_html_v2() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    # Delegate to the main function which handles v2 delegation
+    return create_simple_grid_html(cards, hanzi_font_family, background_color, layout_rows, layout_cols,
+                                   hanzi_font_size, pinyin_font_size, english_font_size, card_size, auto_fill)
 
 
 def clear_preview_cache() -> None:

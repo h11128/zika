@@ -141,7 +141,7 @@ class TestStateErrorHandling:
     
     def test_handle_param_changes_error_handling(self, mock_streamlit):
         """Test error handling in handle_param_changes."""
-        test_params = {'card_size': 5.5, 'gap': 0.5}
+        test_params = {'card_size_cm': 5.5, 'gap_cm': 0.5}
         
         with patch('core.state.check_params_changed', side_effect=Exception("Check error")):
             # This should be tested if the function had error handling
@@ -198,17 +198,17 @@ class TestInputValidation:
         
         # Test UIConfig with invalid data
         config = UIConfig.from_dict({})
-        assert config.hanzi_font == 'SimHei'  # Should use defaults
+        assert config.hanzi_font_family == 'SimHei'  # Should use defaults
         
         # Test LayoutConfig with string numbers
         config = LayoutConfig.from_dict({
-            'card_size': '6.5',
-            'font_hanzi': '50',
-            'rows': '3'
+            'card_size_cm': '6.5',
+            'hanzi_font_size': '50',
+            'layout_rows': '3'
         })
-        assert config.card_size == 6.5
-        assert config.font_hanzi == 50
-        assert config.rows == 3
+        assert config.card_size_cm == 6.5
+        assert config.hanzi_font_size == 50
+        assert config.layout_rows == 3
     
     def test_preview_input_validation(self):
         """Test preview function input validation."""
@@ -247,16 +247,16 @@ class TestRobustness:
         from core.config import UIConfig, LayoutConfig
 
         # Test UIConfig with malformed data
-        config = UIConfig.from_dict({'hanzi_font': None, 'background_color': 123})
-        assert config.hanzi_font == 'SimHei'  # Should use default for None
+        config = UIConfig.from_dict({'hanzi_font_family': None, 'background_color': 123})
+        assert config.hanzi_font_family == 'SimHei'  # Should use default for None
         assert config.background_color == '#ffffff'  # Should use default for invalid type
 
         # Test LayoutConfig with malformed data
-        config = LayoutConfig.from_dict({'card_size': 'invalid', 'rows': -1})
+        config = LayoutConfig.from_dict({'card_size_cm': 'invalid', 'layout_rows': -1})
         # Should return default config on conversion error
         assert isinstance(config, LayoutConfig)
-        assert config.card_size == 5.5  # Default value
-        assert config.rows == 2  # Default value
+        assert config.card_size_cm == 5.5  # Default value
+        assert config.layout_rows == 2  # Default value
 
 
 if __name__ == '__main__':

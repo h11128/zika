@@ -34,13 +34,13 @@ def test_color_interface_html():
         <title>Color Palette Test</title>
         <style>
         .color-button {
-            width: 50px;
-            height: 40px;
+            width_cm: 50px;
+            height_cm: 40px;
             border-radius: 8px;
             border: 2px solid #ddd;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin: 2px;
+            margin_cm: 2px;
             display: inline-block;
         }
         .color-button:hover {
@@ -52,7 +52,7 @@ def test_color_interface_html():
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
         }
         .color-row {
-            margin: 10px 0;
+            margin_cm: 10px 0;
         }
         </style>
     </head>
@@ -98,7 +98,7 @@ def test_color_interface_html():
         </div>
         
         <p>当前选中颜色: <span id="current-color">{}</span></p>
-        <div id="current-color-preview" style="width: 100px; height: 50px; background-color: {}; border: 2px solid #333; margin: 10px 0;"></div>
+        <div id="current-color-preview" style="width_cm: 100px; height_cm: 50px; background-color: {}; border: 2px solid #333; margin_cm: 10px 0;"></div>
         
         <script>
         function selectColor(color) {{

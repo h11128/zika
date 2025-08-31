@@ -7,6 +7,7 @@ Legacy functions preserved for backward compatibility.
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
+from contextlib import contextmanager
 import streamlit as st
 
 from core.feature_flags import get_feature_flag
@@ -228,7 +229,7 @@ class StyleManager:
             top: 0;
             z-index: 100;
             background: var(--color-background, #ffffff);
-            max-height: 100vh;
+            max-height_cm: 100vh;
             overflow-y: auto;
             align-self: start;
         }}
@@ -280,30 +281,111 @@ def add_custom_css(css: str) -> None:
 
 
 def apply_global_styles() -> None:
-    """Apply global CSS styles to the application."""
-    st.markdown(
-        """
-        <style>
-        .preview-sticky { 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            background: #ffffff; 
-            max-height: 100vh; 
-            overflow-y: auto; 
-            align-self: start; 
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    """
+    Apply global CSS styles to the application as a single CSS injector.
+
+    This function serves as the centralized CSS injection point for the application.
+    It includes all necessary global styles including sticky preview behavior,
+    responsive design, and theme-aware styling.
+    """
+    # Get current theme for dynamic styling
+    theme = get_current_theme()
+
+    # Comprehensive global CSS
+    global_css = f"""
+    <style>
+    /* CSS Variables for theme consistency */
+    :root {{
+        --color-primary: {theme.colors.primary};
+        --color-secondary: {theme.colors.secondary};
+        --color-background: {theme.colors.background};
+        --color-surface: {theme.colors.surface};
+        --color-text-primary: {theme.colors.text_primary};
+        --color-text-secondary: {theme.colors.text_secondary};
+        --color-border: {theme.colors.border};
+        --color-shadow: {theme.colors.shadow};
+        --font-family-primary: {theme.typography.font_family_primary};
+        --font-size-base: {theme.typography.font_size_base};
+        --line-height-base: {theme.typography.line_height_base};
+        --spacing-sm: {theme.spacing.sm};
+        --spacing-md: {theme.spacing.md};
+        --spacing-lg: {theme.spacing.lg};
+        --border-radius-md: {theme.border_radius.md};
+    }}
+
+    /* Sticky Preview Styles */
+    .preview-sticky {{
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--color-background, #ffffff);
+        max-height_cm: 100vh;
+        overflow-y: auto;
+        align-self: start;
+        border-radius: var(--border-radius-md, 0.5rem);
+        box-shadow: 0 2px 4px var(--color-shadow, rgba(0, 0, 0, 0.1));
+        padding: var(--spacing-md, 1rem);
+        margin-bottom: var(--spacing-lg, 1.5rem);
+    }}
+
+    /* Responsive Design */
+    @media (max-width_cm: 768px) {{
+        .preview-sticky {{
+            position: relative;
+            max-height_cm: none;
+            overflow-y: visible;
+        }}
+    }}
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {{
+        .preview-sticky {{
+            background: var(--color-surface, #2d2d2d);
+            color: var(--color-text-primary, #ffffff);
+        }}
+    }}
+
+    /* Accessibility improvements */
+    .preview-sticky:focus-within {{
+        outline: 2px solid var(--color-primary, #1f77b4);
+        outline-offset: 2px;
+    }}
+
+    /* Performance optimizations */
+    .preview-sticky {{
+        contain: layout style paint;
+        will-change: scroll-position;
+    }}
+    </style>
+    """
+
+    st.markdown(global_css, unsafe_allow_html=True)
 
 
-def render_sticky_wrapper_start() -> None:
-    """Render the start of a sticky wrapper div."""
-    st.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
+@contextmanager
+def sticky_preview():
+    """
+    Context manager for sticky preview behavior.
+    Ensures matching open/close of sticky wrapper.
+
+    Usage:
+        with sticky_preview():
+            # Preview content here
+            pass
+    """
+    try:
+        # Apply global styles first to ensure CSS is available
+        apply_global_styles()
+
+        # Start sticky wrapper
+        st.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
+        yield
+    finally:
+        # Always close sticky wrapper, even if exception occurs
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
-def render_sticky_wrapper_end() -> None:
-    """Render the end of a sticky wrapper div."""
-    st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+

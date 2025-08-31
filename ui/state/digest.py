@@ -146,10 +146,10 @@ def create_preview_digest_config() -> DigestConfig:
     """Create digest config for preview-related state."""
     return DigestConfig(
         include_keys={
-            'card_size', 'gap_cm', 'margin_cm',
-            'font_hanzi', 'font_pinyin', 'font_english',
-            'page_size', 'hanzi_font', 'background_color',
-            'rows', 'cols', 'auto_fill', 'preview_mode',
+            'card_size_cm', 'gap_cm', 'margin_cm',
+            'hanzi_font_size', 'pinyin_font_size', 'english_font_size',
+            'page_size', 'hanzi_font_family', 'background_color',
+            'layout_rows', 'layout_cols', 'layout_auto_fill', 'preview_mode',
             'processed_cards'
         },
         exclude_keys={'_preview_cache', '_export_cache'},
@@ -161,10 +161,10 @@ def create_export_digest_config() -> DigestConfig:
     """Create digest config for export-related state."""
     return DigestConfig(
         include_keys={
-            'card_size', 'gap_cm', 'margin_cm',
-            'font_hanzi', 'font_pinyin', 'font_english',
-            'page_size', 'hanzi_font', 'background_color',
-            'rows', 'cols', 'auto_fill',
+            'card_size_cm', 'gap_cm', 'margin_cm',
+            'hanzi_font_size', 'pinyin_font_size', 'english_font_size',
+            'page_size', 'hanzi_font_family', 'background_color',
+            'layout_rows', 'layout_cols', 'layout_auto_fill',
             'processed_cards'
         },
         exclude_keys={'_preview_cache', '_export_cache'},

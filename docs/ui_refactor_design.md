@@ -77,14 +77,14 @@ Decisions:
 - Domains:
   - Processing: input_text, auto_pinyin, auto_translate, translate_order, segmentation
   - Layout: rows, cols, gap_cm, margin_cm, page_size, auto_fill, card_size
-  - Style: font_hanzi, font_pinyin, font_english, hanzi_font, background_color
+  - Style: hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font, background_color
   - Navigation: nav_index (int)
 
 4.2 Digests & invalidation
 - normalize_for_digest: round floats to 4 decimals; sort sets; stringify Decimals; JSON‑serializable only
 - processing_digest = stable_digest({input_text, auto_pinyin, auto_translate, translate_order})
 - layout_digest = stable_digest({rows, cols, gap_cm, margin_cm, page_size, auto_fill, card_size})
-- style_digest = stable_digest({font_hanzi, font_pinyin, font_english, hanzi_font, background_color})
+- style_digest = stable_digest({hanzi_font_size_pt, pinyin_font_size_pt, english_font_size_pt, hanzi_font, background_color})
 - PREVIEW_CACHE_SCHEMA_VERSION / EXPORT_SCHEMA_VERSION constants; include code_version in cached args
 - preview_params_digest = stable_digest({layout_digest, style_digest, preview_mode, cards_count, PREVIEW_CACHE_SCHEMA_VERSION, code_version})
 - Page‑slice key = (preview_params_digest, nav_index)

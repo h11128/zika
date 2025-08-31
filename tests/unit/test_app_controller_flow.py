@@ -112,7 +112,7 @@ def test_calculate_pagination_resets_when_out_of_range(monkeypatch):
     called = {"reset": False}
     monkeypatch.setattr(ac, "set_current_page", lambda p: called.__setitem__("reset", True))
 
-    cards_per_page, total_pages = ctrl.calculate_pagination([{}]*3, {"rows": 1, "cols": 2})
+    cards_per_page, total_pages = ctrl.calculate_pagination([{}]*3, {"layout_rows": 1, "layout_cols": 2})
     assert cards_per_page == 2 and total_pages == 2
     assert called["reset"] is True
 
@@ -127,16 +127,16 @@ def test_render_right_column_content_paths(monkeypatch):
         'auto_pinyin': True,
         'auto_translate': True,
         'page_size': 'A4',
-        'card_size': 5.5,
-        'gap': 0.5,
-        'margin': 1.0,
-        'font_hanzi': 48,
-        'font_pinyin': 18,
-        'font_english': 14,
+        'card_size_cm': 5.5,
+        'gap_cm': 0.5,
+        'margin_cm': 1.0,
+        'hanzi_font_size': 48,
+        'pinyin_font_size': 18,
+        'english_font_size': 14,
     }
 
-    monkeypatch.setattr(ac, "render_preview_column_header", lambda: {"hanzi_font": "SimHei", "background_color": "#fff", "preview_mode": "📄 完整页面"})
-    monkeypatch.setattr(ac, "get_all_ui_params", lambda *a, **k: {"rows": 2, "cols": 3, "auto_fill": True, "background_color": "#fff", "hanzi_font": "SimHei", "total_cards": 1, "card_size": 5.5, "gap": 0.5, "margin": 1.0, "page_size": 'A4', "font_hanzi": 48, "font_pinyin": 18, "font_english": 14})
+    monkeypatch.setattr(ac, "render_preview_column_header", lambda: {"hanzi_font_family": "SimHei", "background_color": "#fff", "preview_mode": "📄 完整页面"})
+    monkeypatch.setattr(ac, "get_all_ui_params", lambda *a, **k: {"layout_rows": 2, "layout_cols": 3, "layout_auto_fill": True, "background_color": "#fff", "hanzi_font_family": "SimHei", "total_cards": 1, "card_size_cm": 5.5, "gap_cm": 0.5, "margin_cm": 1.0, "page_size": 'A4', "hanzi_font_size": 48, "pinyin_font_size": 18, "english_font_size": 14})
     monkeypatch.setattr(ac, "handle_param_changes", lambda p: None)
     monkeypatch.setattr(ac, "render_preview_content_legacy", lambda *a, **k: (6, 1))
     monkeypatch.setattr(ac, "render_sticky_wrapper_end", lambda: None)

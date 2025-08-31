@@ -189,26 +189,26 @@ class UserSnapshot:
                 'use_segmented': getattr(session_state, 'use_segmented', False),
             },
             layout={
-                'rows': getattr(session_state, 'rows', 2),
-                'cols': getattr(session_state, 'cols', 3),
-                'auto_fill': getattr(session_state, 'auto_fill', True),
-                'card_size': getattr(session_state, 'card_size', 5.5),
+                'layout_rows': getattr(session_state, 'layout_rows', 2),
+                'layout_cols': getattr(session_state, 'layout_cols', 3),
+                'layout_auto_fill': getattr(session_state, 'layout_auto_fill', True),
+                'card_size_cm': getattr(session_state, 'card_size_cm', 5.5),
                 # Use canonical field names for new snapshots
                 'gap_cm': get_field_with_alias({
-                    'gap': getattr(session_state, 'gap', None),
+                    'gap_cm': getattr(session_state, 'gap_cm', None),
                     'gap_cm': getattr(session_state, 'gap_cm', None)
                 }, 'gap_cm', 0.5),
                 'margin_cm': get_field_with_alias({
-                    'margin': getattr(session_state, 'margin', None),
+                    'margin_cm': getattr(session_state, 'margin_cm', None),
                     'margin_cm': getattr(session_state, 'margin_cm', None)
                 }, 'margin_cm', 1.0),
                 'page_size': getattr(session_state, 'page_size', 'A4'),
             },
             typography={
-                'font_hanzi': getattr(session_state, 'font_hanzi', 48),
-                'font_pinyin': getattr(session_state, 'font_pinyin', 18),
-                'font_english': getattr(session_state, 'font_english', 14),
-                'hanzi_font': getattr(session_state, 'hanzi_font', 'SimHei'),
+                'hanzi_font_size': getattr(session_state, 'hanzi_font_size', 48),
+                'pinyin_font_size': getattr(session_state, 'pinyin_font_size', 18),
+                'english_font_size': getattr(session_state, 'english_font_size', 14),
+                'hanzi_font_family': getattr(session_state, 'hanzi_font_family', 'SimHei'),
             },
             visual={
                 'background_color': getattr(session_state, 'background_color', '#ffffff'),

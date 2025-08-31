@@ -82,44 +82,44 @@ class TestCacheV2:
     
     def test_cache_basic_operations(self):
         """Test basic cache operations."""
-        with patch('services.cache_v2.use_cache_v2', return_value=True):
-            # Test miss
-            assert self.cache.get("key1") is None
-            assert self.cache.stats.misses == 1
+        # Cache v2 is always enabled - no need to mock
+        # Test miss
+        assert self.cache.get("key1") is None
+        assert self.cache.stats.misses == 1
 
-            # Test set and hit
-            self.cache.set("key1", "value1")
-            assert self.cache.get("key1") == "value1"
-            assert self.cache.stats.hits == 1
-            assert self.cache.stats.entry_count == 1
+        # Test set and hit
+        self.cache.set("key1", "value1")
+        assert self.cache.get("key1") == "value1"
+        assert self.cache.stats.hits == 1
+        assert self.cache.stats.entry_count == 1
     
     def test_cache_ttl_expiration(self):
         """Test TTL expiration."""
-        with patch('services.cache_v2.use_cache_v2', return_value=True):
-            # Set short TTL
-            self.cache.config.ttl_seconds = 0.1
+        # Cache v2 is always enabled - no need to mock
+        # Set short TTL
+        self.cache.config.ttl_seconds = 0.1
 
-            self.cache.set("key1", "value1")
-            assert self.cache.get("key1") == "value1"
+        self.cache.set("key1", "value1")
+        assert self.cache.get("key1") == "value1"
 
-            # Wait for expiration
-            time.sleep(0.2)
-            assert self.cache.get("key1") is None
-            assert self.cache.stats.misses == 1
+        # Wait for expiration
+        time.sleep(0.2)
+        assert self.cache.get("key1") is None
+        assert self.cache.stats.misses == 1
     
     def test_cache_size_eviction(self):
         """Test size-based eviction."""
-        with patch('services.cache_v2.use_cache_v2', return_value=True):
-            # Set small size limit
-            self.cache.config.max_size_bytes = 50
+        # Cache v2 is always enabled - no need to mock
+        # Set small size limit
+        self.cache.config.max_size_bytes = 50
 
-            # Add entries that exceed size limit
-            self.cache.set("key1", "a" * 30)  # 30 bytes
-            self.cache.set("key2", "b" * 30)  # 30 bytes - should evict key1
+        # Add entries that exceed size limit
+        self.cache.set("key1", "a" * 30)  # 30 bytes
+        self.cache.set("key2", "b" * 30)  # 30 bytes - should evict key1
 
-            assert self.cache.get("key1") is None  # Evicted
-            assert self.cache.get("key2") == "b" * 30  # Still there
-            assert self.cache.stats.evictions >= 1
+        assert self.cache.get("key1") is None  # Evicted
+        assert self.cache.get("key2") == "b" * 30  # Still there
+        assert self.cache.stats.evictions >= 1
     
     def test_cache_entry_count_eviction(self):
         """Test entry count-based eviction."""
@@ -278,14 +278,14 @@ class TestPreviewDataclassesV2:
         page_num = 0
 
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(
@@ -311,14 +311,14 @@ class TestPreviewDataclassesV2:
         page_num = 0
 
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(
@@ -343,14 +343,14 @@ class TestPreviewDataclassesV2:
         cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
 
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(
@@ -375,14 +375,14 @@ class TestPreviewDataclassesV2:
         cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
 
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(
@@ -405,20 +405,20 @@ class TestPreviewDataclassesV2:
 
         # Create identical dataclasses
         layout1 = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         layout2 = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
 
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
 
         visual = VisualOptions(

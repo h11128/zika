@@ -23,7 +23,7 @@ class DummySt:
     class components:
         class v1:
             @staticmethod
-            def html(html, height=0):
+            def html(html, height_cm=0):
                 pass
 
 
@@ -34,7 +34,7 @@ def test_render_preview_content_non_empty(monkeypatch):
     
     # Mock state functions
     def fake_get_layout_settings():
-        return {"rows": 2, "cols": 2}
+        return {"layout_rows": 2, "layout_cols": 2}
     
     def fake_get_current_page():
         return 0
@@ -85,7 +85,7 @@ def test_render_preview_content_page_reset(monkeypatch):
     
     # Mock state functions - current page is out of range
     def fake_get_layout_settings():
-        return {"rows": 2, "cols": 2}
+        return {"layout_rows": 2, "layout_cols": 2}
     
     def fake_get_current_page():
         return 5  # Out of range for 1 card
@@ -120,7 +120,7 @@ def test_render_preview_content_legacy(monkeypatch):
     
     # Mock get_layout_settings for legacy wrapper
     def fake_get_layout_settings():
-        return {"rows": 3, "cols": 3, "auto_fill": True}
+        return {"layout_rows": 3, "layout_cols": 3, "layout_auto_fill": True}
     
     monkeypatch.setattr(us, "get_layout_settings", fake_get_layout_settings)
     
@@ -132,18 +132,18 @@ def test_render_preview_content_legacy(monkeypatch):
     
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     preview_params = {
-        "hanzi_font": "SimHei",
+        "hanzi_font_family": "SimHei",
         "background_color": "#ffffff",
         "preview_mode": "📄 完整页面"
     }
     layout_params = {
-        "card_size": 5.5,
-        "gap": 0.5,
-        "margin": 1.0,
+        "card_size_cm": 5.5,
+        "gap_cm": 0.5,
+        "margin_cm": 1.0,
         "page_size": "A4",
-        "font_hanzi": 48,
-        "font_pinyin": 18,
-        "font_english": 14
+        "hanzi_font_size": 48,
+        "pinyin_font_size": 18,
+        "english_font_size": 14
     }
     
     cards_per_page, total_pages = us.render_preview_content_legacy(
@@ -175,7 +175,7 @@ def test_validate_preview_inputs():
 def test_calculate_pagination(monkeypatch):
     """Test _calculate_pagination function."""
     def fake_get_layout_settings():
-        return {"rows": 2, "cols": 3}
+        return {"layout_rows": 2, "layout_cols": 3}
     
     monkeypatch.setattr(us, "get_layout_settings", fake_get_layout_settings)
     
@@ -241,7 +241,7 @@ def test_render_empty_preview(monkeypatch):
     monkeypatch.setattr(us, "st", st)
     
     html_calls = []
-    def mock_html(html, height=0):
+    def mock_html(html, height_cm=0):
         html_calls.append((html, height))
     
     # Mock create_preview_html

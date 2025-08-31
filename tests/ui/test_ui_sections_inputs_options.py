@@ -23,10 +23,10 @@ class DummySt:
     def __init__(self):
         self.session_state = SS()
         self.session_state.background_color = "#FFFFFF"
-        self.session_state.hanzi_font = "SimHei"
-        self.session_state.rows = 2
-        self.session_state.cols = 3
-        self.session_state.auto_fill = True
+        self.session_state.hanzi_font_family = "SimHei"
+        self.session_state.layout_rows = 2
+        self.session_state.layout_cols = 3
+        self.session_state.layout_auto_fill = True
         self.session_state.total_cards_generated = 0
         self.session_state.export_history = []
 
@@ -70,7 +70,7 @@ class DummySt:
             self.session_state[key] = value
         return value
 
-    def text_area(self, label, key=None, height=None, placeholder=None, help=None):
+    def text_area(self, label, key=None, height_cm=None, placeholder=None, help=None):
         # Do nothing; assume session_state already has key
         pass
 
@@ -157,20 +157,20 @@ def test_render_options_and_advanced(monkeypatch):
     st.selectbox = lambda label, options, index=0, **kwargs: options[index]
     st.slider = lambda *a, **k: 5.5
 
-    auto_pinyin, auto_translate, page_size, card_size = us.render_options_section()
+    auto_pinyin, auto_translate, page_size, card_size_cm = us.render_options_section()
     assert auto_pinyin is True and auto_translate is True and page_size in ("A4", "Letter") and isinstance(card_size, float)
 
     # Advanced options
     st.slider = lambda *a, **k: 0.5 if "间距" in a[0] else (1.0 if "边距" in a[0] else (48 if "汉字" in a[0] else (18 if "拼音" in a[0] else 14)))
     st.number_input = lambda *a, **k: 2
-    st.selectbox = lambda *a, **k: st.session_state.hanzi_font
+    st.selectbox = lambda *a, **k: st.session_state.hanzi_font_family
     st.color_picker = lambda *a, **k: st.session_state.background_color
 
     # Avoid calling real color palette
     monkeypatch.setattr(us, "render_color_palette", lambda *a, **k: None)
 
-    gap, margin, font_hanzi, font_pinyin, font_english, rows, cols = us.render_advanced_options()
+    gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = us.render_advanced_options()
     assert isinstance(gap, float) and isinstance(margin, float)
-    assert isinstance(font_hanzi, int) and isinstance(font_pinyin, int) and isinstance(font_english, int)
-    assert isinstance(rows, int) and isinstance(cols, int)
+    assert isinstance(hanzi_font_size, int) and isinstance(pinyin_font_size, int) and isinstance(english_font_size, int)
+    assert isinstance(layout_rows, int) and isinstance(layout_cols, int)
 

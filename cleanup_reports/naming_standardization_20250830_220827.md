@@ -1,0 +1,528 @@
+# Naming Standardization Report
+
+**Date**: 2025-08-30 22:08:27
+
+## Summary
+
+- **Files Modified**: 116
+- **Changes Made**: 396
+- **Errors**: 0
+
+## Modified Files
+
+- scripts\standardize_naming.py
+- services\cache_v2.py
+- services\prefetch.py
+- services\warmup.py
+- tests\integration\test_integration_configuration.py
+- tests\integration\test_integration_cross_module.py
+- tests\integration\test_integration_end_to_end.py
+- tests\integration\test_integration_error_handling.py
+- tests\integration\test_integration_performance.py
+- tests\integration\test_streamlit_migration_complete.py
+- tests\ui\test_preview_updates.py
+- tests\ui\test_preview_update_e2e.py
+- tests\ui\test_realtime_color_preview.py
+- tests\ui\test_ui_components_smoke.py
+- tests\ui\test_ui_components_unit.py
+- tests\unit\test_cache_strategy.py
+- tests\unit\test_legacy_delegation.py
+- tests\unit\test_preview_layout_and_colors.py
+- tests\unit\test_segmentation_state_and_preview_refresh.py
+- tests\unit\test_services_cache_html.py
+- tests\unit\test_services_cache_legacy.py
+- tests\unit\test_services_cache_more.py
+- tests\unit\test_shared_render_core.py
+- ui\cache_manager.py
+- ui\components.py
+- ui\editor.py
+- ui\editor_unified.py
+- ui\export_unified.py
+- ui\form_components.py
+- ui\inputs.py
+- ui\options.py
+- ui\ports.py
+- ui\preview.py
+- ui\preview_controller.py
+- ui\state.py
+- core\config.py
+- core\field_migration.py
+- core\state.py
+- scripts\remove_legacy_code.py
+- services\cache.py
+- services\export.py
+- services\persistence.py
+- services\preview_types.py
+- services\render_core.py
+- src\gen_cards.py
+- src\layout_pdf.py
+- src\layout_pptx.py
+- tests\integration\test_digest_debug_integration.py
+- tests\integration\test_field_migration_integration.py
+- tests\integration\test_preview_params_consistency.py
+- tests\ui\test_color_change_font_persistence.py
+- tests\ui\test_export_and_layout.py
+- tests\ui\test_export_fix.py
+- tests\ui\test_export_ui_fix.py
+- tests\ui\test_font_color_features.py
+- tests\ui\test_refactored_preview.py
+- tests\ui\test_ui_sections_export.py
+- tests\ui\test_ui_sections_inputs_options.py
+- tests\ui\test_ui_sections_preview_content.py
+- tests\ui\test_ui_sections_wrappers.py
+- tests\unit\test_app_controller.py
+- tests\unit\test_app_controller_flow.py
+- tests\unit\test_config_objects.py
+- tests\unit\test_core_flow.py
+- tests\unit\test_core_state_preview.py
+- tests\unit\test_digest_debug.py
+- tests\unit\test_error_handling.py
+- tests\unit\test_field_migration.py
+- tests\unit\test_persistence.py
+- tests\unit\test_preview_types.py
+- tests\unit\test_ui_state.py
+- ui\adapter_showcase.py
+- ui\app_controller.py
+- ui\debug.py
+- ui\export.py
+- ui\sections.py
+- ui\sections_clean.py
+- ui\sections_unified.py
+- ui\state\digest.py
+- ui\state\rules.py
+- components\browser_storage.py
+- components\color_palette\__init__.py
+- services\layout.py
+- services\security.py
+- tests\integration\test_comprehensive_fixes.py
+- tests\integration\test_integration_file_io.py
+- tests\ui\test_color_button_fix.py
+- tests\ui\test_direct_color_click.py
+- tests\ui\test_layout_generators_smoke.py
+- tests\ui\test_no_white_borders.py
+- tests\unit\test_export_cache_key.py
+- tests\unit\test_prefetch.py
+- tests\unit\test_services_layout.py
+- tests\unit\test_ui_ports.py
+- tests\unit\test_warmup.py
+- ui\styles.py
+- ui\unified.py
+- ui\adapters\streamlit_adapter.py
+- ui\state\invalidations.py
+- services\typography.py
+- tests\golden\test_typography_consistency.py
+- tests\ui\test_layout_pdf_branches.py
+- tests\ui\test_ui_sections_preview_wrapper.py
+- tests\unit\test_cache_v2.py
+- tests\unit\test_core_state_unit.py
+- tests\unit\test_editor_features.py
+- tests\unit\test_gen_cards_unit.py
+- tests\unit\test_services_export_unit.py
+- tests\unit\test_typography.py
+- UI_refactor_design_review__2025-08-30T05-04-44.md
+- docs\TESTING_GUIDE.md
+- docs\ui_refactor_design.md
+- docs\ui_refactor_design_zh.md
+- docs\archive\completed-plans\WEB_UI_REFACTOR_PLAN.md
+- docs\migration\preview_v2_migration.md
+- docs\refactors\preview_params_dataclasses_refactor.md
+
+## Changes Made
+
+- **scripts\standardize_naming.py**: \bnav_digest\b → nav_index
+- **services\cache_v2.py**: services\.cache(?!_v2) → services.cache_v2
+- **services\prefetch.py**: services\.cache(?!_v2) → services.cache_v2
+- **services\warmup.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\integration\test_integration_configuration.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\integration\test_integration_cross_module.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\integration\test_integration_end_to_end.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\integration\test_integration_error_handling.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\integration\test_integration_performance.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\integration\test_streamlit_migration_complete.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\ui\test_preview_updates.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\ui\test_preview_update_e2e.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\ui\test_realtime_color_preview.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\ui\test_ui_components_smoke.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\ui\test_ui_components_unit.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_cache_strategy.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_legacy_delegation.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_preview_layout_and_colors.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_segmentation_state_and_preview_refresh.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_services_cache_html.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_services_cache_legacy.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_services_cache_more.py**: services\.cache(?!_v2) → services.cache_v2
+- **tests\unit\test_shared_render_core.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\cache_manager.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\components.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\editor.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\editor_unified.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\export_unified.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\form_components.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\inputs.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\options.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\ports.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\preview.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\preview_controller.py**: services\.cache(?!_v2) → services.cache_v2
+- **ui\state.py**: services\.cache(?!_v2) → services.cache_v2
+- **core\config.py**: \bfont_hanzi\b → hanzi_font_size
+- **core\field_migration.py**: \bfont_hanzi\b → hanzi_font_size
+- **core\state.py**: \bfont_hanzi\b → hanzi_font_size
+- **scripts\remove_legacy_code.py**: \bfont_hanzi\b → hanzi_font_size
+- **scripts\standardize_naming.py**: \bfont_hanzi\b → hanzi_font_size
+- **services\cache.py**: \bfont_hanzi\b → hanzi_font_size
+- **services\export.py**: \bfont_hanzi\b → hanzi_font_size
+- **services\persistence.py**: \bfont_hanzi\b → hanzi_font_size
+- **services\preview_types.py**: \bfont_hanzi\b → hanzi_font_size
+- **services\render_core.py**: \bfont_hanzi\b → hanzi_font_size
+- **src\gen_cards.py**: \bfont_hanzi\b → hanzi_font_size
+- **src\layout_pdf.py**: \bfont_hanzi\b → hanzi_font_size
+- **src\layout_pptx.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_digest_debug_integration.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_field_migration_integration.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_integration_configuration.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_integration_cross_module.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_integration_end_to_end.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_integration_error_handling.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_integration_performance.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_preview_params_consistency.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\integration\test_streamlit_migration_complete.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_color_change_font_persistence.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_export_and_layout.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_export_fix.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_export_ui_fix.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_font_color_features.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_preview_updates.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_preview_update_e2e.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_realtime_color_preview.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_refactored_preview.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_ui_components_smoke.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_ui_sections_export.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_ui_sections_inputs_options.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_ui_sections_preview_content.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\ui\test_ui_sections_wrappers.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_app_controller.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_app_controller_flow.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_config_objects.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_core_flow.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_core_state_preview.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_digest_debug.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_error_handling.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_field_migration.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_persistence.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_preview_layout_and_colors.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_preview_types.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_services_cache_html.py**: \bfont_hanzi\b → hanzi_font_size
+- **tests\unit\test_ui_state.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\adapter_showcase.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\app_controller.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\components.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\debug.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\export.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\export_unified.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\form_components.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\options.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\preview.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\preview_controller.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\sections.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\sections_clean.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\sections_unified.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\state.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\state\digest.py**: \bfont_hanzi\b → hanzi_font_size
+- **ui\state\rules.py**: \bfont_hanzi\b → hanzi_font_size
+- **core\config.py**: \bfont_pinyin\b → pinyin_font_size
+- **core\field_migration.py**: \bfont_pinyin\b → pinyin_font_size
+- **core\state.py**: \bfont_pinyin\b → pinyin_font_size
+- **scripts\remove_legacy_code.py**: \bfont_pinyin\b → pinyin_font_size
+- **scripts\standardize_naming.py**: \bfont_pinyin\b → pinyin_font_size
+- **services\cache.py**: \bfont_pinyin\b → pinyin_font_size
+- **services\export.py**: \bfont_pinyin\b → pinyin_font_size
+- **services\persistence.py**: \bfont_pinyin\b → pinyin_font_size
+- **services\preview_types.py**: \bfont_pinyin\b → pinyin_font_size
+- **services\render_core.py**: \bfont_pinyin\b → pinyin_font_size
+- **src\gen_cards.py**: \bfont_pinyin\b → pinyin_font_size
+- **src\layout_pdf.py**: \bfont_pinyin\b → pinyin_font_size
+- **src\layout_pptx.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_digest_debug_integration.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_field_migration_integration.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_integration_configuration.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_integration_cross_module.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_integration_end_to_end.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_integration_error_handling.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_integration_performance.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_preview_params_consistency.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\integration\test_streamlit_migration_complete.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_color_change_font_persistence.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_export_and_layout.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_export_fix.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_export_ui_fix.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_font_color_features.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_preview_updates.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_preview_update_e2e.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_realtime_color_preview.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_refactored_preview.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_ui_components_smoke.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_ui_sections_export.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_ui_sections_inputs_options.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_ui_sections_preview_content.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\ui\test_ui_sections_wrappers.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_app_controller.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_app_controller_flow.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_config_objects.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_core_flow.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_core_state_preview.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_digest_debug.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_preview_layout_and_colors.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_preview_types.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_services_cache_html.py**: \bfont_pinyin\b → pinyin_font_size
+- **tests\unit\test_ui_state.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\adapter_showcase.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\app_controller.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\components.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\debug.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\export.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\export_unified.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\form_components.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\options.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\preview.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\preview_controller.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\sections.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\sections_clean.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\sections_unified.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\state.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\state\digest.py**: \bfont_pinyin\b → pinyin_font_size
+- **ui\state\rules.py**: \bfont_pinyin\b → pinyin_font_size
+- **core\config.py**: \bfont_english\b → english_font_size
+- **core\field_migration.py**: \bfont_english\b → english_font_size
+- **core\state.py**: \bfont_english\b → english_font_size
+- **scripts\remove_legacy_code.py**: \bfont_english\b → english_font_size
+- **scripts\standardize_naming.py**: \bfont_english\b → english_font_size
+- **services\cache.py**: \bfont_english\b → english_font_size
+- **services\export.py**: \bfont_english\b → english_font_size
+- **services\persistence.py**: \bfont_english\b → english_font_size
+- **services\preview_types.py**: \bfont_english\b → english_font_size
+- **services\render_core.py**: \bfont_english\b → english_font_size
+- **src\gen_cards.py**: \bfont_english\b → english_font_size
+- **src\layout_pdf.py**: \bfont_english\b → english_font_size
+- **src\layout_pptx.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_digest_debug_integration.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_field_migration_integration.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_integration_configuration.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_integration_cross_module.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_integration_end_to_end.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_integration_error_handling.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_integration_performance.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_preview_params_consistency.py**: \bfont_english\b → english_font_size
+- **tests\integration\test_streamlit_migration_complete.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_color_change_font_persistence.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_export_and_layout.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_export_fix.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_export_ui_fix.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_font_color_features.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_preview_updates.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_preview_update_e2e.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_realtime_color_preview.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_refactored_preview.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_ui_components_smoke.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_ui_sections_export.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_ui_sections_inputs_options.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_ui_sections_preview_content.py**: \bfont_english\b → english_font_size
+- **tests\ui\test_ui_sections_wrappers.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_app_controller.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_app_controller_flow.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_config_objects.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_core_flow.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_core_state_preview.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_digest_debug.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_preview_layout_and_colors.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_preview_types.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_services_cache_html.py**: \bfont_english\b → english_font_size
+- **tests\unit\test_ui_state.py**: \bfont_english\b → english_font_size
+- **ui\adapter_showcase.py**: \bfont_english\b → english_font_size
+- **ui\app_controller.py**: \bfont_english\b → english_font_size
+- **ui\components.py**: \bfont_english\b → english_font_size
+- **ui\debug.py**: \bfont_english\b → english_font_size
+- **ui\export.py**: \bfont_english\b → english_font_size
+- **ui\export_unified.py**: \bfont_english\b → english_font_size
+- **ui\form_components.py**: \bfont_english\b → english_font_size
+- **ui\options.py**: \bfont_english\b → english_font_size
+- **ui\preview.py**: \bfont_english\b → english_font_size
+- **ui\preview_controller.py**: \bfont_english\b → english_font_size
+- **ui\sections.py**: \bfont_english\b → english_font_size
+- **ui\sections_clean.py**: \bfont_english\b → english_font_size
+- **ui\sections_unified.py**: \bfont_english\b → english_font_size
+- **ui\state.py**: \bfont_english\b → english_font_size
+- **ui\state\digest.py**: \bfont_english\b → english_font_size
+- **ui\state\rules.py**: \bfont_english\b → english_font_size
+- **components\browser_storage.py**: unit standardization → multiple units
+- **components\color_palette\__init__.py**: unit standardization → multiple units
+- **core\config.py**: unit standardization → multiple units
+- **core\field_migration.py**: unit standardization → multiple units
+- **core\state.py**: unit standardization → multiple units
+- **scripts\standardize_naming.py**: unit standardization → multiple units
+- **services\cache.py**: unit standardization → multiple units
+- **services\export.py**: unit standardization → multiple units
+- **services\layout.py**: unit standardization → multiple units
+- **services\persistence.py**: unit standardization → multiple units
+- **services\preview_types.py**: unit standardization → multiple units
+- **services\render_core.py**: unit standardization → multiple units
+- **services\security.py**: unit standardization → multiple units
+- **src\gen_cards.py**: unit standardization → multiple units
+- **src\layout_pdf.py**: unit standardization → multiple units
+- **src\layout_pptx.py**: unit standardization → multiple units
+- **tests\integration\test_comprehensive_fixes.py**: unit standardization → multiple units
+- **tests\integration\test_digest_debug_integration.py**: unit standardization → multiple units
+- **tests\integration\test_field_migration_integration.py**: unit standardization → multiple units
+- **tests\integration\test_integration_configuration.py**: unit standardization → multiple units
+- **tests\integration\test_integration_cross_module.py**: unit standardization → multiple units
+- **tests\integration\test_integration_end_to_end.py**: unit standardization → multiple units
+- **tests\integration\test_integration_error_handling.py**: unit standardization → multiple units
+- **tests\integration\test_integration_file_io.py**: unit standardization → multiple units
+- **tests\integration\test_integration_performance.py**: unit standardization → multiple units
+- **tests\integration\test_preview_params_consistency.py**: unit standardization → multiple units
+- **tests\integration\test_streamlit_migration_complete.py**: unit standardization → multiple units
+- **tests\ui\test_color_button_fix.py**: unit standardization → multiple units
+- **tests\ui\test_color_change_font_persistence.py**: unit standardization → multiple units
+- **tests\ui\test_direct_color_click.py**: unit standardization → multiple units
+- **tests\ui\test_export_and_layout.py**: unit standardization → multiple units
+- **tests\ui\test_export_ui_fix.py**: unit standardization → multiple units
+- **tests\ui\test_font_color_features.py**: unit standardization → multiple units
+- **tests\ui\test_layout_generators_smoke.py**: unit standardization → multiple units
+- **tests\ui\test_no_white_borders.py**: unit standardization → multiple units
+- **tests\ui\test_preview_updates.py**: unit standardization → multiple units
+- **tests\ui\test_preview_update_e2e.py**: unit standardization → multiple units
+- **tests\ui\test_realtime_color_preview.py**: unit standardization → multiple units
+- **tests\ui\test_refactored_preview.py**: unit standardization → multiple units
+- **tests\ui\test_ui_components_smoke.py**: unit standardization → multiple units
+- **tests\ui\test_ui_components_unit.py**: unit standardization → multiple units
+- **tests\ui\test_ui_sections_export.py**: unit standardization → multiple units
+- **tests\ui\test_ui_sections_inputs_options.py**: unit standardization → multiple units
+- **tests\ui\test_ui_sections_preview_content.py**: unit standardization → multiple units
+- **tests\ui\test_ui_sections_wrappers.py**: unit standardization → multiple units
+- **tests\unit\test_app_controller.py**: unit standardization → multiple units
+- **tests\unit\test_app_controller_flow.py**: unit standardization → multiple units
+- **tests\unit\test_config_objects.py**: unit standardization → multiple units
+- **tests\unit\test_core_flow.py**: unit standardization → multiple units
+- **tests\unit\test_core_state_preview.py**: unit standardization → multiple units
+- **tests\unit\test_digest_debug.py**: unit standardization → multiple units
+- **tests\unit\test_error_handling.py**: unit standardization → multiple units
+- **tests\unit\test_export_cache_key.py**: unit standardization → multiple units
+- **tests\unit\test_field_migration.py**: unit standardization → multiple units
+- **tests\unit\test_prefetch.py**: unit standardization → multiple units
+- **tests\unit\test_preview_layout_and_colors.py**: unit standardization → multiple units
+- **tests\unit\test_preview_types.py**: unit standardization → multiple units
+- **tests\unit\test_services_cache_html.py**: unit standardization → multiple units
+- **tests\unit\test_services_layout.py**: unit standardization → multiple units
+- **tests\unit\test_ui_ports.py**: unit standardization → multiple units
+- **tests\unit\test_ui_state.py**: unit standardization → multiple units
+- **tests\unit\test_warmup.py**: unit standardization → multiple units
+- **ui\adapter_showcase.py**: unit standardization → multiple units
+- **ui\app_controller.py**: unit standardization → multiple units
+- **ui\components.py**: unit standardization → multiple units
+- **ui\debug.py**: unit standardization → multiple units
+- **ui\export.py**: unit standardization → multiple units
+- **ui\export_unified.py**: unit standardization → multiple units
+- **ui\form_components.py**: unit standardization → multiple units
+- **ui\inputs.py**: unit standardization → multiple units
+- **ui\options.py**: unit standardization → multiple units
+- **ui\ports.py**: unit standardization → multiple units
+- **ui\preview.py**: unit standardization → multiple units
+- **ui\preview_controller.py**: unit standardization → multiple units
+- **ui\sections.py**: unit standardization → multiple units
+- **ui\sections_clean.py**: unit standardization → multiple units
+- **ui\sections_unified.py**: unit standardization → multiple units
+- **ui\state.py**: unit standardization → multiple units
+- **ui\styles.py**: unit standardization → multiple units
+- **ui\unified.py**: unit standardization → multiple units
+- **ui\adapters\streamlit_adapter.py**: unit standardization → multiple units
+- **ui\state\digest.py**: unit standardization → multiple units
+- **ui\state\invalidations.py**: unit standardization → multiple units
+- **ui\state\rules.py**: unit standardization → multiple units
+- **components\color_palette\__init__.py**: field deduplication → multiple fields
+- **core\config.py**: field deduplication → multiple fields
+- **core\field_migration.py**: field deduplication → multiple fields
+- **core\state.py**: field deduplication → multiple fields
+- **scripts\remove_legacy_code.py**: field deduplication → multiple fields
+- **scripts\standardize_naming.py**: field deduplication → multiple fields
+- **services\cache.py**: field deduplication → multiple fields
+- **services\cache_v2.py**: field deduplication → multiple fields
+- **services\export.py**: field deduplication → multiple fields
+- **services\layout.py**: field deduplication → multiple fields
+- **services\persistence.py**: field deduplication → multiple fields
+- **services\preview_types.py**: field deduplication → multiple fields
+- **services\render_core.py**: field deduplication → multiple fields
+- **services\typography.py**: field deduplication → multiple fields
+- **src\layout_pdf.py**: field deduplication → multiple fields
+- **src\layout_pptx.py**: field deduplication → multiple fields
+- **tests\golden\test_typography_consistency.py**: field deduplication → multiple fields
+- **tests\integration\test_digest_debug_integration.py**: field deduplication → multiple fields
+- **tests\integration\test_field_migration_integration.py**: field deduplication → multiple fields
+- **tests\integration\test_integration_configuration.py**: field deduplication → multiple fields
+- **tests\integration\test_integration_cross_module.py**: field deduplication → multiple fields
+- **tests\integration\test_integration_end_to_end.py**: field deduplication → multiple fields
+- **tests\integration\test_integration_error_handling.py**: field deduplication → multiple fields
+- **tests\integration\test_integration_performance.py**: field deduplication → multiple fields
+- **tests\integration\test_preview_params_consistency.py**: field deduplication → multiple fields
+- **tests\integration\test_streamlit_migration_complete.py**: field deduplication → multiple fields
+- **tests\ui\test_color_change_font_persistence.py**: field deduplication → multiple fields
+- **tests\ui\test_export_and_layout.py**: field deduplication → multiple fields
+- **tests\ui\test_font_color_features.py**: field deduplication → multiple fields
+- **tests\ui\test_layout_generators_smoke.py**: field deduplication → multiple fields
+- **tests\ui\test_layout_pdf_branches.py**: field deduplication → multiple fields
+- **tests\ui\test_preview_updates.py**: field deduplication → multiple fields
+- **tests\ui\test_preview_update_e2e.py**: field deduplication → multiple fields
+- **tests\ui\test_realtime_color_preview.py**: field deduplication → multiple fields
+- **tests\ui\test_refactored_preview.py**: field deduplication → multiple fields
+- **tests\ui\test_ui_components_smoke.py**: field deduplication → multiple fields
+- **tests\ui\test_ui_sections_export.py**: field deduplication → multiple fields
+- **tests\ui\test_ui_sections_inputs_options.py**: field deduplication → multiple fields
+- **tests\ui\test_ui_sections_preview_content.py**: field deduplication → multiple fields
+- **tests\ui\test_ui_sections_preview_wrapper.py**: field deduplication → multiple fields
+- **tests\ui\test_ui_sections_wrappers.py**: field deduplication → multiple fields
+- **tests\unit\test_app_controller.py**: field deduplication → multiple fields
+- **tests\unit\test_app_controller_flow.py**: field deduplication → multiple fields
+- **tests\unit\test_cache_v2.py**: field deduplication → multiple fields
+- **tests\unit\test_config_objects.py**: field deduplication → multiple fields
+- **tests\unit\test_core_flow.py**: field deduplication → multiple fields
+- **tests\unit\test_core_state_preview.py**: field deduplication → multiple fields
+- **tests\unit\test_core_state_unit.py**: field deduplication → multiple fields
+- **tests\unit\test_digest_debug.py**: field deduplication → multiple fields
+- **tests\unit\test_editor_features.py**: field deduplication → multiple fields
+- **tests\unit\test_error_handling.py**: field deduplication → multiple fields
+- **tests\unit\test_field_migration.py**: field deduplication → multiple fields
+- **tests\unit\test_gen_cards_unit.py**: field deduplication → multiple fields
+- **tests\unit\test_persistence.py**: field deduplication → multiple fields
+- **tests\unit\test_prefetch.py**: field deduplication → multiple fields
+- **tests\unit\test_preview_layout_and_colors.py**: field deduplication → multiple fields
+- **tests\unit\test_preview_types.py**: field deduplication → multiple fields
+- **tests\unit\test_services_cache_html.py**: field deduplication → multiple fields
+- **tests\unit\test_services_cache_legacy.py**: field deduplication → multiple fields
+- **tests\unit\test_services_export_unit.py**: field deduplication → multiple fields
+- **tests\unit\test_services_layout.py**: field deduplication → multiple fields
+- **tests\unit\test_shared_render_core.py**: field deduplication → multiple fields
+- **tests\unit\test_typography.py**: field deduplication → multiple fields
+- **tests\unit\test_ui_state.py**: field deduplication → multiple fields
+- **ui\adapter_showcase.py**: field deduplication → multiple fields
+- **ui\app_controller.py**: field deduplication → multiple fields
+- **ui\components.py**: field deduplication → multiple fields
+- **ui\debug.py**: field deduplication → multiple fields
+- **ui\export.py**: field deduplication → multiple fields
+- **ui\export_unified.py**: field deduplication → multiple fields
+- **ui\form_components.py**: field deduplication → multiple fields
+- **ui\options.py**: field deduplication → multiple fields
+- **ui\preview.py**: field deduplication → multiple fields
+- **ui\preview_controller.py**: field deduplication → multiple fields
+- **ui\sections.py**: field deduplication → multiple fields
+- **ui\sections_clean.py**: field deduplication → multiple fields
+- **ui\sections_unified.py**: field deduplication → multiple fields
+- **ui\state.py**: field deduplication → multiple fields
+- **ui\state\digest.py**: field deduplication → multiple fields
+- **ui\state\invalidations.py**: field deduplication → multiple fields
+- **ui\state\rules.py**: field deduplication → multiple fields
+- **UI_refactor_design_review__2025-08-30T05-04-44.md**: documentation update → naming consistency
+- **docs\TESTING_GUIDE.md**: documentation update → naming consistency
+- **docs\ui_refactor_design.md**: documentation update → naming consistency
+- **docs\ui_refactor_design_zh.md**: documentation update → naming consistency
+- **docs\archive\completed-plans\WEB_UI_REFACTOR_PLAN.md**: documentation update → naming consistency
+- **docs\migration\preview_v2_migration.md**: documentation update → naming consistency
+- **docs\refactors\preview_params_dataclasses_refactor.md**: documentation update → naming consistency
+

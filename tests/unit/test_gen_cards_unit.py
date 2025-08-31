@@ -10,7 +10,7 @@ import pytest
 from src.gen_cards import CardGenerator
 
 
-def make_temp_csv(rows, delimiter=","):
+def make_temp_csv(layout_rows, delimiter=","):
     fd, path = tempfile.mkstemp(suffix=".csv")
     os.close(fd)
     with open(path, "w", encoding="utf-8", newline="") as f:

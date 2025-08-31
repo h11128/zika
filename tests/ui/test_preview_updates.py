@@ -9,8 +9,8 @@ from unittest.mock import patch, MagicMock
 from typing import Dict, Any
 
 # Import the modules we're testing
-from services.cache import clear_preview_cache, cached_create_page_preview_html, cached_create_simple_grid_html
-from services.cache import create_page_preview_html_immediate, create_simple_grid_html_immediate
+from services.cache_v2 import clear_preview_cache, cached_create_page_preview_html, cached_create_simple_grid_html
+from services.cache_v2 import create_page_preview_html_immediate, create_simple_grid_html_immediate
 from ui.components import render_preview_section, render_color_palette
 from ui.sections import render_advanced_options
 from core.state import get_all_ui_params, handle_param_changes
@@ -28,8 +28,8 @@ class TestPreviewCacheManagement:
     def test_clear_preview_cache(self, mock_session_state):
         """Test that cache clearing works properly."""
         # Setup mock cache functions
-        with patch('services.cache.cached_create_page_preview_html') as mock_page_cache:
-            with patch('services.cache.cached_create_simple_grid_html') as mock_grid_cache:
+        with patch('services.cache_v2.cached_create_page_preview_html') as mock_page_cache:
+            with patch('services.cache_v2.cached_create_simple_grid_html') as mock_grid_cache:
                 mock_page_cache.clear = MagicMock()
                 mock_grid_cache.clear = MagicMock()
                 
@@ -50,7 +50,7 @@ class TestPreviewCacheManagement:
         test_cards = [{'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'}]
         
         # Test immediate rendering
-        with patch('services.cache.create_page_preview_html') as mock_create:
+        with patch('services.cache_v2.create_page_preview_html') as mock_create:
             mock_create.return_value = "<html>test</html>"
             
             result = create_page_preview_html_immediate(
@@ -72,11 +72,11 @@ class TestParameterChangeDetection:
             'last_params': {},
             'export_ready': {},
             'export_data': {},
-            'hanzi_font': 'SimHei',
+            'hanzi_font_family': 'SimHei',
             'background_color': '#ffffff',
-            'rows': 2,
-            'cols': 3,
-            'auto_fill': True
+            'layout_rows': 2,
+            'layout_cols': 3,
+            'layout_auto_fill': True
         }
     
     @patch('streamlit.session_state')
@@ -87,25 +87,25 @@ class TestParameterChangeDetection:
         mock_session_state.__getitem__ = lambda key: self.mock_session_state.get(key)
         mock_session_state.get = lambda key, default=None: self.mock_session_state.get(key, default)
         
-        mock_layout.return_value = {'rows': 2, 'cols': 3, 'auto_fill': True}
-        mock_prefs.return_value = {'hanzi_font': 'SimHei', 'background_color': '#ffffff'}
+        mock_layout.return_value = {'layout_rows': 2, 'layout_cols': 3, 'layout_auto_fill': True}
+        mock_prefs.return_value = {'hanzi_font_family': 'SimHei', 'background_color': '#ffffff'}
         
         test_cards = [{'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'}]
         
         params = get_all_ui_params(5.5, 0.5, 1.0, 'A4', 48, 18, 14, test_cards)
         
         expected_keys = [
-            'card_size', 'gap', 'margin', 'page_size',
-            'font_hanzi', 'font_pinyin', 'font_english',
-            'hanzi_font', 'background_color', 'rows', 'cols', 'auto_fill', 'total_cards'
+            'card_size_cm', 'gap_cm', 'margin_cm', 'page_size',
+            'hanzi_font_size', 'pinyin_font_size', 'english_font_size',
+            'hanzi_font_family', 'background_color', 'layout_rows', 'layout_cols', 'layout_auto_fill', 'total_cards'
         ]
         
         for key in expected_keys:
             assert key in params
         
         assert params['total_cards'] == 1
-        assert params['card_size'] == 5.5
-        assert params['hanzi_font'] == 'SimHei'
+        assert params['card_size_cm'] == 5.5
+        assert params['hanzi_font_family'] == 'SimHei'
     
     @patch('streamlit.session_state')
     @patch('core.state.check_params_changed')
@@ -117,7 +117,7 @@ class TestParameterChangeDetection:
         """Test parameter change handling."""
         mock_check_changed.return_value = True
         
-        test_params = {'card_size': 6.0, 'gap': 0.8}
+        test_params = {'card_size_cm': 6.0, 'gap_cm': 0.8}
         result = handle_param_changes(test_params)
         
         assert result is True
@@ -131,7 +131,7 @@ class TestUIComponentUpdates:
 
     def test_cache_clear_function_exists(self):
         """Test that cache clear function exists and is callable."""
-        from services.cache import clear_preview_cache
+        from services.cache_v2 import clear_preview_cache
 
         # Should not raise an exception
         clear_preview_cache()
@@ -141,7 +141,7 @@ class TestUIComponentUpdates:
 
     def test_immediate_rendering_functions_exist(self):
         """Test that immediate rendering functions exist."""
-        from services.cache import create_page_preview_html_immediate, create_simple_grid_html_immediate
+        from services.cache_v2 import create_page_preview_html_immediate, create_simple_grid_html_immediate
 
         assert callable(create_page_preview_html_immediate)
         assert callable(create_simple_grid_html_immediate)
@@ -193,7 +193,7 @@ class TestPreviewSectionRendering:
         
         test_cards = [{'hanzi': '你好', 'pinyin': 'nǐ hǎo', 'english': 'hello'}]
         
-        with patch('services.cache.create_page_preview_html_immediate') as mock_immediate:
+        with patch('services.cache_v2.create_page_preview_html_immediate') as mock_immediate:
             mock_immediate.return_value = "<html>immediate</html>"
             
             render_preview_section(
@@ -203,7 +203,7 @@ class TestPreviewSectionRendering:
             
             # Verify immediate rendering was used
             mock_immediate.assert_called_once()
-            mock_html.assert_called_once_with("<html>immediate</html>", height=850)
+            mock_html.assert_called_once_with("<html>immediate</html>", height_cm=850)
 
 
 if __name__ == "__main__":

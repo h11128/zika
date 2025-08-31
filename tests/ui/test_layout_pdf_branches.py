@@ -18,9 +18,9 @@ def test_pdf_layout_info_and_wrap(monkeypatch, tmp_path):
 
     monkeypatch.setattr(ld, "canvas", types.SimpleNamespace(Canvas=DummyCanvas))
 
-    gen = ld.PDFCardGenerator(page_size="A4", rows=1, cols=1, auto_fill=True)
+    gen = ld.PDFCardGenerator(page_size="A4", layout_rows=1, layout_cols=1, layout_auto_fill=True)
     info = gen.get_layout_info()
-    assert info["rows"] == 1 and info["cols"] == 1 and "card_size_cm" in info
+    assert info["layout_rows"] == 1 and info["layout_cols"] == 1 and "card_size_cm" in info
 
     # Use long english to trigger wrapping logic
     long_english = "this is a very long english translation that should wrap across multiple lines for testing purposes"

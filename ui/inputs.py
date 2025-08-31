@@ -33,33 +33,23 @@ def render_input_section() -> List[Dict[str, str]]:
     # Check if we should use adapter
     from core.feature_flags import get_feature_flag
 
-    if get_feature_flag('adapted_inputs', False):
-        from ui.ports import get_ui_adapter, ComponentConfig
-        adapter = get_ui_adapter()
+    # Always use adapter (feature flag enabled by default)
+    from ui.ports import get_ui_adapter, ComponentConfig
+    adapter = get_ui_adapter()
 
-        adapter.header("📝 输入")
+    adapter.header("📝 输入")
 
-        # Input method selection using adapter
-        method_config = ComponentConfig(
-            key="input_method",
-            label="选择输入方式"
-        )
-        input_method = adapter.inputs.radio(
-            method_config,
-            options=["手动输入", "上传CSV文件"],
-            index=0,
-            horizontal=True
-        )
-    else:
-        st.header("📝 输入")
-
-        # Input method selection
-        input_method = st.radio(
-            "选择输入方式",
-            ["手动输入", "上传CSV文件"],
-            horizontal=True,
-            key="input_method"
-        )
+    # Input method selection using adapter
+    method_config = ComponentConfig(
+        key="input_method",
+        label="选择输入方式"
+    )
+    input_method = adapter.inputs.radio(
+        method_config,
+        options=["手动输入", "上传CSV文件"],
+        index=0,
+        horizontal=True
+    )
 
     cards = []
 
@@ -73,21 +63,18 @@ def render_input_section() -> List[Dict[str, str]]:
             "食物": "米 面 肉 鱼 蛋 奶 茶 水 糖"
         }
 
-        # Use adapter for template selection if available
-        if get_feature_flag('adapted_inputs', False):
-            template_config = ComponentConfig(
-                key="template_select",
-                label="选择模板"
-            )
-            selected_template = adapter.inputs.selectbox(
-                template_config,
-                options=list(templates.keys()),
-                index=0
-            )
-            adapter.markdown('<span data-testid="select-template" style="display:none"></span>', unsafe_allow_html=True)
-        else:
-            selected_template = st.selectbox("选择模板", list(templates.keys()), key="template_select")
-            st.markdown('<span data-testid="select-template" style="display:none"></span>', unsafe_allow_html=True)
+        # Use adapter for template selection (always enabled)
+        template_config = ComponentConfig(
+            key="template_select",
+            label="选择模板",
+            help_text="选择预设模板或自定义输入"
+        )
+        selected_template = adapter.inputs.selectbox(
+            template_config,
+            options=list(templates.keys()),
+            index=0
+        )
+        adapter.markdown('<span data-testid="select-template" style="display:none"></span>', unsafe_allow_html=True)
 
         # Determine default text from template selection
         default_text = templates[st.session_state.template_select]
@@ -126,7 +113,7 @@ def render_input_section() -> List[Dict[str, str]]:
                             # Fallback to legacy approach
                             st.session_state.input_text = new_text
                             try:
-                                from services.cache import clear_preview_cache
+                                from services.cache_v2 import clear_preview_cache
                                 clear_preview_cache()
                             except Exception:
                                 pass
@@ -136,7 +123,7 @@ def render_input_section() -> List[Dict[str, str]]:
                         # Fallback if new modules not available
                         st.session_state.input_text = new_text
                         try:
-                            from services.cache import clear_preview_cache
+                            from services.cache_v2 import clear_preview_cache
                             clear_preview_cache()
                         except Exception:
                             pass
@@ -165,7 +152,7 @@ def render_input_section() -> List[Dict[str, str]]:
                 text_value = adapter.inputs.text_area(
                     text_config,
                     value=st.session_state.get('input_text', ''),
-                    height=150,
+                    height_cm=150,
                     placeholder="例如：你好 世界 学习 中文"
                 )
                 # Update session state with new value
@@ -193,7 +180,7 @@ def render_input_section() -> List[Dict[str, str]]:
                 st.text_area(
                     "输入汉字（空格分隔）",
                     key="input_text",
-                    height=150,
+                    height_cm=150,
                     placeholder="例如：你好 世界 学习 中文",
                     help="输入汉字，用空格分隔。支持单字、词语和短句。"
                 )
@@ -318,7 +305,7 @@ def render_manual_input_adapted(adapter: UIAdapter) -> List[Dict[str, str]]:
         label="输入中文文本（每行一个词或短语）",
         help_text="输入要制作卡片的中文文本，每行一个词或短语"
     )
-    input_text = adapter.inputs.text_area(input_config, value="", height=200)
+    input_text = adapter.inputs.text_area(input_config, value="", height_cm=200)
 
     # Processing options
     col1, col2 = adapter.layout.columns([1, 1])
@@ -356,7 +343,7 @@ def render_manual_input_adapted(adapter: UIAdapter) -> List[Dict[str, str]]:
                         label="分词后的文本",
                         disabled=True
                     )
-                    adapter.inputs.text_area(result_config, value=segmented_text, height=100)
+                    adapter.inputs.text_area(result_config, value=segmented_text, height_cm=100)
             else:
                 cards = parse_input_text(input_text)
                 
@@ -400,7 +387,7 @@ def render_csv_upload_adapted(adapter: UIAdapter) -> List[Dict[str, str]]:
 
 def use_adapted_inputs() -> bool:
     """Check if adapted inputs should be used."""
-    return get_feature_flag('adapted_inputs', False)
+    return True
 
 
 def render_input_section_unified() -> List[Dict[str, str]]:

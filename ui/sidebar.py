@@ -308,7 +308,7 @@ def render_info_section_adapted(adapter: UIAdapter) -> None:
 
 def use_adapted_sidebar() -> bool:
     """Check if adapted sidebar should be used."""
-    return get_feature_flag('adapted_sidebar', False)
+    return True
 
 
 def render_sidebar_unified() -> None:

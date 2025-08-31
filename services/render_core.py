@@ -18,16 +18,16 @@ class RenderOptions:
     card_size_cm: float = 5.5
     gap_cm: float = 0.5
     margin_cm: float = 1.0
-    rows: int = 2
-    cols: int = 3
-    auto_fill: bool = True
+    layout_rows: int = 2
+    layout_cols: int = 3
+    layout_auto_fill: bool = True
     page_size: str = 'A4'
     
     # Typography options
     font_hanzi_pt: int = 48
     font_pinyin_pt: int = 18
     font_english_pt: int = 14
-    hanzi_font: str = 'SimHei'
+    hanzi_font_family: str = 'SimHei'
     
     # Visual options
     background_color: str = '#ffffff'
@@ -38,8 +38,8 @@ class RenderOptions:
     
     def __post_init__(self):
         """Validate render options."""
-        if self.hanzi_font not in HANZI_FONT_OPTIONS:
-            self.hanzi_font = 'SimHei'
+        if self.hanzi_font_family not in HANZI_FONT_OPTIONS:
+            self.hanzi_font_family = 'SimHei'
         
         if self.page_size not in ['A4', 'Letter']:
             self.page_size = 'A4'
@@ -48,8 +48,8 @@ class RenderOptions:
         self.card_size_cm = max(0.1, self.card_size_cm)
         self.gap_cm = max(0.0, self.gap_cm)
         self.margin_cm = max(0.0, self.margin_cm)
-        self.rows = max(1, self.rows)
-        self.cols = max(1, self.cols)
+        self.layout_rows = max(1, self.layout_rows)
+        self.layout_cols = max(1, self.layout_cols)
         self.font_hanzi_pt = max(8, self.font_hanzi_pt)
         self.font_pinyin_pt = max(6, self.font_pinyin_pt)
         self.font_english_pt = max(6, self.font_english_pt)
@@ -104,7 +104,7 @@ def render_page(cards: List[Dict[str, str]], options: RenderOptions) -> RenderRe
             return result
 
         # Calculate pagination
-        pagination_info = paginate(len(cards), options.rows, options.cols)
+        pagination_info = paginate(len(cards), options.layout_rows, options.layout_cols)
 
         # Generate HTML content
         html_content = _generate_html_content(cards, options, pagination_info)
@@ -143,15 +143,15 @@ def _render_empty_page(options: RenderOptions) -> str:
     """Render empty page placeholder."""
     return f"""
     <div style="
-        width: 100%;
-        height: 400px;
+        width_cm: 100%;
+        height_cm: 400px;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: {options.background_color};
         border: 2px dashed #ccc;
         border-radius: 8px;
-        font-family: {options.hanzi_font}, sans-serif;
+        font-family: {options.hanzi_font_family}, sans-serif;
         font-size: {options.font_hanzi_pt}px;
         color: #666;
     ">
@@ -174,12 +174,12 @@ def _generate_html_content(cards: List[Dict[str, str]],
         page_width_cm, page_height_cm = 21.59, 27.94
     
     # Calculate actual card size if auto_fill is enabled
-    if options.auto_fill:
+    if options.layout_auto_fill:
         available_width = page_width_cm - 2 * options.margin_cm
         available_height = page_height_cm - 2 * options.margin_cm
         
-        card_width = (available_width - (options.cols - 1) * options.gap_cm) / options.cols
-        card_height = (available_height - (options.rows - 1) * options.gap_cm) / options.rows
+        card_width = (available_width - (options.layout_cols - 1) * options.gap_cm) / options.layout_cols
+        card_height = (available_height - (options.layout_rows - 1) * options.gap_cm) / options.layout_rows
         
         actual_card_size = min(card_width, card_height)
     else:
@@ -220,20 +220,20 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
     return f"""
         @page {{
             size: {options.page_size};
-            margin: {options.margin_cm}cm;
+            margin_cm: {options.margin_cm}cm;
         }}
         
         body {{
-            margin: 0;
+            margin_cm: 0;
             padding: 0;
-            font-family: {options.hanzi_font}, sans-serif;
+            font-family: {options.hanzi_font_family}, sans-serif;
             background-color: {options.background_color};
         }}
         
         .page {{
-            width: {page_width_cm}cm;
-            height: {page_height_cm}cm;
-            margin: 0 auto;
+            width_cm: {page_width_cm}cm;
+            height_cm: {page_height_cm}cm;
+            margin_cm: 0 auto;
             padding: {options.margin_cm}cm;
             box-sizing: border-box;
             background-color: {options.background_color};
@@ -241,16 +241,16 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
         
         .cards-container {{
             display: grid;
-            grid-template-columns: repeat({options.cols}, 1fr);
-            grid-template-rows: repeat({options.rows}, 1fr);
-            gap: {options.gap_cm}cm;
-            width: 100%;
-            height: calc(100% - 2cm);
+            grid-template-columns: repeat({options.layout_cols}, 1fr);
+            grid-template-layout_rows: repeat({options.layout_rows}, 1fr);
+            gap_cm: {options.gap_cm}cm;
+            width_cm: 100%;
+            height_cm: calc(100% - 2cm);
         }}
         
         .card {{
-            width: {card_size_cm}cm;
-            height: {card_size_cm}cm;
+            width_cm: {card_size_cm}cm;
+            height_cm: {card_size_cm}cm;
             border: 2px solid #333;
             border-radius: 8px;
             display: flex;
@@ -269,20 +269,20 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
             font-weight: bold;
             color: #000;
             margin-bottom: 0.2cm;
-            line-height: 1.2;
+            line-height_cm: 1.2;
         }}
         
         .pinyin {{
             font-size: {options.font_pinyin_pt}pt;
             color: #666;
             margin-bottom: 0.2cm;
-            line-height: 1.2;
+            line-height_cm: 1.2;
         }}
         
         .english {{
             font-size: {options.font_english_pt}pt;
             color: #333;
-            line-height: 1.2;
+            line-height_cm: 1.2;
         }}
         
         .page-footer {{
@@ -327,7 +327,7 @@ def _generate_cards_html(cards: List[Dict[str, str]],
         cards_html.append(card_html)
     
     # Fill remaining slots with empty cards if needed
-    total_slots = options.rows * options.cols
+    total_slots = options.layout_rows * options.layout_cols
     while len(cards_html) < total_slots:
         cards_html.append('<div class="card"></div>')
     
@@ -347,24 +347,24 @@ def _generate_page_footer(options: RenderOptions,
     """
 
 
-def create_render_options_from_legacy(card_size: float, gap: float, margin: float,
-                                    font_hanzi: int, font_pinyin: int, font_english: int,
-                                    page_size: str, hanzi_font: str, background_color: str,
-                                    rows: int, cols: int, auto_fill: bool,
+def create_render_options_from_legacy(card_size_cm: float, gap_cm: float, margin_cm: float,
+                                    hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                                    page_size: str, hanzi_font_family: str, background_color: str,
+                                    layout_rows: int, layout_cols: int, layout_auto_fill: bool,
                                     **kwargs) -> RenderOptions:
     """Create RenderOptions from legacy parameter format."""
     return RenderOptions(
         card_size_cm=card_size,
         gap_cm=gap,
         margin_cm=margin,
-        rows=rows,
-        cols=cols,
-        auto_fill=auto_fill,
+        layout_rows=layout_rows,
+        layout_cols=layout_cols,
+        layout_auto_fill=layout_auto_fill,
         page_size=page_size,
-        font_hanzi_pt=font_hanzi,
-        font_pinyin_pt=font_pinyin,
-        font_english_pt=font_english,
-        hanzi_font=hanzi_font,
+        font_hanzi_pt=hanzi_font_size,
+        font_pinyin_pt=pinyin_font_size,
+        font_english_pt=english_font_size,
+        hanzi_font_family=hanzi_font_family,
         background_color=background_color,
         include_page_numbers=kwargs.get('include_page_numbers', True),
         optimize_for_print=kwargs.get('optimize_for_print', True)
@@ -438,17 +438,17 @@ def render_pdf_unified(cards: List[Dict[str, str]], options: RenderOptions) -> R
             card_size_cm=options.card_size_cm,
             gap_cm=options.gap_cm,
             margin_cm=options.margin_cm,
-            rows=options.rows,
-            cols=options.cols,
-            auto_fill=options.auto_fill
+            layout_rows=options.layout_rows,
+            layout_cols=options.layout_cols,
+            layout_auto_fill=options.layout_auto_fill
         )
 
         # Generate PDF
         success = generator.generate_pdf(
             cards, tmp_file_path,
-            font_hanzi=options.font_hanzi_pt,
-            font_pinyin=options.font_pinyin_pt,
-            font_english=options.font_english_pt
+            hanzi_font_size=options.font_hanzi_pt,
+            pinyin_font_size=options.font_pinyin_pt,
+            english_font_size=options.font_english_pt
         )
 
         if not success:
@@ -463,7 +463,7 @@ def render_pdf_unified(cards: List[Dict[str, str]], options: RenderOptions) -> R
         os.unlink(tmp_file_path)
 
         # Calculate pagination info
-        pagination_info = paginate(len(cards), options.rows, options.cols)
+        pagination_info = paginate(len(cards), options.layout_rows, options.layout_cols)
 
         return RenderResult(
             content=content,  # Binary content for PDF
@@ -496,17 +496,17 @@ def render_pptx_unified(cards: List[Dict[str, str]], options: RenderOptions) -> 
             card_size_cm=options.card_size_cm,
             gap_cm=options.gap_cm,
             margin_cm=options.margin_cm,
-            rows=options.rows,
-            cols=options.cols,
-            auto_fill=options.auto_fill
+            layout_rows=options.layout_rows,
+            layout_cols=options.layout_cols,
+            layout_auto_fill=options.layout_auto_fill
         )
 
         # Generate PPTX
         success = generator.generate_pptx(
             cards, tmp_file_path,
-            font_hanzi=options.font_hanzi_pt,
-            font_pinyin=options.font_pinyin_pt,
-            font_english=options.font_english_pt
+            hanzi_font_size=options.font_hanzi_pt,
+            pinyin_font_size=options.font_pinyin_pt,
+            english_font_size=options.font_english_pt
         )
 
         if not success:
@@ -521,7 +521,7 @@ def render_pptx_unified(cards: List[Dict[str, str]], options: RenderOptions) -> 
         os.unlink(tmp_file_path)
 
         # Calculate pagination info
-        pagination_info = paginate(len(cards), options.rows, options.cols)
+        pagination_info = paginate(len(cards), options.layout_rows, options.layout_cols)
 
         return RenderResult(
             content=content,  # Binary content for PPTX

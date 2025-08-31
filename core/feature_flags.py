@@ -10,7 +10,6 @@ from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 @dataclass
 class FeatureFlagConfig:
     """Configuration for feature flag evaluation."""
@@ -22,7 +21,6 @@ class FeatureFlagConfig:
     remote_service_url: Optional[str] = None
     # Environment variable prefix
     env_prefix: str = "ZIKA_FEATURE_"
-
 
 @dataclass
 class FeatureFlagState:
@@ -36,10 +34,8 @@ class FeatureFlagState:
     # Configuration
     config: FeatureFlagConfig = field(default_factory=FeatureFlagConfig)
 
-
 # Global state instance
 _flag_state = FeatureFlagState()
-
 
 def configure_feature_flags(
     config_file_path: Optional[str] = None,
@@ -57,7 +53,6 @@ def configure_feature_flags(
     )
     # Force cache refresh on next evaluation
     _flag_state.last_cache_update = 0
-
 
 def get_feature_flag(flag_name: str, default: Any = False) -> Any:
     """
@@ -94,21 +89,17 @@ def get_feature_flag(flag_name: str, default: Any = False) -> Any:
     # Priority 6: Fallback default
     return default
 
-
 def set_test_override(flag_name: str, value: Any) -> None:
     """Set a test override for a feature flag."""
     _flag_state.test_overrides[flag_name] = value
-
 
 def clear_test_override(flag_name: str) -> None:
     """Clear a test override for a feature flag."""
     _flag_state.test_overrides.pop(flag_name, None)
 
-
 def clear_all_test_overrides() -> None:
     """Clear all test overrides."""
     _flag_state.test_overrides.clear()
-
 
 class FeatureFlagOverride:
     """Context manager for temporary feature flag overrides in tests."""
@@ -139,20 +130,17 @@ class FeatureFlagOverride:
             else:
                 set_test_override(flag_name, original_value)
 
-
 def invalidate_cache() -> None:
     """Force cache invalidation on next flag evaluation."""
     global _flag_state
     _flag_state.last_cache_update = 0
     _flag_state.cached_flags.clear()
 
-
 def _refresh_cache_if_needed() -> None:
     """Refresh cache if TTL expired."""
     current_time = time.time()
     if (current_time - _flag_state.last_cache_update) > _flag_state.config.remote_cache_ttl:
         _refresh_cache()
-
 
 def _refresh_cache() -> None:
     """Refresh cache from config file and remote service."""
@@ -172,7 +160,6 @@ def _refresh_cache() -> None:
     _flag_state.cached_flags = new_flags
     _flag_state.last_cache_update = time.time()
 
-
 def _load_config_file(file_path: str) -> Dict[str, Any]:
     """Load feature flags from configuration file."""
     try:
@@ -187,7 +174,6 @@ def _load_config_file(file_path: str) -> Dict[str, Any]:
         # Silently fail and return empty dict
         return {}
 
-
 def _load_remote_flags(service_url: str) -> Dict[str, Any]:
     """Load feature flags from remote service with exponential backoff."""
     try:
@@ -197,7 +183,6 @@ def _load_remote_flags(service_url: str) -> Dict[str, Any]:
     except Exception:
         # Silently fail and return empty dict
         return {}
-
 
 def _parse_env_value(value: str) -> Union[bool, int, float, str]:
     """Parse environment variable value to appropriate type."""
@@ -221,25 +206,15 @@ def _parse_env_value(value: str) -> Union[bool, int, float, str]:
     # String value
     return value
 
-
 # Default feature flags for the UI refactor
 DEFAULT_FLAGS = {
     # Core pipeline flags - enabling for Phase 6 fixes
-    'new_preview_pipeline': True,  # Enable unified preview pipeline
-    'ui_adapter': True,  # Enable UI adapter system
-    'state_service': True,  # Enable state service
-    'cache_v2': True,  # Enable improved caching
+
     'persistence': True,  # Enable persistence system
     'debug_panel': True,  # Enable debug panel for development
     'ENABLE_DIGEST_DEBUG': False,  # Enable digest debug panel (development only)
 
     # Modularization flags - enabling for Phase 6
-    'adapted_inputs': True,  # Enable adapted inputs
-    'adapted_options': True,  # Enable adapted options
-    'adapted_preview': True,  # Enable adapted preview
-    'adapted_editor': True,  # Enable adapted editor
-    'adapted_export': True,  # Enable adapted export
-    'adapted_sidebar': True,  # Enable adapted sidebar
 
     # Table editor and browser storage
     'table_editor': True,  # Enable table editor
@@ -252,43 +227,19 @@ DEFAULT_FLAGS = {
     'debouncing': True,       # Enable debouncing
 
     # Shared render core
-    'shared_render_core': True,  # Enable shared rendering
 
     # Unified sections
-    'unified_sections': True,  # Enable unified sections with zero direct calls
-}
 
+}
 
 def is_feature_enabled(flag_name: str) -> bool:
     """Check if a feature is enabled (convenience function for boolean flags)."""
     return bool(get_feature_flag(flag_name, DEFAULT_FLAGS.get(flag_name, False)))
 
-
 # Convenience functions for specific features
-def use_new_preview_pipeline() -> bool:
-    """Check if new preview pipeline should be used."""
-    return is_feature_enabled('new_preview_pipeline')
-
-
-def use_ui_adapter() -> bool:
-    """Check if UI adapter should be used."""
-    return is_feature_enabled('ui_adapter')
-
-
-def use_state_service() -> bool:
-    """Check if state service should be used."""
-    return is_feature_enabled('state_service')
-
-
-def use_cache_v2() -> bool:
-    """Check if cache v2 should be used."""
-    return is_feature_enabled('cache_v2')
-
-
 def use_persistence() -> bool:
     """Check if persistence should be used."""
     return is_feature_enabled('persistence')
-
 
 def show_debug_panel() -> bool:
     """Check if debug panel should be shown."""

@@ -53,8 +53,8 @@ def initialize_session_state() -> None:
         st.session_state.export_data = {}
     
     # UI preferences
-    if 'hanzi_font' not in st.session_state:
-        st.session_state.hanzi_font = DEFAULT_HANZI_FONT
+    if 'hanzi_font_family' not in st.session_state:
+        st.session_state.hanzi_font_family = DEFAULT_HANZI_FONT
     if 'background_color' not in st.session_state:
         st.session_state.background_color = DEFAULT_BACKGROUND_COLOR
     # Text processing UI options
@@ -65,12 +65,12 @@ def initialize_session_state() -> None:
     _validate_background_color()
 
     # Layout settings
-    if 'rows' not in st.session_state:
-        st.session_state.rows = DEFAULT_ROWS
-    if 'cols' not in st.session_state:
-        st.session_state.cols = DEFAULT_COLS
-    if 'auto_fill' not in st.session_state:
-        st.session_state.auto_fill = DEFAULT_AUTO_FILL
+    if 'layout_rows' not in st.session_state:
+        st.session_state.layout_rows = DEFAULT_ROWS
+    if 'layout_cols' not in st.session_state:
+        st.session_state.layout_cols = DEFAULT_COLS
+    if 'layout_auto_fill' not in st.session_state:
+        st.session_state.layout_auto_fill = DEFAULT_AUTO_FILL
 
 
 def _validate_background_color() -> None:
@@ -112,13 +112,13 @@ def get_current_page() -> int:
 
 def get_layout_settings() -> Dict[str, Any]:
     """Get current layout settings. Safe for bare/unit-test contexts (defaults)."""
-    rows = _ss_get('rows', DEFAULT_ROWS)
-    cols = _ss_get('cols', DEFAULT_COLS)
-    auto_fill = _ss_get('auto_fill', DEFAULT_AUTO_FILL)
+    layout_rows = _ss_get('layout_rows', DEFAULT_ROWS)
+    layout_cols = _ss_get('layout_cols', DEFAULT_COLS)
+    layout_auto_fill = _ss_get('layout_auto_fill', DEFAULT_AUTO_FILL)
     return {
-        'rows': rows if rows is not None else DEFAULT_ROWS,
-        'cols': cols if cols is not None else DEFAULT_COLS,
-        'auto_fill': bool(auto_fill) if isinstance(auto_fill, (bool, int)) else DEFAULT_AUTO_FILL,
+        'layout_rows': rows if rows is not None else DEFAULT_ROWS,
+        'layout_cols': cols if cols is not None else DEFAULT_COLS,
+        'layout_auto_fill': bool(auto_fill) if isinstance(layout_auto_fill, (bool, int)) else DEFAULT_AUTO_FILL,
     }
 
 
@@ -132,11 +132,11 @@ def get_ui_preferences() -> Dict[str, str]:
             from ui.state import get_state_service
             state_service = get_state_service()
 
-            hanzi_font = state_service.get('hanzi_font', DEFAULT_HANZI_FONT)
+            hanzi_font_family = state_service.get('hanzi_font_family', DEFAULT_HANZI_FONT)
             background_color = state_service.get('background_color', DEFAULT_BACKGROUND_COLOR)
 
             return {
-                'hanzi_font': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
+                'hanzi_font_family': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
                 'background_color': background_color if background_color else DEFAULT_BACKGROUND_COLOR,
             }
         except Exception:
@@ -144,10 +144,10 @@ def get_ui_preferences() -> Dict[str, str]:
             pass
 
     # Legacy implementation
-    hanzi_font = _ss_get('hanzi_font', DEFAULT_HANZI_FONT)
+    hanzi_font_family = _ss_get('hanzi_font_family', DEFAULT_HANZI_FONT)
     background_color = _ss_get('background_color', DEFAULT_BACKGROUND_COLOR)
     return {
-        'hanzi_font': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
+        'hanzi_font_family': hanzi_font if hanzi_font else DEFAULT_HANZI_FONT,
         'background_color': background_color if background_color else DEFAULT_BACKGROUND_COLOR,
     }
 
@@ -205,20 +205,20 @@ def clear_processed_cards() -> None:
     st.session_state.cards_source = ""
 
 
-def update_layout_settings(rows: int = None, cols: int = None, auto_fill: bool = None) -> None:
+def update_layout_settings(layout_rows: int = None, layout_cols: int = None, layout_auto_fill: bool = None) -> None:
     """Update layout settings."""
     if rows is not None:
-        st.session_state.rows = int(rows)
+        st.session_state.layout_rows = int(rows)
     if cols is not None:
-        st.session_state.cols = int(cols)
+        st.session_state.layout_cols = int(cols)
     if auto_fill is not None:
-        st.session_state.auto_fill = bool(auto_fill)
+        st.session_state.layout_auto_fill = bool(auto_fill)
 
 
-def update_ui_preferences(hanzi_font: str = None, background_color: str = None) -> None:
+def update_ui_preferences(hanzi_font_family: str = None, background_color: str = None) -> None:
     """Update UI preferences."""
     if hanzi_font is not None:
-        st.session_state.hanzi_font = hanzi_font
+        st.session_state.hanzi_font_family = hanzi_font
     if background_color is not None:
         st.session_state.background_color = background_color
         _validate_background_color()
@@ -255,8 +255,8 @@ def get_export_data(format_type: str) -> Dict[str, Any]:
 
 
 # Enhanced parameter management functions
-def get_all_ui_params(card_size: float, gap: float, margin: float, page_size: str,
-                     font_hanzi: int, font_pinyin: int, font_english: int,
+def get_all_ui_params(card_size_cm: float, gap_cm: float, margin_cm: float, page_size: str,
+                     hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
                      processed_cards: List[Dict[str, str]], preview_mode: str = None) -> Dict[str, Any]:
     """Get all UI parameters for change detection in a unified way.
     Including preview_mode helps ensure cache/preview update when switching modes.
@@ -265,18 +265,18 @@ def get_all_ui_params(card_size: float, gap: float, margin: float, page_size: st
     prefs = get_ui_preferences()
 
     return {
-        'card_size': card_size,
-        'gap': gap,
-        'margin': margin,
+        'card_size_cm': card_size,
+        'gap_cm': gap,
+        'margin_cm': margin,
         'page_size': page_size,
-        'font_hanzi': font_hanzi,
-        'font_pinyin': font_pinyin,
-        'font_english': font_english,
-        'hanzi_font': prefs['hanzi_font'],
+        'hanzi_font_size': hanzi_font_size,
+        'pinyin_font_size': pinyin_font_size,
+        'english_font_size': english_font_size,
+        'hanzi_font_family': prefs['hanzi_font_family'],
         'background_color': prefs['background_color'],
-        'rows': layout['rows'],
-        'cols': layout['cols'],
-        'auto_fill': layout['auto_fill'],
+        'layout_rows': layout['layout_rows'],
+        'layout_cols': layout['layout_cols'],
+        'layout_auto_fill': layout['layout_auto_fill'],
         'total_cards': len(processed_cards),
         'preview_mode': preview_mode or _ss_get('preview_mode', None)
     }
@@ -285,8 +285,30 @@ def get_all_ui_params(card_size: float, gap: float, margin: float, page_size: st
 def handle_param_changes(current_params: Dict[str, Any]) -> bool:
     """Handle parameter changes and return True if changes were detected."""
     if check_params_changed(current_params):
-        set_current_page(0)
+        # Only reset current_page for layout or cards count changes
+        if _should_reset_navigation(current_params):
+            set_current_page(0)
+
         update_last_params(current_params)
         clear_export_data()
         return True
+    return False
+
+
+def _should_reset_navigation(current_params: Dict[str, Any]) -> bool:
+    """Check if navigation should be reset based on parameter changes."""
+    last_params = _ss_get('last_params', {})
+
+    # Reset navigation if layout parameters changed (affects cards_per_page)
+    layout_keys = ['layout_rows', 'layout_cols']
+    for key in layout_keys:
+        if current_params.get(key) != last_params.get(key):
+            return True
+
+    # Reset navigation if cards count changed
+    current_cards_count = len(current_params.get('processed_cards', []))
+    last_cards_count = len(last_params.get('processed_cards', []))
+    if current_cards_count != last_cards_count:
+        return True
+
     return False

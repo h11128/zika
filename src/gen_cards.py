@@ -190,31 +190,31 @@ class CardGenerator:
             if format_type.lower() == 'pptx':
                 generator = PPTXCardGenerator(
                     page_size=layout_options.get('page_size', 'A4'),
-                    card_size_cm=layout_options.get('card_size', 6.0),
-                    gap_cm=layout_options.get('gap', 0.6),
-                    margin_cm=layout_options.get('margin', 1.0)
+                    card_size_cm=layout_options.get('card_size_cm', 6.0),
+                    gap_cm=layout_options.get('gap_cm', 0.6),
+                    margin_cm=layout_options.get('margin_cm', 1.0)
                 )
                 
                 return generator.generate_pptx(
                     cards, output_path,
-                    font_hanzi=layout_options.get('font_hanzi', 48),
-                    font_pinyin=layout_options.get('font_pinyin', 18),
-                    font_english=layout_options.get('font_english', 14)
+                    hanzi_font_size=layout_options.get('hanzi_font_size', 48),
+                    pinyin_font_size=layout_options.get('pinyin_font_size', 18),
+                    english_font_size=layout_options.get('english_font_size', 14)
                 )
                 
             elif format_type.lower() == 'pdf':
                 generator = PDFCardGenerator(
                     page_size=layout_options.get('page_size', 'A4'),
-                    card_size_cm=layout_options.get('card_size', 6.0),
-                    gap_cm=layout_options.get('gap', 0.6),
-                    margin_cm=layout_options.get('margin', 1.0)
+                    card_size_cm=layout_options.get('card_size_cm', 6.0),
+                    gap_cm=layout_options.get('gap_cm', 0.6),
+                    margin_cm=layout_options.get('margin_cm', 1.0)
                 )
                 
                 return generator.generate_pdf(
                     cards, output_path,
-                    font_hanzi=layout_options.get('font_hanzi', 48),
-                    font_pinyin=layout_options.get('font_pinyin', 18),
-                    font_english=layout_options.get('font_english', 14)
+                    hanzi_font_size=layout_options.get('hanzi_font_size', 48),
+                    pinyin_font_size=layout_options.get('pinyin_font_size', 18),
+                    english_font_size=layout_options.get('english_font_size', 14)
                 )
             
             else:
@@ -277,7 +277,7 @@ Examples:
                        help='Font size for Chinese characters (default: 48)')
     parser.add_argument('--font-pinyin', type=int, default=18,
                        help='Font size for pinyin (default: 18)')
-    parser.add_argument('--font-en', '--font-english', dest='font_english', type=int, default=14,
+    parser.add_argument('--font-en', '--font-english', dest='english_font_size', type=int, default=14,
                        help='Font size for English (default: 14)')
     
     args = parser.parse_args()
@@ -315,12 +315,12 @@ Examples:
     # Generate output
     layout_options = {
         'page_size': args.page,
-        'card_size': args.card_size,
-        'gap': args.gap,
-        'margin': args.margin,
-        'font_hanzi': args.font_hanzi,
-        'font_pinyin': args.font_pinyin,
-        'font_english': args.font_english
+        'card_size_cm': args.card_size_cm,
+        'gap_cm': args.gap_cm,
+        'margin_cm': args.margin_cm,
+        'hanzi_font_size': args.hanzi_font_size,
+        'pinyin_font_size': args.pinyin_font_size,
+        'english_font_size': args.english_font_size
     }
     
     print(f"Generating {args.format.upper()} output: {args.output_file}")

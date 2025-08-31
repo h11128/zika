@@ -32,15 +32,15 @@ class MigrationResult:
 
 # Field alias definitions
 FIELD_ALIASES = {
-    'gap': FieldAlias(
-        old_name='gap',
+    'gap_cm': FieldAlias(
+        old_name='gap_cm',
         new_name='gap_cm',
         unit_suffix='_cm',
         conversion_factor=1.0,  # Already in cm
         description='Card gap spacing in centimeters'
     ),
-    'margin': FieldAlias(
-        old_name='margin',
+    'margin_cm': FieldAlias(
+        old_name='margin_cm',
         new_name='margin_cm',
         unit_suffix='_cm',
         conversion_factor=1.0,  # Already in cm
@@ -267,14 +267,14 @@ def validate_field_units() -> Dict[str, str]:
         
     # Add other known fields
     field_units.update({
-        'rows': 'count',
-        'cols': 'count',
-        'card_size': 'cm',
-        'font_hanzi': 'pt',
-        'font_pinyin': 'pt',
-        'font_english': 'pt',
+        'layout_rows': 'count',
+        'layout_cols': 'count',
+        'card_size_cm': 'cm',
+        'hanzi_font_size': 'pt',
+        'pinyin_font_size': 'pt',
+        'english_font_size': 'pt',
         'page_size': 'enum',
-        'auto_fill': 'boolean',
+        'layout_auto_fill': 'boolean',
     })
     
     return field_units

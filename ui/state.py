@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import streamlit as st
 
-from core.feature_flags import use_state_service
+# State service is now always enabled - no feature flag needed
 from core.version import get_code_version
 from core.field_migration import resolve_field_value
 
@@ -194,13 +194,7 @@ class StateService:
         Set a single option. Returns True if value changed.
         Accumulates changes for batch processing.
         """
-        if not use_state_service():
-            # Fallback to direct session state
-            current = getattr(st.session_state, key, None)
-            if current != value:
-                setattr(st.session_state, key, value)
-                return True
-            return False
+        # State service is always enabled
         
         # Get current value
         current = self._get_current_value(key)
@@ -216,19 +210,7 @@ class StateService:
         Apply multiple changes atomically with rule engine normalization.
         Returns ChangeSet indicating which domains were affected.
         """
-        if not use_state_service():
-            # Fallback to direct session state updates
-            changeset = ChangeSet()
-            for key, value in changes.items():
-                if self.set_option(key, value):
-                    # Simple heuristic for fallback mode
-                    if key in ['rows', 'cols', 'card_size', 'gap_cm', 'margin_cm', 'auto_fill']:
-                        changeset.affects_layout = True
-                    elif key in ['font_hanzi', 'font_pinyin', 'font_english', 'hanzi_font', 'background_color']:
-                        changeset.affects_style = True
-                    elif key in ['current_page']:
-                        changeset.affects_navigation = True
-            return changeset
+        # State service is always enabled
         
         # Merge with pending changes
         self.pending_changes.update(changes)
@@ -281,7 +263,7 @@ class StateService:
 
         # Clear services cache (current implementation)
         try:
-            from services.cache import clear_preview_cache
+            from services.cache_v2 import clear_preview_cache
             clear_preview_cache()
         except ImportError:
             pass
@@ -313,26 +295,26 @@ class StateService:
         """Apply rule engine to normalize and constrain changes."""
         normalized = changes.copy()
         
-        # Rule 1: Manual card_size adjustment → auto_fill=False
-        if 'card_size' in changes and 'auto_fill' not in changes:
-            current_auto_fill = self._get_current_value('auto_fill')
+        # Rule 1: Manual card_size adjustment → layout_auto_fill=False
+        if 'card_size_cm' in changes and 'layout_auto_fill' not in changes:
+            current_auto_fill = self._get_current_value('layout_auto_fill')
             if current_auto_fill:
-                normalized['auto_fill'] = False
+                normalized['layout_auto_fill'] = False
         
-        # Rule 2: auto_fill=True → recompute card_size
-        if changes.get('auto_fill') is True:
-            card_size = self._compute_auto_card_size(normalized)
+        # Rule 2: layout_auto_fill=True → recompute card_size
+        if changes.get('layout_auto_fill') is True:
+            card_size_cm = self._compute_auto_card_size(normalized)
             if card_size is not None:
-                normalized['card_size'] = card_size
+                normalized['card_size_cm'] = card_size
 
-        # Rule 3: Page size/layout changes with auto_fill=True → recompute card_size
-        layout_keys = {'rows', 'cols', 'page_size', 'gap_cm', 'margin_cm'}
+        # Rule 3: Page size/layout changes with layout_auto_fill=True → recompute card_size
+        layout_keys = {'layout_rows', 'layout_cols', 'page_size', 'gap_cm', 'margin_cm'}
         if any(key in changes for key in layout_keys):
-            auto_fill = normalized.get('auto_fill', self._get_current_value('auto_fill'))
-            if auto_fill:
-                card_size = self._compute_auto_card_size(normalized)
+            layout_auto_fill = normalized.get('layout_auto_fill', self._get_current_value('layout_auto_fill'))
+            if layout_auto_fill:
+                card_size_cm = self._compute_auto_card_size(normalized)
                 if card_size is not None:
-                    normalized['card_size'] = card_size
+                    normalized['card_size_cm'] = card_size
 
         return normalized
 
@@ -345,19 +327,19 @@ class StateService:
                     return changes[key]
                 return self._get_current_value(key) or default
 
-            rows = get_value('rows', 2)
-            cols = get_value('cols', 3)
+            layout_rows = get_value('layout_rows', 2)
+            layout_cols = get_value('layout_cols', 3)
             gap_cm = get_value('gap_cm', 0.5)
             margin_cm = get_value('margin_cm', 1.0)
             page_size = get_value('page_size', 'A4')
 
             # Import layout computation (will be moved to services/layout.py in P6)
             from services.layout import compute_auto_card_size_cm
-            return compute_auto_card_size_cm(page_size, margin_cm, gap_cm, rows, cols)
+            return compute_auto_card_size_cm(page_size, margin_cm, gap_cm, layout_rows, cols)
         except ImportError:
             # Fallback calculation if services/layout not available yet
             return self._fallback_compute_card_size(
-                get_value('rows', 2), get_value('cols', 3),
+                get_value('layout_rows', 2), get_value('layout_cols', 3),
                 get_value('gap_cm', 0.5), get_value('margin_cm', 1.0),
                 get_value('page_size', 'A4')
             )
@@ -365,7 +347,7 @@ class StateService:
             # Return None if computation fails
             return None
 
-    def _fallback_compute_card_size(self, rows: int, cols: int, gap_cm: float,
+    def _fallback_compute_card_size(self, layout_rows: int, layout_cols: int, gap_cm: float,
                                    margin_cm: float, page_size: str) -> float:
         """Fallback card size computation."""
         # Simple A4 calculation (21cm x 29.7cm)
@@ -386,38 +368,50 @@ class StateService:
     def _compute_changeset(self, changes: Dict[str, Any]) -> ChangeSet:
         """Compute which domains are affected by the changes."""
         changeset = ChangeSet()
-        
+
         # Processing domain
         processing_keys = {'input_text', 'auto_pinyin', 'auto_translate', 'translate_order'}
         if any(key in changes for key in processing_keys):
             changeset.affects_processing = True
-        
+            # Processing changes affect cards count, so navigation reset may be required
+            changeset.nav_reset_required = True
+
         # Layout domain
-        layout_keys = {'rows', 'cols', 'gap_cm', 'margin_cm', 'page_size', 'auto_fill', 'card_size'}
+        layout_keys = {'layout_rows', 'layout_cols', 'gap_cm', 'margin_cm', 'page_size', 'layout_auto_fill', 'card_size_cm'}
         if any(key in changes for key in layout_keys):
             changeset.affects_layout = True
-            # Check if navigation reset is required
-            if 'rows' in changes or 'cols' in changes:
+            # Check if navigation reset is required (only for cards_per_page affecting changes)
+            if 'layout_rows' in changes or 'layout_cols' in changes:
                 changeset.nav_reset_required = True
-        
-        # Style domain
-        style_keys = {'font_hanzi', 'font_pinyin', 'font_english', 'hanzi_font', 'background_color'}
+
+        # Style domain (does NOT require navigation reset)
+        style_keys = {'hanzi_font_size', 'pinyin_font_size', 'english_font_size', 'hanzi_font_family', 'background_color'}
         if any(key in changes for key in style_keys):
             changeset.affects_style = True
-        
+            # Style changes do NOT reset navigation - this is the key fix
+
         # Navigation domain
         if 'current_page' in changes:
             changeset.affects_navigation = True
-        
+
+        # Cards changes require navigation reset
+        if 'cards' in changes or 'processed_cards' in changes:
+            changeset.nav_reset_required = True
+
         # Export is affected by processing, layout, or style changes
         if changeset.affects_processing or changeset.affects_layout or changeset.affects_style:
             changeset.affects_export = True
-        
+
         return changeset
     
     def _reset_navigation(self) -> None:
         """Reset navigation to page 0."""
         st.session_state.current_page = 0
+
+    def _apply_changeset(self, changeset: ChangeSet) -> None:
+        """Apply changeset effects like navigation reset."""
+        if changeset.nav_reset_required:
+            self._reset_navigation()
 
 
 # Global state service instance
@@ -475,7 +469,7 @@ def compute_layout_digest() -> str:
     # Use field migration system for backward compatibility
     session_data = {
         attr: getattr(st.session_state, attr, None)
-        for attr in ['gap', 'gap_cm', 'margin', 'margin_cm', 'rows', 'cols', 'page_size', 'auto_fill', 'card_size']
+        for attr in ['gap_cm', 'gap_cm', 'margin_cm', 'margin_cm', 'layout_rows', 'layout_cols', 'page_size', 'layout_auto_fill', 'card_size_cm']
         if hasattr(st.session_state, attr)
     }
 
@@ -483,13 +477,13 @@ def compute_layout_digest() -> str:
     margin_cm = resolve_field_value(session_data, 'margin_cm', 1.0)
 
     layout_data = {
-        'rows': getattr(st.session_state, 'rows', 2),
-        'cols': getattr(st.session_state, 'cols', 3),
+        'layout_rows': getattr(st.session_state, 'layout_rows', 2),
+        'layout_cols': getattr(st.session_state, 'layout_cols', 3),
         'gap_cm': gap_cm,
         'margin_cm': margin_cm,
         'page_size': getattr(st.session_state, 'page_size', 'A4'),
-        'auto_fill': getattr(st.session_state, 'auto_fill', True),
-        'card_size': getattr(st.session_state, 'card_size', 5.5),
+        'layout_auto_fill': getattr(st.session_state, 'layout_auto_fill', True),
+        'card_size_cm': getattr(st.session_state, 'card_size_cm', 5.5),
     }
     return stable_digest(layout_data)
 
@@ -497,10 +491,10 @@ def compute_layout_digest() -> str:
 def compute_style_digest() -> str:
     """Compute digest for style domain."""
     style_data = {
-        'font_hanzi': getattr(st.session_state, 'font_hanzi', 48),
-        'font_pinyin': getattr(st.session_state, 'font_pinyin', 18),
-        'font_english': getattr(st.session_state, 'font_english', 14),
-        'hanzi_font': getattr(st.session_state, 'hanzi_font', 'SimHei'),
+        'hanzi_font_size': getattr(st.session_state, 'hanzi_font_size', 48),
+        'pinyin_font_size': getattr(st.session_state, 'pinyin_font_size', 18),
+        'english_font_size': getattr(st.session_state, 'english_font_size', 14),
+        'hanzi_font_family': getattr(st.session_state, 'hanzi_font_family', 'SimHei'),
         'background_color': getattr(st.session_state, 'background_color', '#ffffff'),
     }
     return stable_digest(style_data)
@@ -522,10 +516,25 @@ def compute_preview_params_digest(cards_count: int) -> str:
     return stable_digest(preview_data)
 
 
-def compute_export_key(export_params: Dict[str, Any], cards_count: int, content_version_signal: str = None) -> str:
-    """Compute stable export cache key."""
+def compute_export_key(export_params: Dict[str, Any], cards_count: int,
+                      content_version_signal: str = None,
+                      export_schema_version: str = None,
+                      preview_theme_version: str = None) -> str:
+    """
+    Compute stable export cache key with content version signal.
+
+    Args:
+        export_params: Export configuration parameters
+        cards_count: Number of cards being exported
+        content_version_signal: Content version signal (hash of (uuid, version) tuples or snapshot_last_modified)
+        export_schema_version: Export schema version (defaults to current)
+        preview_theme_version: Preview theme version for consistency
+
+    Returns:
+        Stable cache key string
+    """
     # Schema version for cache invalidation
-    EXPORT_SCHEMA_VERSION = "v1.0.0"
+    EXPORT_SCHEMA_VERSION = export_schema_version or "v1.1.0"  # Updated for content versioning
 
     export_data = {
         'params': normalize_for_digest(export_params),
@@ -535,11 +544,117 @@ def compute_export_key(export_params: Dict[str, Any], cards_count: int, content_
         'session_generation': get_session_generation(),
     }
 
-    # Include content version signal if provided (for P5 implementation)
+    # Include content version signal - this is critical for cache invalidation
+    # when card content changes but count remains the same
     if content_version_signal:
         export_data['content_version_signal'] = content_version_signal
 
+    # Include preview theme version for consistency between preview and export
+    if preview_theme_version:
+        export_data['preview_theme_version'] = preview_theme_version
+
     return stable_digest(export_data)
+
+
+def compute_cards_content_version_signal(cards: List[Dict[str, Any]]) -> str:
+    """
+    Compute content version signal from cards list.
+
+    Creates a hash of ordered (uuid, version) tuples to detect content changes
+    without hashing full content. This ensures cache invalidation when card
+    content changes but count remains the same.
+
+    Args:
+        cards: List of card dictionaries with 'id' and 'version' fields
+
+    Returns:
+        Content version signal string
+    """
+    if not cards:
+        return "empty"
+
+    # Extract (uuid, version) tuples and sort by UUID for deterministic ordering
+    version_tuples = []
+    for card in cards:
+        card_id = card.get('id')
+        version = card.get('version', 1)  # Default version for legacy cards
+
+        # Generate UUID for legacy cards without ID
+        if not card_id:
+            import hashlib
+            import json
+            # Use content hash as stable ID for legacy cards
+            content = {
+                'hanzi': card.get('hanzi', ''),
+                'pinyin': card.get('pinyin', ''),
+                'english': card.get('english', '')
+            }
+            content_str = json.dumps(content, sort_keys=True, ensure_ascii=False)
+            card_id = hashlib.sha256(content_str.encode('utf-8')).hexdigest()[:16]
+
+        version_tuples.append((card_id, version))
+
+    # Sort by UUID for deterministic ordering
+    version_tuples.sort(key=lambda x: x[0])
+
+    # Create hash of the ordered tuples
+    import json
+    import hashlib
+    tuples_str = json.dumps(version_tuples, sort_keys=True)
+    return hashlib.sha256(tuples_str.encode('utf-8')).hexdigest()[:16]
+
+
+def compute_snapshot_content_version_signal(snapshot_last_modified: str) -> str:
+    """
+    Compute content version signal from snapshot last modified timestamp.
+
+    Args:
+        snapshot_last_modified: ISO-8601 timestamp string
+
+    Returns:
+        Content version signal string
+    """
+    if not snapshot_last_modified:
+        return "no_timestamp"
+
+    import hashlib
+    return hashlib.sha256(snapshot_last_modified.encode('utf-8')).hexdigest()[:16]
+
+
+def get_content_version_signal(cards: List[Dict[str, Any]] = None,
+                              snapshot_last_modified: str = None) -> str:
+    """
+    Get content version signal using the best available method.
+
+    Priority:
+    1. Cards with UUID/version if available
+    2. Snapshot last modified timestamp
+    3. Fallback to current timestamp
+
+    Args:
+        cards: List of card dictionaries
+        snapshot_last_modified: ISO-8601 timestamp string
+
+    Returns:
+        Content version signal string
+    """
+    # Try cards-based version signal first (most precise)
+    if cards:
+        # Check if cards have proper ID/version structure
+        has_proper_structure = any(
+            card.get('id') and card.get('version') for card in cards
+        )
+        if has_proper_structure:
+            return compute_cards_content_version_signal(cards)
+
+    # Fall back to snapshot timestamp
+    if snapshot_last_modified:
+        return compute_snapshot_content_version_signal(snapshot_last_modified)
+
+    # Final fallback - use current timestamp
+    from datetime import datetime, timezone
+    current_time = datetime.now(timezone.utc).isoformat()
+    return compute_snapshot_content_version_signal(current_time)
 
 # Convenience functions for state access
 def set_option(key: str, value: Any) -> bool:

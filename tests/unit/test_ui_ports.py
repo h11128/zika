@@ -92,12 +92,12 @@ class TestFakeInputsAdapter:
     
     def test_text_area(self):
         """Test text area component."""
-        result = self.adapter.text_area(self.config, value="content", height=300)
+        result = self.adapter.text_area(self.config, value="content", height_cm=300)
         
         assert result == "content"
         assert len(self.adapter.interactions) == 1
         assert self.adapter.interactions[0]['type'] == 'text_area'
-        assert self.adapter.interactions[0]['height'] == 300
+        assert self.adapter.interactions[0]['height_cm'] == 300
     
     def test_number_input(self):
         """Test number input component."""
@@ -190,11 +190,11 @@ class TestFakePreviewAdapter:
     def test_html_component(self):
         """Test HTML component rendering."""
         html_content = "<div>Test HTML</div>"
-        self.adapter.html_component(html_content, height=500)
+        self.adapter.html_component(html_content, height_cm=500)
         
         assert len(self.adapter.html_renders) == 1
         assert self.adapter.html_renders[0]['content'] == html_content
-        assert self.adapter.html_renders[0]['height'] == 500
+        assert self.adapter.html_renders[0]['height_cm'] == 500
     
     def test_empty_placeholder(self):
         """Test empty placeholder creation."""

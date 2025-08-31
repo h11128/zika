@@ -18,8 +18,8 @@ def test_color_preview_html_generation():
     """Test that HTML generation works with different colors."""
     print("🎨 Testing real-time color preview HTML generation...")
     
-    # Import the HTML generation functions directly from services.cache to avoid importing web_ui during tests
-    from services.cache import create_simple_grid_html, create_page_preview_html
+    # Import the HTML generation functions directly from services.cache_v2 to avoid importing web_ui during tests
+    from services.cache_v2 import create_simple_grid_html, create_page_preview_html
 
     # Test cards
     test_cards = [
@@ -55,7 +55,7 @@ def test_color_preview_html_generation():
             # Test simple grid HTML generation
             simple_html = create_simple_grid_html(
                 test_cards, 
-                hanzi_font="Microsoft YaHei", 
+                hanzi_font_family="Microsoft YaHei", 
                 background_color=color
             )
             
@@ -78,14 +78,14 @@ def test_color_preview_html_generation():
             page_html = create_page_preview_html(
                 test_cards,
                 page_num=0,
-                card_size=5.5,
-                gap=0.5,
-                margin=1.0,
-                font_hanzi=48,
-                font_pinyin=18,
-                font_english=14,
+                card_size_cm=5.5,
+                gap_cm=0.5,
+                margin_cm=1.0,
+                hanzi_font_size=48,
+                pinyin_font_size=18,
+                english_font_size=14,
                 page_size="A4",
-                hanzi_font="Microsoft YaHei",
+                hanzi_font_family="Microsoft YaHei",
                 background_color=color
             )
             

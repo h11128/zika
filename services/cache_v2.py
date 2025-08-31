@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import streamlit as st
 
-from core.feature_flags import use_cache_v2
+# Cache v2 is now always enabled - no feature flag needed
 from core.version import get_code_version
 # Import from the main ui.state module (not the package)
 import importlib.util
@@ -83,9 +83,7 @@ class CacheV2:
 
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache."""
-        if not use_cache_v2():
-            return None
-
+        # Cache v2 is always enabled
         if key not in self.entries:
             self.stats.misses += 1
             return None
@@ -105,9 +103,7 @@ class CacheV2:
 
     def set(self, key: str, value: Any) -> None:
         """Set value in cache."""
-        if not use_cache_v2():
-            return
-
+        # Cache v2 is always enabled
         # Estimate size
         size_bytes = self._estimate_size(value)
 
@@ -244,9 +240,7 @@ def compute_cache_key(base_data: Dict[str, Any], schema_version: str) -> str:
 
 def cached_preview_render(render_func: Callable[..., T], *args, **kwargs) -> T:
     """Cache decorator for preview rendering functions."""
-    if not use_cache_v2():
-        return render_func(*args, **kwargs)
-
+    # Cache v2 is always enabled
     # Build cache key from arguments, converting dataclasses to dicts
     serializable_args = []
     for arg in args:
@@ -284,18 +278,22 @@ def cached_preview_render(render_func: Callable[..., T], *args, **kwargs) -> T:
 
 
 def cached_export_render(render_func: Callable[..., T], *args, **kwargs) -> T:
-    """Cache decorator for export rendering functions."""
-    if not use_cache_v2():
-        return render_func(*args, **kwargs)
-
+    """Cache decorator for export rendering functions with content version awareness."""
+    # Cache v2 is always enabled
     # Build cache key from arguments, converting dataclasses to dicts
     serializable_args = []
+    cards_data = None  # Track cards for content version signal
+
     for arg in args:
         if hasattr(arg, 'to_dict'):
             # Convert dataclass to dict for serialization
             serializable_args.append(arg.to_dict())
         else:
             serializable_args.append(arg)
+            # Check if this argument looks like cards data
+            if isinstance(arg, list) and arg and isinstance(arg[0], dict):
+                if any(key in arg[0] for key in ['hanzi', 'pinyin', 'english']):
+                    cards_data = arg
 
     serializable_kwargs = {}
     for key, value in kwargs.items():
@@ -304,13 +302,44 @@ def cached_export_render(render_func: Callable[..., T], *args, **kwargs) -> T:
             serializable_kwargs[key] = value.to_dict()
         else:
             serializable_kwargs[key] = value
+            # Check if this kwarg looks like cards data
+            if key == 'cards' and isinstance(value, list):
+                cards_data = value
 
-    cache_data = {
-        'function': render_func.__name__,
-        'args': serializable_args,
-        'kwargs': serializable_kwargs,
-    }
-    cache_key = compute_cache_key(cache_data, EXPORT_CACHE_SCHEMA_VERSION)
+    # Use enhanced export key computation with content version signal
+    try:
+        from ui.state import compute_export_key, get_content_version_signal
+
+        # Extract export parameters from args/kwargs
+        export_params = {
+            'function': render_func.__name__,
+            'args': serializable_args,
+            'kwargs': serializable_kwargs,
+        }
+
+        # Get content version signal if we have cards
+        content_version_signal = None
+        cards_count = 0
+        if cards_data:
+            content_version_signal = get_content_version_signal(cards_data)
+            cards_count = len(cards_data)
+
+        # Compute enhanced cache key
+        cache_key = compute_export_key(
+            export_params=export_params,
+            cards_count=cards_count,
+            content_version_signal=content_version_signal,
+            export_schema_version=EXPORT_CACHE_SCHEMA_VERSION
+        )
+
+    except ImportError:
+        # Fallback to old method if ui.state is not available
+        cache_data = {
+            'function': render_func.__name__,
+            'args': serializable_args,
+            'kwargs': serializable_kwargs,
+        }
+        cache_key = compute_cache_key(cache_data, EXPORT_CACHE_SCHEMA_VERSION)
 
     # Try cache first
     cache = get_export_cache()
@@ -326,14 +355,14 @@ def cached_export_render(render_func: Callable[..., T], *args, **kwargs) -> T:
 
 def clear_preview_cache_v2() -> None:
     """Clear preview cache."""
-    if use_cache_v2():
-        get_preview_cache().clear()
+    # Cache v2 is always enabled
+    get_preview_cache().clear()
 
 
 def clear_export_cache_v2() -> None:
     """Clear export cache."""
-    if use_cache_v2():
-        get_export_cache().clear()
+    # Cache v2 is always enabled
+    get_export_cache().clear()
 
 
 def clear_all_caches_v2() -> None:
@@ -344,9 +373,7 @@ def clear_all_caches_v2() -> None:
 
 def get_cache_stats() -> Dict[str, CacheStats]:
     """Get statistics for all caches."""
-    if not use_cache_v2():
-        return {}
-
+    # Cache v2 is always enabled
     return {
         'preview': get_preview_cache().get_stats(),
         'export': get_export_cache().get_stats(),
@@ -355,9 +382,7 @@ def get_cache_stats() -> Dict[str, CacheStats]:
 
 def log_cache_stats() -> None:
     """Log cache statistics for debugging."""
-    if not use_cache_v2():
-        return
-
+    # Cache v2 is always enabled
     stats = get_cache_stats()
     for cache_name, cache_stats in stats.items():
         print(f"Cache {cache_name}: "
@@ -381,11 +406,11 @@ def _st_cached_render(cache_key: str, render_func_name: str, *args, **kwargs) ->
                 return result.content
             else:
                 # Fall back to legacy implementation
-                from services.cache import create_preview_html
+                from services.cache_v2 import create_preview_html
                 return create_preview_html(*args, **kwargs)
         except Exception:
             # Fall back to legacy implementation
-            from services.cache import create_preview_html
+            from services.cache_v2 import create_preview_html
             return create_preview_html(*args, **kwargs)
     else:
         raise ValueError(f"Unknown render function: {render_func_name}")
@@ -408,25 +433,45 @@ def create_page_preview_html_v2(cards: List[Dict[str, str]], page_num: int,
     Returns:
         HTML string for the page preview
     """
-    from services.cache import create_page_preview_html
-
-    # Convert dataclasses to legacy parameters
-    return create_page_preview_html(
-        cards=cards,
-        page_num=page_num,
-        card_size=layout.card_size_cm,
-        gap=layout.gap_cm,
-        margin=layout.margin_cm,
-        font_hanzi=typography.font_hanzi_pt,
-        font_pinyin=typography.font_pinyin_pt,
-        font_english=typography.font_english_pt,
-        page_size=layout.page_size,
-        hanzi_font=typography.hanzi_font,
-        background_color=visual.background_color,
-        rows=layout.rows,
-        cols=layout.cols,
-        auto_fill=layout.auto_fill
+    # Direct implementation to avoid recursion with legacy delegation
+    from services.cache_v2 import (
+        _slice_cards_for_page, _compute_page_layout_metrics,
+        _compute_page_card_box, _compute_font_px, PageTemplateContext
     )
+
+    # Safety guards
+    layout_rows = max(1, int(layout.layout_rows or 3))
+    layout_cols = max(1, int(layout.layout_cols or 3))
+
+    # Compute inputs via helpers
+    cards_per_page, page_cards = _slice_cards_for_page(cards, page_num, layout_rows, layout_cols)
+    if not page_cards and page_num > 0:
+        return "<div style='text-align: center; color: #666; padding: 50px;'>页面不存在</div>"
+
+    M = _compute_page_layout_metrics(
+        layout.page_size, layout.gap_cm, layout.margin_cm,
+        layout_rows, layout_cols, layout.card_size_cm, layout.layout_auto_fill
+    )
+    card_box = _compute_page_card_box(M)
+    font_px = _compute_font_px(
+        typography.font_hanzi_pt, typography.font_pinyin_pt,
+        typography.font_english_pt, M.scale_factor
+    )
+
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    env = Environment(
+        loader=FileSystemLoader('templates'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
+    template = env.get_template('page_preview.html.j2')
+
+    ctx = PageTemplateContext(
+        page_num=page_num, layout_rows=layout_rows, layout_cols=layout_cols,
+        hanzi_font_family=typography.hanzi_font_family, background_color=visual.background_color
+    )
+
+    page_cards_ctx = [(page_cards[i] if i < len(page_cards) else None) for i in range(cards_per_page)]
+    return template.render(M=M, font=font_px, card_box=card_box, ctx=ctx, page_cards=page_cards_ctx)
 
 
 def cached_create_page_preview_html_v2(cards: List[Dict[str, str]], page_num: int,
@@ -458,21 +503,43 @@ def create_simple_grid_html_v2(cards: List[Dict[str, str]],
     Returns:
         HTML string for the simple grid
     """
-    from services.cache import create_simple_grid_html
-
-    # Convert dataclasses to legacy parameters
-    return create_simple_grid_html(
-        cards=cards,
-        hanzi_font=typography.hanzi_font,
-        background_color=visual.background_color,
-        rows=layout.rows,
-        cols=layout.cols,
-        font_hanzi=typography.font_hanzi_pt,
-        font_pinyin=typography.font_pinyin_pt,
-        font_english=typography.font_english_pt,
-        card_size=layout.card_size_cm,
-        auto_fill=layout.auto_fill
+    # Direct implementation to avoid recursion with legacy delegation
+    from services.cache_v2 import (
+        _compute_simple_grid_css, _compute_simple_grid_font_px,
+        _compute_simple_card_box, SimpleGridTemplateContext
     )
+
+    layout_rows = max(1, int(layout.layout_rows or 3))
+    layout_cols = max(1, int(layout.layout_cols or 3))
+
+    if not cards:
+        return "<div style='text-align: center; color: #666; padding: 50px;'>输入汉字以查看预览</div>"
+
+    params = _compute_simple_grid_css(layout_cols, layout.card_size_cm, layout.layout_auto_fill)
+    font_px = _compute_simple_grid_font_px(
+        typography.font_hanzi_pt, typography.font_pinyin_pt, typography.font_english_pt
+    )
+    card_box = _compute_simple_card_box(params.card_size_px_calc)
+
+    # Build grid cards with padding for empty slots
+    cards_per_page = rows * cols
+    grid_cards: List[Dict[str, str]] = []
+    for i in range(cards_per_page):
+        grid_cards.append(cards[i] if i < len(cards) else None)
+
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    env = Environment(
+        loader=FileSystemLoader('templates'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
+    template = env.get_template('simple_grid.html.j2')
+
+    ctx = SimpleGridTemplateContext(
+        layout_rows=layout_rows, layout_cols=layout_cols,
+        hanzi_font_family=typography.hanzi_font_family, background_color=visual.background_color
+    )
+
+    return template.render(params=params, ctx=ctx, font=font_px, card_box=card_box, grid_cards=grid_cards)
 
 
 def cached_create_simple_grid_html_v2(cards: List[Dict[str, str]],

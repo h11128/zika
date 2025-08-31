@@ -23,7 +23,7 @@ if ROOT not in sys.path:
 
 from services.processing import parse_input_text, generate_missing_data
 from services.export import export_cards
-from services.cache import create_page_preview_html, create_simple_grid_html
+from services.cache_v2 import create_page_preview_html, create_simple_grid_html
 from src.dict_utils import create_default_dict
 from core.constants import (
     DEFAULT_PAGE_SIZE, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
@@ -55,7 +55,7 @@ class TestServicesIntegration:
         # Generate cached HTML with processed data
         simple_html = create_simple_grid_html(
             processed_cards, 
-            hanzi_font=DEFAULT_HANZI_FONT,
+            hanzi_font_family=DEFAULT_HANZI_FONT,
             background_color=DEFAULT_BACKGROUND_COLOR
         )
         
@@ -69,9 +69,9 @@ class TestServicesIntegration:
         # Test page preview integration
         page_html = create_page_preview_html(
             processed_cards, page_num=0,
-            card_size=DEFAULT_CARD_SIZE, gap=DEFAULT_GAP, margin=DEFAULT_MARGIN,
-            font_hanzi=DEFAULT_FONT_HANZI, font_pinyin=DEFAULT_FONT_PINYIN,
-            font_english=DEFAULT_FONT_ENGLISH, page_size=DEFAULT_PAGE_SIZE
+            card_size_cm=DEFAULT_CARD_SIZE, gap_cm=DEFAULT_GAP, margin_cm=DEFAULT_MARGIN,
+            hanzi_font_size=DEFAULT_FONT_HANZI, pinyin_font_size=DEFAULT_FONT_PINYIN,
+            english_font_size=DEFAULT_FONT_ENGLISH, page_size=DEFAULT_PAGE_SIZE
         )
         
         assert page_html
@@ -90,25 +90,25 @@ class TestServicesIntegration:
         pptx_content = export_cards(
             processed_cards, 'pptx',
             page_size=DEFAULT_PAGE_SIZE,
-            card_size=DEFAULT_CARD_SIZE,
-            gap=DEFAULT_GAP,
-            margin=DEFAULT_MARGIN,
-            font_hanzi=DEFAULT_FONT_HANZI,
-            font_pinyin=DEFAULT_FONT_PINYIN,
-            font_english=DEFAULT_FONT_ENGLISH,
-            hanzi_font=DEFAULT_HANZI_FONT,
+            card_size_cm=DEFAULT_CARD_SIZE,
+            gap_cm=DEFAULT_GAP,
+            margin_cm=DEFAULT_MARGIN,
+            hanzi_font_size=DEFAULT_FONT_HANZI,
+            pinyin_font_size=DEFAULT_FONT_PINYIN,
+            english_font_size=DEFAULT_FONT_ENGLISH,
+            hanzi_font_family=DEFAULT_HANZI_FONT,
             background_color=DEFAULT_BACKGROUND_COLOR
         )
         
         pdf_content = export_cards(
             processed_cards, 'pdf',
             page_size=DEFAULT_PAGE_SIZE,
-            card_size=DEFAULT_CARD_SIZE,
-            gap=DEFAULT_GAP,
-            margin=DEFAULT_MARGIN,
-            font_hanzi=DEFAULT_FONT_HANZI,
-            font_pinyin=DEFAULT_FONT_PINYIN,
-            font_english=DEFAULT_FONT_ENGLISH
+            card_size_cm=DEFAULT_CARD_SIZE,
+            gap_cm=DEFAULT_GAP,
+            margin_cm=DEFAULT_MARGIN,
+            hanzi_font_size=DEFAULT_FONT_HANZI,
+            pinyin_font_size=DEFAULT_FONT_PINYIN,
+            english_font_size=DEFAULT_FONT_ENGLISH
         )
         
         # Verify both exports work with processed data
@@ -126,10 +126,10 @@ class TestServicesIntegration:
         
         # Generate HTML multiple times with same parameters
         html1 = create_simple_grid_html(
-            processed_cards, hanzi_font='SimHei', background_color='#E3F2FD'
+            processed_cards, hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         html2 = create_simple_grid_html(
-            processed_cards, hanzi_font='SimHei', background_color='#E3F2FD'
+            processed_cards, hanzi_font_family='SimHei', background_color='#E3F2FD'
         )
         
         # Should be identical (cache working)
@@ -137,7 +137,7 @@ class TestServicesIntegration:
         
         # Different parameters should produce different results
         html3 = create_simple_grid_html(
-            processed_cards, hanzi_font='Microsoft YaHei', background_color='#FFEBEE'
+            processed_cards, hanzi_font_family='Microsoft YaHei', background_color='#FFEBEE'
         )
         
         assert html1 != html3
@@ -173,8 +173,8 @@ class TestConstantsIntegration:
 
             # Test in page preview
             page_html = create_page_preview_html(
-                cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-                font_hanzi=48, font_pinyin=18, font_english=14,
+                cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+                hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
                 background_color=color_value
             )
             assert color_value in page_html
@@ -276,11 +276,11 @@ class TestConfigurationIntegration:
         
         for font in fonts:
             # Test in cache service
-            html = create_simple_grid_html(cards, hanzi_font=font)
+            html = create_simple_grid_html(cards, hanzi_font_family=font)
             assert font in html or 'font-family' in html
             
             # Test in export service
-            content = export_cards(cards, 'pptx', hanzi_font=font)
+            content = export_cards(cards, 'pptx', hanzi_font_family=font)
             assert isinstance(content, (bytes, bytearray))
     
     def test_layout_configuration_integration(self):
@@ -290,26 +290,26 @@ class TestConfigurationIntegration:
         
         # Test different layout configurations
         layouts = [
-            {'rows': 2, 'cols': 2, 'card_size': 4.0},
-            {'rows': 3, 'cols': 3, 'card_size': 5.5},
-            {'rows': 4, 'cols': 3, 'card_size': 3.5}
+            {'layout_rows': 2, 'layout_cols': 2, 'card_size_cm': 4.0},
+            {'layout_rows': 3, 'layout_cols': 3, 'card_size_cm': 5.5},
+            {'layout_rows': 4, 'layout_cols': 3, 'card_size_cm': 3.5}
         ]
         
         for layout in layouts:
             # Test in preview
             html = create_page_preview_html(
-                cards, page_num=0, card_size=layout['card_size'],
-                gap=0.5, margin=1.0, font_hanzi=48, font_pinyin=18,
-                font_english=14, rows=layout['rows'], cols=layout['cols']
+                cards, page_num=0, card_size_cm=layout['card_size_cm'],
+                gap_cm=0.5, margin_cm=1.0, hanzi_font_size=48, pinyin_font_size=18,
+                english_font_size=14, layout_rows=layout['layout_rows'], layout_cols=layout['layout_cols']
             )
             assert html
             
             # Test in export
             content = export_cards(
                 cards, 'pptx', 
-                card_size=layout['card_size'],
-                rows=layout['rows'], 
-                cols=layout['cols']
+                card_size_cm=layout['card_size_cm'],
+                layout_rows=layout['layout_rows'], 
+                layout_cols=layout['layout_cols']
             )
             assert isinstance(content, (bytes, bytearray))
     
@@ -322,8 +322,8 @@ class TestConfigurationIntegration:
         for page_size in page_sizes:
             # Test in preview
             html = create_page_preview_html(
-                cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-                font_hanzi=48, font_pinyin=18, font_english=14,
+                cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+                hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
                 page_size=page_size
             )
             assert html

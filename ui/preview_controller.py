@@ -59,10 +59,10 @@ class PreviewController:
         
         # Calculate pagination
         pagination = paginate(len(processed_cards), 
-                            preview_params.layout.rows, 
-                            preview_params.layout.cols)
+                            preview_params.layout.layout_rows, 
+                            preview_params.layout.layout_cols)
         
-        # Clamp navigation index
+        # Clamp navigation index (only if out of bounds, don't reset for style changes)
         self._clamp_nav_index(pagination.total_pages)
         
         # Render based on digest change
@@ -138,7 +138,7 @@ class PreviewController:
             html = self._create_page_preview_html_v2(
                 processed_cards, current_page, params, use_cache
             )
-            ui.html(html, height=850)
+            ui.html(html, height_cm=850)
         else:
             # Simple grid preview
             start_idx = current_page * pagination.cards_per_page
@@ -148,7 +148,7 @@ class PreviewController:
             html = self._create_simple_grid_html_v2(
                 current_page_cards, params, use_cache
             )
-            ui.html(html, height=650)
+            ui.html(html, height_cm=650)
     
     def _create_page_preview_html_v2(self, processed_cards: List[Dict[str, str]], 
                                     page_num: int, params: PreviewParams,
@@ -192,7 +192,7 @@ class PreviewController:
                 render_options = convert_preview_params_to_render_options(params)
 
                 # Get cards for current page
-                cards_per_page = params.layout.rows * params.layout.cols
+                cards_per_page = params.layout.layout_rows * params.layout.layout_cols
                 start_idx = page_num * cards_per_page
                 end_idx = min(start_idx + cards_per_page, len(processed_cards))
                 page_cards = processed_cards[start_idx:end_idx]
@@ -209,19 +209,19 @@ class PreviewController:
                 logging.warning(f"Shared render core failed for page preview, falling back: {e}")
 
         # Legacy implementation fallback
-        from services.cache import create_page_preview_html
+        from services.cache_v2 import create_page_preview_html
         from services.preview_types import extract_legacy_params
 
         legacy_params = extract_legacy_params(params)
 
         return create_page_preview_html(
             processed_cards, page_num,
-            legacy_params['card_size'], legacy_params['gap'], legacy_params['margin'],
-            legacy_params['font_hanzi'], legacy_params['font_pinyin'], legacy_params['font_english'],
-            legacy_params['page_size'], legacy_params['hanzi_font'], legacy_params['background_color'],
-            legacy_params['rows'], legacy_params['cols'], legacy_params['auto_fill']
+            legacy_params['card_size_cm'], legacy_params['gap_cm'], legacy_params['margin_cm'],
+            legacy_params['hanzi_font_size'], legacy_params['pinyin_font_size'], legacy_params['english_font_size'],
+            legacy_params['page_size'], legacy_params['hanzi_font_family'], legacy_params['background_color'],
+            legacy_params['layout_rows'], legacy_params['layout_cols'], legacy_params['layout_auto_fill']
         )
-    
+
     def _create_simple_grid_html_immediate(self, processed_cards: List[Dict[str, str]],
                                          params: PreviewParams) -> str:
         """Create simple grid HTML immediately using shared render core."""
@@ -247,25 +247,14 @@ class PreviewController:
                 import logging
                 logging.warning(f"Shared render core failed for simple grid, falling back: {e}")
 
-        # Legacy implementation fallback
-        from services.cache import create_simple_grid_html
-        from services.preview_types import extract_legacy_params
-
-        legacy_params = extract_legacy_params(params)
-
-        return create_simple_grid_html(
-            processed_cards, legacy_params['hanzi_font'], legacy_params['background_color'],
-            legacy_params['rows'], legacy_params['cols'],
-            legacy_params['font_hanzi'], legacy_params['font_pinyin'], legacy_params['font_english'],
-            legacy_params['card_size'], legacy_params['auto_fill']
-        )
+        
     
     def _render_empty_preview(self) -> None:
         """Render preview for empty cards case."""
         ui = get_unified_ui()
         try:
-            from services.cache import create_preview_html
-            ui.html(create_preview_html([]), height=650)
+            from services.cache_v2 import create_preview_html
+            ui.html(create_preview_html([]), height_cm=650)
         except Exception as e:
             ui.error(f"预览渲染错误: {e}")
     
@@ -273,15 +262,14 @@ class PreviewController:
                       config: AppConfig) -> Tuple[int, int]:
         """Fallback to legacy preview rendering."""
         from ui.sections import render_preview_content_legacy
-        from services.preview_types import extract_legacy_params
-        
+                
         # Convert config to legacy format
         preview_params = convert_app_config_to_preview_params(config)
         legacy_params = extract_legacy_params(preview_params)
         
         # Split into preview and layout params for legacy function
         preview_dict = {
-            'hanzi_font': legacy_params['hanzi_font'],
+            'hanzi_font_family': legacy_params['hanzi_font_family'],
             'background_color': legacy_params['background_color'],
             'preview_mode': legacy_params['preview_mode']
         }

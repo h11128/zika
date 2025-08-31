@@ -6,7 +6,7 @@ Handles preview display, navigation, and mode selection.
 from typing import List, Dict, Any
 
 from core.feature_flags import get_feature_flag
-from services.cache import create_preview_html
+from services.cache_v2 import create_preview_html
 from services.layout import paginate
 from ui.error_boundary import with_error_boundary
 from ui.components import render_page_navigation, render_page_info, render_preview_section
@@ -17,10 +17,10 @@ from ui.state_bridge import state_get, state_set, state_delete
 
 @with_error_boundary("preview_section_wrapper")
 def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
-                                 card_size: float, gap: float, margin: float,
-                                 font_hanzi: int, font_pinyin: int, font_english: int,
-                                 page_size: str, hanzi_font: str, background_color: str,
-                                 rows: int, cols: int, auto_fill: bool) -> None:
+                                 card_size_cm: float, gap_cm: float, margin_cm: float,
+                                 hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,
+                                 page_size: str, hanzi_font_family: str, background_color: str,
+                                 layout_rows: int, layout_cols: int, layout_auto_fill: bool) -> None:
     """
     Render the complete preview section with mode selection and navigation.
     Migrated from ui/sections.py
@@ -34,11 +34,11 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
         if use_new_preview_pipeline():
             # Convert legacy parameters to new format
             preview_params = convert_legacy_params_to_preview_params(
-                card_size=card_size, gap=gap, margin=margin, page_size=page_size,
-                font_hanzi=font_hanzi, font_pinyin=font_pinyin, font_english=font_english,
-                hanzi_font=hanzi_font, background_color=background_color,
+                card_size_cm=card_size, gap_cm=gap, margin_cm=margin, page_size=page_size,
+                hanzi_font_size=hanzi_font_size, pinyin_font_size=pinyin_font_size, english_font_size=english_font_size,
+                hanzi_font_family=hanzi_font_family, background_color=background_color,
                 preview_mode=state_get('preview_mode', '📄 完整页面'),
-                rows=rows, cols=cols, auto_fill=auto_fill
+                layout_rows=layout_rows, layout_cols=layout_cols, layout_auto_fill=auto_fill
             )
 
             # Create mock AppConfig for new pipeline
@@ -46,20 +46,20 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
 
             @dataclass
             class MockLayoutConfig:
-                rows: int
-                cols: int
-                auto_fill: bool
-                card_size: float
-                gap: float
-                margin: float
+                layout_rows: int
+                layout_cols: int
+                layout_auto_fill: bool
+                card_size_cm: float
+                gap_cm: float
+                margin_cm: float
                 page_size: str
-                font_hanzi: int
-                font_pinyin: int
-                font_english: int
+                hanzi_font_size: int
+                pinyin_font_size: int
+                english_font_size: int
 
             @dataclass
             class MockUIConfig:
-                hanzi_font: str
+                hanzi_font_family: str
                 background_color: str
                 preview_mode: str
 
@@ -70,19 +70,19 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
 
             mock_config = MockAppConfig(
                 layout=MockLayoutConfig(
-                    rows=preview_params.layout.rows,
-                    cols=preview_params.layout.cols,
-                    auto_fill=preview_params.layout.auto_fill,
-                    card_size=preview_params.layout.card_size_cm,
-                    gap=preview_params.layout.gap_cm,
-                    margin=preview_params.layout.margin_cm,
+                    layout_rows=preview_params.layout.layout_rows,
+                    layout_cols=preview_params.layout.layout_cols,
+                    layout_auto_fill=preview_params.layout.layout_auto_fill,
+                    card_size_cm=preview_params.layout.card_size_cm,
+                    gap_cm=preview_params.layout.gap_cm,
+                    margin_cm=preview_params.layout.margin_cm,
                     page_size=preview_params.layout.page_size,
-                    font_hanzi=preview_params.typography.font_hanzi_pt,
-                    font_pinyin=preview_params.typography.font_pinyin_pt,
-                    font_english=preview_params.typography.font_english_pt,
+                    hanzi_font_size=preview_params.typography.font_hanzi_pt,
+                    pinyin_font_size=preview_params.typography.font_pinyin_pt,
+                    english_font_size=preview_params.typography.font_english_pt,
                 ),
                 ui=MockUIConfig(
-                    hanzi_font=preview_params.typography.hanzi_font,
+                    hanzi_font_family=preview_params.typography.hanzi_font_family,
                     background_color=preview_params.visual.background_color,
                     preview_mode=preview_params.visual.preview_mode,
                 )
@@ -135,24 +135,24 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
 
     # Build effective params using session_state as the source of truth
     passed = {
-        'card_size': card_size,
-        'gap': gap,
-        'margin': margin,
-        'font_hanzi': font_hanzi,
-        'font_pinyin': font_pinyin,
-        'font_english': font_english,
+        'card_size_cm': card_size,
+        'gap_cm': gap,
+        'margin_cm': margin,
+        'hanzi_font_size': hanzi_font_size,
+        'pinyin_font_size': pinyin_font_size,
+        'english_font_size': english_font_size,
         'page_size': page_size,
-        'hanzi_font': hanzi_font,
+        'hanzi_font_family': hanzi_font_family,
         'background_color': background_color,
-        'rows': rows,
-        'cols': cols,
-        'auto_fill': auto_fill,
+        'layout_rows': layout_rows,
+        'layout_cols': layout_cols,
+        'layout_auto_fill': layout_auto_fill,
     }
     eff = _effective_preview_params_from_state(passed)
-    card_size, gap, margin = eff['card_size'], eff['gap'], eff['margin']
-    font_hanzi, font_pinyin, font_english = eff['font_hanzi'], eff['font_pinyin'], eff['font_english']
-    page_size, hanzi_font, background_color = eff['page_size'], eff['hanzi_font'], eff['background_color']
-    rows, cols, auto_fill = eff['rows'], eff['cols'], eff['auto_fill']
+    card_size, gap, margin_cm = eff['card_size_cm'], eff['gap_cm'], eff['margin_cm']
+    hanzi_font_size, pinyin_font_size, english_font_size = eff['hanzi_font_size'], eff['pinyin_font_size'], eff['english_font_size']
+    page_size, hanzi_font_family, background_color = eff['page_size'], eff['hanzi_font_family'], eff['background_color']
+    layout_rows, layout_cols, layout_auto_fill = eff['layout_rows'], eff['layout_cols'], eff['layout_auto_fill']
 
     if processed_cards:
         # Calculate total pages (rows x cols per page)
@@ -160,24 +160,24 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
         total_pages = max(1, (len(processed_cards) + cards_per_page - 1) // cards_per_page)
 
         # Use state values as source of truth for fonts to avoid accidental resets
-        effective_font_hanzi = state_get('font_hanzi', font_hanzi)
-        effective_font_pinyin = state_get('font_pinyin', font_pinyin)
-        effective_font_english = state_get('font_english', font_english)
+        effective_font_hanzi = state_get('hanzi_font_size', hanzi_font_size)
+        effective_font_pinyin = state_get('pinyin_font_size', pinyin_font_size)
+        effective_font_english = state_get('english_font_size', english_font_size)
 
         # Check if parameters changed (reset to first page if they did)
         current_params = {
-            'card_size': card_size,
-            'gap': gap,
-            'margin': margin,
-            'font_hanzi': effective_font_hanzi,
-            'font_pinyin': effective_font_pinyin,
-            'font_english': effective_font_english,
+            'card_size_cm': card_size,
+            'gap_cm': gap,
+            'margin_cm': margin,
+            'hanzi_font_size': effective_font_hanzi,
+            'pinyin_font_size': effective_font_pinyin,
+            'english_font_size': effective_font_english,
             'page_size': page_size,
-            'hanzi_font': hanzi_font,
+            'hanzi_font_family': hanzi_font_family,
             'background_color': background_color,
-            'rows': rows,
-            'cols': cols,
-            'auto_fill': auto_fill,
+            'layout_rows': layout_rows,
+            'layout_cols': layout_cols,
+            'layout_auto_fill': layout_auto_fill,
             'total_cards': len(processed_cards),
             # Include preview mode to ensure state resets and cache invalidation on mode change
             'preview_mode': preview_mode,
@@ -202,8 +202,8 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
             processed_cards, preview_mode,
             card_size, gap, margin,
             effective_font_hanzi, effective_font_pinyin, effective_font_english,
-            page_size, hanzi_font, background_color,
-            rows, cols, auto_fill
+            page_size, hanzi_font_family, background_color,
+            layout_rows, layout_cols, auto_fill
         )
 
         # Show card count and page info
@@ -226,12 +226,12 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
     else:
         # Show empty state using adapter if available
         if get_feature_flag('adapted_preview', False):
-            from services.cache import create_preview_html
-            adapter.preview.render_html(create_preview_html([]), height=650)
+            from services.cache_v2 import create_preview_html
+            adapter.preview.render_html(create_preview_html([]), height_cm=650)
         else:
-            from services.cache import create_preview_html
+            from services.cache_v2 import create_preview_html
             ui = get_unified_ui()
-            ui.html(create_preview_html([]), height=650)
+            ui.html(create_preview_html([]), height_cm=650)
 
     # Close sticky wrapper for the entire preview column
     if get_feature_flag('adapted_preview', False):
@@ -278,18 +278,18 @@ def _effective_preview_params_from_state(passed: Dict[str, Any]) -> Dict[str, An
     """Get effective preview parameters from session state."""
     # Use session state as source of truth, fall back to passed values
     return {
-        'card_size': state_get('card_size', passed['card_size']),
-        'gap': state_get('gap_cm', passed['gap']),
-        'margin': state_get('margin_cm', passed['margin']),
-        'font_hanzi': state_get('font_hanzi', passed['font_hanzi']),
-        'font_pinyin': state_get('font_pinyin', passed['font_pinyin']),
-        'font_english': state_get('font_english', passed['font_english']),
+        'card_size_cm': state_get('card_size_cm', passed['card_size_cm']),
+        'gap_cm': state_get('gap_cm', passed['gap_cm']),
+        'margin_cm': state_get('margin_cm', passed['margin_cm']),
+        'hanzi_font_size': state_get('hanzi_font_size', passed['hanzi_font_size']),
+        'pinyin_font_size': state_get('pinyin_font_size', passed['pinyin_font_size']),
+        'english_font_size': state_get('english_font_size', passed['english_font_size']),
         'page_size': state_get('page_size', passed['page_size']),
-        'hanzi_font': state_get('hanzi_font', passed['hanzi_font']),
+        'hanzi_font_family': state_get('hanzi_font_family', passed['hanzi_font_family']),
         'background_color': state_get('background_color', passed['background_color']),
-        'rows': state_get('rows', passed['rows']),
-        'cols': state_get('cols', passed['cols']),
-        'auto_fill': state_get('auto_fill', passed['auto_fill']),
+        'layout_rows': state_get('layout_rows', passed['layout_rows']),
+        'layout_cols': state_get('layout_cols', passed['layout_cols']),
+        'layout_auto_fill': state_get('layout_auto_fill', passed['layout_auto_fill']),
     }
 
 
@@ -320,9 +320,9 @@ def render_preview_content_adapted(adapter: UIAdapter, processed_cards: List[Dic
     )
 
     # Calculate pagination
-    rows = config.get('rows', 2)
-    cols = config.get('cols', 3)
-    pagination_info = paginate(len(processed_cards), rows, cols)
+    layout_rows = config.get('layout_rows', 2)
+    layout_cols = config.get('layout_cols', 3)
+    pagination_info = paginate(len(processed_cards), layout_rows, cols)
     cards_per_page = pagination_info.cards_per_page
     total_pages = pagination_info.total_pages
 
@@ -405,18 +405,18 @@ def render_preview_content_html_adapted(adapter: UIAdapter, processed_cards: Lis
 
                 # Create render options from config
                 render_options = create_render_options_from_legacy(
-                    card_size=config.get('card_size', 5.5),
-                    gap=config.get('gap', 0.5),
-                    margin=config.get('margin', 1.0),
-                    font_hanzi=config.get('font_hanzi', 48),
-                    font_pinyin=config.get('font_pinyin', 18),
-                    font_english=config.get('font_english', 14),
+                    card_size_cm=config.get('card_size_cm', 5.5),
+                    gap_cm=config.get('gap_cm', 0.5),
+                    margin_cm=config.get('margin_cm', 1.0),
+                    hanzi_font_size=config.get('hanzi_font_size', 48),
+                    pinyin_font_size=config.get('pinyin_font_size', 18),
+                    english_font_size=config.get('english_font_size', 14),
                     page_size=config.get('page_size', 'A4'),
-                    hanzi_font=config.get('hanzi_font', 'SimHei'),
+                    hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
                     background_color=config.get('background_color', '#ffffff'),
-                    rows=config.get('rows', 2),
-                    cols=config.get('cols', 3),
-                    auto_fill=config.get('auto_fill', True)
+                    layout_rows=config.get('layout_rows', 2),
+                    layout_cols=config.get('layout_cols', 3),
+                    layout_auto_fill=config.get('layout_auto_fill', True)
                 )
 
                 # Use unified rendering
@@ -424,10 +424,10 @@ def render_preview_content_html_adapted(adapter: UIAdapter, processed_cards: Lis
 
                 if result.success:
                     # Determine height based on preview mode
-                    height = 850 if preview_mode == '📄 完整页面' else 650
+                    height_cm = 850 if preview_mode == '📄 完整页面' else 650
 
                     # Render HTML component
-                    adapter.preview.html_component(result.content, height=height)
+                    adapter.preview.html_component(result.content, height_cm=height)
                     return
                 else:
                     # Fall back to legacy implementation
@@ -445,25 +445,25 @@ def render_preview_content_html_adapted(adapter: UIAdapter, processed_cards: Lis
         # Legacy implementation fallback
         html_content = create_preview_html(
             processed_cards,
-            card_size=config.get('card_size', 5.5),
-            gap=config.get('gap', 0.5),
-            margin=config.get('margin', 1.0),
-            font_hanzi=config.get('font_hanzi', 48),
-            font_pinyin=config.get('font_pinyin', 18),
-            font_english=config.get('font_english', 14),
+            card_size_cm=config.get('card_size_cm', 5.5),
+            gap_cm=config.get('gap_cm', 0.5),
+            margin_cm=config.get('margin_cm', 1.0),
+            hanzi_font_size=config.get('hanzi_font_size', 48),
+            pinyin_font_size=config.get('pinyin_font_size', 18),
+            english_font_size=config.get('english_font_size', 14),
             page_size=config.get('page_size', 'A4'),
-            hanzi_font=config.get('hanzi_font', 'SimHei'),
+            hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
             background_color=config.get('background_color', '#ffffff'),
-            rows=config.get('rows', 2),
-            cols=config.get('cols', 3),
-            auto_fill=config.get('auto_fill', True)
+            layout_rows=config.get('layout_rows', 2),
+            layout_cols=config.get('layout_cols', 3),
+            layout_auto_fill=config.get('layout_auto_fill', True)
         )
 
         # Determine height based on preview mode
-        height = 850 if preview_mode == '📄 完整页面' else 650
+        height_cm = 850 if preview_mode == '📄 完整页面' else 650
 
         # Render HTML component
-        adapter.preview.html_component(html_content, height=height)
+        adapter.preview.html_component(html_content, height_cm=height)
 
     except Exception as e:
         adapter.notifications.show_message(
@@ -487,7 +487,7 @@ def render_empty_preview_state(adapter: UIAdapter) -> None:
     """Render empty preview state using UI adapter."""
     try:
         empty_html = create_preview_html([])
-        adapter.preview.html_component(empty_html, height=650)
+        adapter.preview.html_component(empty_html, height_cm=650)
     except Exception:
         adapter.notifications.show_message(
             "无预览内容", NotificationLevel.INFO
@@ -496,7 +496,7 @@ def render_empty_preview_state(adapter: UIAdapter) -> None:
 
 def use_adapted_preview() -> bool:
     """Check if adapted preview should be used."""
-    return get_feature_flag('adapted_preview', False)
+    return True
 
 
 def render_preview_unified(processed_cards: List[Dict[str, str]], 
@@ -511,18 +511,18 @@ def render_preview_unified(processed_cards: List[Dict[str, str]],
         # Extract parameters for legacy function
         render_preview_section_wrapper(
             processed_cards,
-            card_size=config.get('card_size', 5.5),
-            gap=config.get('gap', 0.5),
-            margin=config.get('margin', 1.0),
-            font_hanzi=config.get('font_hanzi', 48),
-            font_pinyin=config.get('font_pinyin', 18),
-            font_english=config.get('font_english', 14),
+            card_size_cm=config.get('card_size_cm', 5.5),
+            gap_cm=config.get('gap_cm', 0.5),
+            margin_cm=config.get('margin_cm', 1.0),
+            hanzi_font_size=config.get('hanzi_font_size', 48),
+            pinyin_font_size=config.get('pinyin_font_size', 18),
+            english_font_size=config.get('english_font_size', 14),
             page_size=config.get('page_size', 'A4'),
-            hanzi_font=config.get('hanzi_font', 'SimHei'),
+            hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
             background_color=config.get('background_color', '#ffffff'),
-            rows=config.get('rows', 2),
-            cols=config.get('cols', 3),
-            auto_fill=config.get('auto_fill', True)
+            layout_rows=config.get('layout_rows', 2),
+            layout_cols=config.get('layout_cols', 3),
+            layout_auto_fill=config.get('layout_auto_fill', True)
         )
 
 

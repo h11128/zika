@@ -17,14 +17,14 @@ class TestSharedRenderCoreIntegration:
         """Test conversion from PreviewParams to RenderOptions."""
         # Create test preview params
         layout = LayoutOptions(
-            rows=3, cols=2, auto_fill=True,
+            layout_rows=3, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         
         visual = VisualOptions(
@@ -43,18 +43,18 @@ class TestSharedRenderCoreIntegration:
         
         # Verify conversion
         assert isinstance(render_options, RenderOptions)
-        assert render_options.rows == 3
-        assert render_options.cols == 2
+        assert render_options.layout_rows == 3
+        assert render_options.layout_cols == 2
         assert render_options.card_size_cm == 5.5
         assert render_options.gap_cm == 0.5
         assert render_options.margin_cm == 1.0
         assert render_options.page_size == 'A4'
-        assert render_options.auto_fill is True
+        assert render_options.layout_auto_fill is True
 
         assert render_options.font_hanzi_pt == 48
         assert render_options.font_pinyin_pt == 18
         assert render_options.font_english_pt == 14
-        assert render_options.hanzi_font == 'SimHei'
+        assert render_options.hanzi_font_family == 'SimHei'
 
         assert render_options.background_color == '#ffffff'
     
@@ -77,14 +77,14 @@ class TestSharedRenderCoreIntegration:
         processed_cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
         
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         
         visual = VisualOptions(
@@ -129,14 +129,14 @@ class TestSharedRenderCoreIntegration:
         processed_cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
         
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         
         visual = VisualOptions(
@@ -147,7 +147,7 @@ class TestSharedRenderCoreIntegration:
         params = PreviewParams(layout=layout, typography=typography, visual=visual)
         
         # Mock legacy function
-        with patch('services.cache.create_page_preview_html') as mock_legacy:
+        with patch('services.cache_v2.create_page_preview_html') as mock_legacy:
             mock_legacy.return_value = '<html>legacy content</html>'
             
             # Create controller and test
@@ -173,14 +173,14 @@ class TestSharedRenderCoreIntegration:
         processed_cards = [{'hanzi': '你', 'pinyin': 'nǐ', 'english': 'you'}]
         
         layout = LayoutOptions(
-            rows=2, cols=2, auto_fill=True,
+            layout_rows=2, layout_cols=2, layout_auto_fill=True,
             card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
             page_size='A4'
         )
         
         typography = Typography(
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei'
+            hanzi_font_family='SimHei'
         )
         
         visual = VisualOptions(
@@ -191,7 +191,7 @@ class TestSharedRenderCoreIntegration:
         params = PreviewParams(layout=layout, typography=typography, visual=visual)
         
         # Mock legacy function
-        with patch('services.cache.create_page_preview_html') as mock_legacy:
+        with patch('services.cache_v2.create_page_preview_html') as mock_legacy:
             mock_legacy.return_value = '<html>legacy content</html>'
             
             # Create controller and test
@@ -222,10 +222,10 @@ class TestSharedRenderCoreIntegration:
         output_path = '/tmp/test.pdf'
 
         render_options = RenderOptions(
-            rows=2, cols=2, gap_cm=0.5, margin_cm=1.0,
-            card_size_cm=5.5, page_size='A4', auto_fill=True,
+            layout_rows=2, layout_cols=2, gap_cm=0.5, margin_cm=1.0,
+            card_size_cm=5.5, page_size='A4', layout_auto_fill=True,
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei',
+            hanzi_font_family='SimHei',
             background_color='#ffffff'
         )
         
@@ -264,10 +264,10 @@ class TestSharedRenderCoreIntegration:
         output_path = '/tmp/test.pdf'
 
         render_options = RenderOptions(
-            rows=2, cols=2, gap_cm=0.5, margin_cm=1.0,
-            card_size_cm=5.5, page_size='A4', auto_fill=True,
+            layout_rows=2, layout_cols=2, gap_cm=0.5, margin_cm=1.0,
+            card_size_cm=5.5, page_size='A4', layout_auto_fill=True,
             font_hanzi_pt=48, font_pinyin_pt=18, font_english_pt=14,
-            hanzi_font='SimHei',
+            hanzi_font_family='SimHei',
             background_color='#ffffff'
         )
         

@@ -105,32 +105,32 @@ class InvalidationService(InvalidationPort):
         # Preview cache invalidation
         preview_keys = ["preview_cache", "preview_html", "preview_params"]
         
-        self.add_rule("card_size", preview_keys, "Card size changed")
+        self.add_rule("card_size_cm", preview_keys, "Card size changed")
         self.add_rule("gap_cm", preview_keys, "Gap changed")
         self.add_rule("margin_cm", preview_keys, "Margin changed")
         self.add_rule("font_*", preview_keys, "Font settings changed")
         self.add_rule("page_size", preview_keys, "Page size changed")
-        self.add_rule("hanzi_font", preview_keys, "Font family changed")
+        self.add_rule("hanzi_font_family", preview_keys, "Font family changed")
         self.add_rule("background_color", preview_keys, "Background color changed")
-        self.add_rule("rows", preview_keys, "Layout rows changed")
-        self.add_rule("cols", preview_keys, "Layout columns changed")
-        self.add_rule("auto_fill", preview_keys, "Auto fill setting changed")
+        self.add_rule("layout_rows", preview_keys, "Layout rows changed")
+        self.add_rule("layout_cols", preview_keys, "Layout columns changed")
+        self.add_rule("layout_auto_fill", preview_keys, "Auto fill setting changed")
         self.add_rule("preview_mode", preview_keys, "Preview mode changed")
         self.add_rule("processed_cards", preview_keys, "Card content changed")
         
         # Export cache invalidation
         export_keys = ["export_cache", "export_data", "export_ready"]
         
-        self.add_rule("card_size", export_keys, "Card size changed")
+        self.add_rule("card_size_cm", export_keys, "Card size changed")
         self.add_rule("gap_cm", export_keys, "Gap changed")
         self.add_rule("margin_cm", export_keys, "Margin changed")
         self.add_rule("font_*", export_keys, "Font settings changed")
         self.add_rule("page_size", export_keys, "Page size changed")
-        self.add_rule("hanzi_font", export_keys, "Font family changed")
+        self.add_rule("hanzi_font_family", export_keys, "Font family changed")
         self.add_rule("background_color", export_keys, "Background color changed")
-        self.add_rule("rows", export_keys, "Layout rows changed")
-        self.add_rule("cols", export_keys, "Layout columns changed")
-        self.add_rule("auto_fill", export_keys, "Auto fill setting changed")
+        self.add_rule("layout_rows", export_keys, "Layout rows changed")
+        self.add_rule("layout_cols", export_keys, "Layout columns changed")
+        self.add_rule("layout_auto_fill", export_keys, "Auto fill setting changed")
         self.add_rule("processed_cards", export_keys, "Card content changed")
     
     def _key_matches_pattern(self, key: str, pattern: str) -> bool:

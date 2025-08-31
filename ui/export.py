@@ -76,18 +76,18 @@ def render_pdf_export_options(processed_cards: List[Dict[str, str]],
             try:
                 pdf_data = export_to_pdf(
                     processed_cards,
-                    card_size=config.get('card_size', 5.5),
-                    gap=config.get('gap', 0.5),
-                    margin=config.get('margin', 1.0),
-                    font_hanzi=config.get('font_hanzi', 48),
-                    font_pinyin=config.get('font_pinyin', 18),
-                    font_english=config.get('font_english', 14),
+                    card_size_cm=config.get('card_size_cm', 5.5),
+                    gap_cm=config.get('gap_cm', 0.5),
+                    margin_cm=config.get('margin_cm', 1.0),
+                    hanzi_font_size=config.get('hanzi_font_size', 48),
+                    pinyin_font_size=config.get('pinyin_font_size', 18),
+                    english_font_size=config.get('english_font_size', 14),
                     page_size=config.get('page_size', 'A4'),
-                    hanzi_font=config.get('hanzi_font', 'SimHei'),
+                    hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
                     background_color=config.get('background_color', '#ffffff'),
-                    rows=config.get('rows', 2),
-                    cols=config.get('cols', 3),
-                    auto_fill=config.get('auto_fill', True),
+                    layout_rows=config.get('layout_rows', 2),
+                    layout_cols=config.get('layout_cols', 3),
+                    layout_auto_fill=config.get('layout_auto_fill', True),
                     include_page_numbers=include_page_numbers,
                     optimize_for_print=optimize_for_print,
                     quality=pdf_quality
@@ -153,13 +153,13 @@ def render_pptx_export_options(processed_cards: List[Dict[str, str]],
             try:
                 pptx_data = export_to_pptx(
                     processed_cards,
-                    card_size=config.get('card_size', 5.5),
-                    gap=config.get('gap', 0.5),
-                    margin=config.get('margin', 1.0),
-                    font_hanzi=config.get('font_hanzi', 48),
-                    font_pinyin=config.get('font_pinyin', 18),
-                    font_english=config.get('font_english', 14),
-                    hanzi_font=config.get('hanzi_font', 'SimHei'),
+                    card_size_cm=config.get('card_size_cm', 5.5),
+                    gap_cm=config.get('gap_cm', 0.5),
+                    margin_cm=config.get('margin_cm', 1.0),
+                    hanzi_font_size=config.get('hanzi_font_size', 48),
+                    pinyin_font_size=config.get('pinyin_font_size', 18),
+                    english_font_size=config.get('english_font_size', 14),
+                    hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
                     background_color=config.get('background_color', '#ffffff'),
                     slide_layout=slide_layout,
                     include_title_slide=include_title_slide,
@@ -414,7 +414,7 @@ def record_export_history(format_type: str, card_count: int, filename: str) -> N
 
 def use_adapted_export() -> bool:
     """Check if adapted export should be used."""
-    return get_feature_flag('adapted_export', False)
+    return True
 
 
 def render_export_section_unified(processed_cards: List[Dict[str, str]],
@@ -476,18 +476,18 @@ def render_unified_pdf_export(ui, processed_cards: List[Dict[str, str]],
 
             # Create render options from config
             render_options = create_render_options_from_legacy(
-                card_size=config.get('card_size', 5.5),
-                gap=config.get('gap', 0.5),
-                margin=config.get('margin', 1.0),
-                font_hanzi=config.get('font_hanzi', 48),
-                font_pinyin=config.get('font_pinyin', 18),
-                font_english=config.get('font_english', 14),
+                card_size_cm=config.get('card_size_cm', 5.5),
+                gap_cm=config.get('gap_cm', 0.5),
+                margin_cm=config.get('margin_cm', 1.0),
+                hanzi_font_size=config.get('hanzi_font_size', 48),
+                pinyin_font_size=config.get('pinyin_font_size', 18),
+                english_font_size=config.get('english_font_size', 14),
                 page_size=config.get('page_size', 'A4'),
-                hanzi_font=config.get('hanzi_font', 'SimHei'),
+                hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
                 background_color=config.get('background_color', '#ffffff'),
-                rows=config.get('rows', 2),
-                cols=config.get('cols', 3),
-                auto_fill=config.get('auto_fill', True)
+                layout_rows=config.get('layout_rows', 2),
+                layout_cols=config.get('layout_cols', 3),
+                layout_auto_fill=config.get('layout_auto_fill', True)
             )
 
             # Render PDF using shared core
@@ -525,18 +525,18 @@ def render_unified_pptx_export(ui, processed_cards: List[Dict[str, str]],
 
             # Create render options from config
             render_options = create_render_options_from_legacy(
-                card_size=config.get('card_size', 5.5),
-                gap=config.get('gap', 0.5),
-                margin=config.get('margin', 1.0),
-                font_hanzi=config.get('font_hanzi', 48),
-                font_pinyin=config.get('font_pinyin', 18),
-                font_english=config.get('font_english', 14),
+                card_size_cm=config.get('card_size_cm', 5.5),
+                gap_cm=config.get('gap_cm', 0.5),
+                margin_cm=config.get('margin_cm', 1.0),
+                hanzi_font_size=config.get('hanzi_font_size', 48),
+                pinyin_font_size=config.get('pinyin_font_size', 18),
+                english_font_size=config.get('english_font_size', 14),
                 page_size=config.get('page_size', 'A4'),
-                hanzi_font=config.get('hanzi_font', 'SimHei'),
+                hanzi_font_family=config.get('hanzi_font_family', 'SimHei'),
                 background_color=config.get('background_color', '#ffffff'),
-                rows=config.get('rows', 2),
-                cols=config.get('cols', 3),
-                auto_fill=config.get('auto_fill', True)
+                layout_rows=config.get('layout_rows', 2),
+                layout_cols=config.get('layout_cols', 3),
+                layout_auto_fill=config.get('layout_auto_fill', True)
             )
 
             # Render PPTX using shared core

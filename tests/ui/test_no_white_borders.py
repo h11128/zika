@@ -33,13 +33,13 @@ def create_clean_color_interface_test():
         }
         
         .color-button {
-            width: 100%;
-            height: 40px;
+            width_cm: 100%;
+            height_cm: 40px;
             border-radius: 8px;
             border: 2px solid #ddd;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin: 2px 0;
+            margin_cm: 2px 0;
             display: block;
         }
         .color-button:hover {
@@ -56,8 +56,8 @@ def create_clean_color_interface_test():
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
-            width: 100% !important;
-            height: 44px !important;
+            width_cm: 100% !important;
+            height_cm: 44px !important;
             z-index: 10 !important;
             opacity: 0 !important;
             background: transparent !important;
@@ -68,22 +68,22 @@ def create_clean_color_interface_test():
         /* 确保颜色块容器有相对定位 */
         .color-container {
             position: relative !important;
-            width: 60px !important;
-            height: 44px !important;
+            width_cm: 60px !important;
+            height_cm: 44px !important;
             display: inline-block !important;
-            margin: 5px !important;
+            margin_cm: 5px !important;
         }
         
         .color-row {
             text-align: center;
-            margin: 10px 0;
+            margin_cm: 10px 0;
         }
         
         .test-section {
             background: white;
             padding: 20px;
             border-radius: 10px;
-            margin: 20px 0;
+            margin_cm: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         </style>
@@ -149,7 +149,7 @@ def create_clean_color_interface_test():
             </ul>
             
             <p><strong>当前选中颜色:</strong> <span id="current-color">#FF4444</span></p>
-            <div id="current-color-preview" style="width: 100px; height: 50px; background-color: #FF4444; border: 2px solid #333; margin: 10px 0; display: inline-block;"></div>
+            <div id="current-color-preview" style="width_cm: 100px; height_cm: 50px; background-color: #FF4444; border: 2px solid #333; margin_cm: 10px 0; display: inline-block;"></div>
         </div>
         
         <script>

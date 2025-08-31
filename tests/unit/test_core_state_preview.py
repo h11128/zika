@@ -28,7 +28,7 @@ class TestCoreStatePreview:
             mock_st.session_state.get.return_value = None  # No last_params set
 
             # Provide current params
-            current = {'card_size': 5.5}
+            current = {'card_size_cm': 5.5}
             result = check_params_changed(current)
 
             # Should return True on first run (no previous params)
@@ -43,12 +43,12 @@ class TestCoreStatePreview:
             mock_st.session_state = MagicMock()
             # Set the last_params attribute (used by _ss_get)
             mock_st.session_state.last_params = {
-                'card_size': 5.0,  # Previous
+                'card_size_cm': 5.0,  # Previous
                 'background_color': '#ffffff'
             }
 
             current = {
-                'card_size': 5.5,  # Current value
+                'card_size_cm': 5.5,  # Current value
                 'background_color': '#ffffff'
             }
 
@@ -64,9 +64,9 @@ class TestCoreStatePreview:
         with patch('core.state.st') as mock_st:
             # Mock session state with same previous params
             current_params = {
-                'card_size': 5.5,
+                'card_size_cm': 5.5,
                 'background_color': '#ffffff',
-                'font_hanzi': 48
+                'hanzi_font_size': 48
             }
 
             mock_st.session_state = MagicMock()
@@ -84,37 +84,37 @@ class TestCoreStatePreview:
         with patch('core.state.st') as mock_st:
             # Mock session state with all parameters using attributes (used by _ss_get/getattr)
             mock_st.session_state = MagicMock()
-            mock_st.session_state.hanzi_font = 'SimHei'
+            mock_st.session_state.hanzi_font_family = 'SimHei'
             mock_st.session_state.background_color = '#ffffff'
-            mock_st.session_state.rows = 2
-            mock_st.session_state.cols = 3
-            mock_st.session_state.auto_fill = True
+            mock_st.session_state.layout_rows = 2
+            mock_st.session_state.layout_cols = 3
+            mock_st.session_state.layout_auto_fill = True
 
             params = get_all_ui_params(
-                card_size=5.5,
-                gap=0.5,
-                margin=1.0,
+                card_size_cm=5.5,
+                gap_cm=0.5,
+                margin_cm=1.0,
                 page_size='A4',
-                font_hanzi=48,
-                font_pinyin=18,
-                font_english=14,
+                hanzi_font_size=48,
+                pinyin_font_size=18,
+                english_font_size=14,
                 processed_cards=[{'hanzi': '你', 'pinyin': 'ni3', 'english': 'you'}],
                 preview_mode='📄 完整页面'
             )
 
             # Should return all expected parameters
             expected_keys = [
-                'card_size', 'gap', 'margin', 'font_hanzi', 'font_pinyin',
-                'font_english', 'page_size', 'hanzi_font', 'background_color',
-                'rows', 'cols', 'auto_fill', 'total_cards', 'preview_mode'
+                'card_size_cm', 'gap_cm', 'margin_cm', 'hanzi_font_size', 'pinyin_font_size',
+                'english_font_size', 'page_size', 'hanzi_font_family', 'background_color',
+                'layout_rows', 'layout_cols', 'layout_auto_fill', 'total_cards', 'preview_mode'
             ]
 
             for key in expected_keys:
                 assert key in params
 
             # Check specific values
-            assert params['card_size'] == 5.5
-            assert params['font_hanzi'] == 48
+            assert params['card_size_cm'] == 5.5
+            assert params['hanzi_font_size'] == 48
             assert params['background_color'] == '#ffffff'
             assert params['total_cards'] == 1
             assert params['preview_mode'] == '📄 完整页面'
@@ -128,13 +128,13 @@ class TestCoreStatePreview:
             mock_st.session_state = MagicMock()
 
             params = get_all_ui_params(
-                card_size=5.5,
-                gap=0.5,
-                margin=1.0,
+                card_size_cm=5.5,
+                gap_cm=0.5,
+                margin_cm=1.0,
                 page_size='A4',
-                font_hanzi=48,
-                font_pinyin=18,
-                font_english=14,
+                hanzi_font_size=48,
+                pinyin_font_size=18,
+                english_font_size=14,
                 processed_cards=[],
                 preview_mode=None
             )
@@ -143,7 +143,7 @@ class TestCoreStatePreview:
             assert isinstance(params, dict)
             # Check that totals derived are reasonable
             assert params['total_cards'] == 0
-            assert 'rows' in params and 'cols' in params and 'auto_fill' in params
+            assert 'layout_rows' in params and 'layout_cols' in params and 'layout_auto_fill' in params
 
     def test_set_current_page(self):
         """Test setting current page."""
@@ -281,7 +281,7 @@ class TestCoreStatePreview:
             mock_st.session_state = MagicMock()
 
             # Test that last_params is updated after check
-            current_params = {'card_size': 5.5, 'background_color': '#ffffff'}
+            current_params = {'card_size_cm': 5.5, 'background_color': '#ffffff'}
             mock_st.session_state.get.return_value = None  # First time
 
             result = check_params_changed(current_params)
@@ -302,16 +302,16 @@ class TestCoreStatePreview:
 
             # Previous params with different font sizes
             mock_st.session_state.get.return_value = {
-                'font_hanzi': 48,
-                'font_pinyin': 18,
-                'font_english': 14
+                'hanzi_font_size': 48,
+                'pinyin_font_size': 18,
+                'english_font_size': 14
             }
 
             # Current params with changed font sizes
             current = {
-                'font_hanzi': 26,  # Changed
-                'font_pinyin': 12,  # Changed
-                'font_english': 14  # Same
+                'hanzi_font_size': 26,  # Changed
+                'pinyin_font_size': 12,  # Changed
+                'english_font_size': 14  # Same
             }
 
             result = check_params_changed(current)

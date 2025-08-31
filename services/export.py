@@ -27,18 +27,18 @@ def export_cards(cards: List[Dict[str, str]], format_type: str, **options) -> by
 
             # Convert legacy options to RenderOptions
             render_options = create_render_options_from_legacy(
-                card_size=options.get('card_size', DEFAULT_CARD_SIZE),
-                gap=options.get('gap', DEFAULT_GAP),
-                margin=options.get('margin', DEFAULT_MARGIN),
-                font_hanzi=options.get('font_hanzi', DEFAULT_FONT_HANZI),
-                font_pinyin=options.get('font_pinyin', DEFAULT_FONT_PINYIN),
-                font_english=options.get('font_english', DEFAULT_FONT_ENGLISH),
+                card_size_cm=options.get('card_size_cm', DEFAULT_CARD_SIZE),
+                gap_cm=options.get('gap_cm', DEFAULT_GAP),
+                margin_cm=options.get('margin_cm', DEFAULT_MARGIN),
+                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_FONT_HANZI),
+                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_FONT_PINYIN),
+                english_font_size=options.get('english_font_size', DEFAULT_FONT_ENGLISH),
                 page_size=options.get('page_size', DEFAULT_PAGE_SIZE),
-                hanzi_font=options.get('hanzi_font', DEFAULT_HANZI_FONT),
+                hanzi_font_family=options.get('hanzi_font_family', DEFAULT_HANZI_FONT),
                 background_color=options.get('background_color', DEFAULT_BACKGROUND_COLOR),
-                rows=options.get('rows', DEFAULT_ROWS),
-                cols=options.get('cols', DEFAULT_COLS),
-                auto_fill=options.get('auto_fill', DEFAULT_AUTO_FILL)
+                layout_rows=options.get('layout_rows', DEFAULT_ROWS),
+                layout_cols=options.get('layout_cols', DEFAULT_COLS),
+                layout_auto_fill=options.get('layout_auto_fill', DEFAULT_AUTO_FILL)
             )
 
             # Use unified rendering
@@ -60,36 +60,36 @@ def export_cards(cards: List[Dict[str, str]], format_type: str, **options) -> by
         if format_type == 'pptx':
             generator = PPTXCardGenerator(
                 page_size=options.get('page_size', DEFAULT_PAGE_SIZE),
-                card_size_cm=options.get('card_size', DEFAULT_CARD_SIZE),
-                gap_cm=options.get('gap', DEFAULT_GAP),
-                margin_cm=options.get('margin', DEFAULT_MARGIN),
-                rows=options.get('rows', DEFAULT_ROWS),
-                cols=options.get('cols', DEFAULT_COLS),
-                auto_fill=options.get('auto_fill', DEFAULT_AUTO_FILL)
+                card_size_cm=options.get('card_size_cm', DEFAULT_CARD_SIZE),
+                gap_cm=options.get('gap_cm', DEFAULT_GAP),
+                margin_cm=options.get('margin_cm', DEFAULT_MARGIN),
+                layout_rows=options.get('layout_rows', DEFAULT_ROWS),
+                layout_cols=options.get('layout_cols', DEFAULT_COLS),
+                layout_auto_fill=options.get('layout_auto_fill', DEFAULT_AUTO_FILL)
             )
             success = generator.generate_pptx(
                 cards, tmp_file_path,
-                font_hanzi=options.get('font_hanzi', DEFAULT_FONT_HANZI),
-                font_pinyin=options.get('font_pinyin', DEFAULT_FONT_PINYIN),
-                font_english=options.get('font_english', DEFAULT_FONT_ENGLISH),
-                hanzi_font=options.get('hanzi_font', DEFAULT_HANZI_FONT),
+                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_FONT_HANZI),
+                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_FONT_PINYIN),
+                english_font_size=options.get('english_font_size', DEFAULT_FONT_ENGLISH),
+                hanzi_font_family=options.get('hanzi_font_family', DEFAULT_HANZI_FONT),
                 background_color=options.get('background_color', DEFAULT_BACKGROUND_COLOR)
             )
         elif format_type == 'pdf':
             generator = PDFCardGenerator(
                 page_size=options.get('page_size', DEFAULT_PAGE_SIZE),
-                card_size_cm=options.get('card_size', DEFAULT_CARD_SIZE),
-                gap_cm=options.get('gap', DEFAULT_GAP),
-                margin_cm=options.get('margin', DEFAULT_MARGIN),
-                rows=options.get('rows', DEFAULT_ROWS),
-                cols=options.get('cols', DEFAULT_COLS),
-                auto_fill=options.get('auto_fill', DEFAULT_AUTO_FILL)
+                card_size_cm=options.get('card_size_cm', DEFAULT_CARD_SIZE),
+                gap_cm=options.get('gap_cm', DEFAULT_GAP),
+                margin_cm=options.get('margin_cm', DEFAULT_MARGIN),
+                layout_rows=options.get('layout_rows', DEFAULT_ROWS),
+                layout_cols=options.get('layout_cols', DEFAULT_COLS),
+                layout_auto_fill=options.get('layout_auto_fill', DEFAULT_AUTO_FILL)
             )
             success = generator.generate_pdf(
                 cards, tmp_file_path,
-                font_hanzi=options.get('font_hanzi', DEFAULT_FONT_HANZI),
-                font_pinyin=options.get('font_pinyin', DEFAULT_FONT_PINYIN),
-                font_english=options.get('font_english', DEFAULT_FONT_ENGLISH)
+                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_FONT_HANZI),
+                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_FONT_PINYIN),
+                english_font_size=options.get('english_font_size', DEFAULT_FONT_ENGLISH)
             )
         else:
             raise ValueError(f"Unsupported format: {format_type}")

@@ -25,7 +25,7 @@ if ROOT not in sys.path:
 
 from services.processing import parse_input_text, auto_segment_text, generate_missing_data
 from services.export import export_cards
-from services.cache import create_page_preview_html, create_simple_grid_html
+from services.cache_v2 import create_page_preview_html, create_simple_grid_html
 from src.dict_utils import create_default_dict
 from src.pinyin_utils import hanzi_to_pinyin
 from core.constants import DEFAULT_PAGE_SIZE, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN
@@ -81,9 +81,9 @@ class TestEndToEndTextInputWorkflow:
         pptx_content = export_cards(
             processed_cards, 'pptx',
             page_size=DEFAULT_PAGE_SIZE,
-            card_size=DEFAULT_CARD_SIZE,
-            gap=DEFAULT_GAP,
-            margin=DEFAULT_MARGIN
+            card_size_cm=DEFAULT_CARD_SIZE,
+            gap_cm=DEFAULT_GAP,
+            margin_cm=DEFAULT_MARGIN
         )
         
         assert isinstance(pptx_content, (bytes, bytearray))
@@ -93,9 +93,9 @@ class TestEndToEndTextInputWorkflow:
         pdf_content = export_cards(
             processed_cards, 'pdf',
             page_size=DEFAULT_PAGE_SIZE,
-            card_size=DEFAULT_CARD_SIZE,
-            gap=DEFAULT_GAP,
-            margin=DEFAULT_MARGIN
+            card_size_cm=DEFAULT_CARD_SIZE,
+            gap_cm=DEFAULT_GAP,
+            margin_cm=DEFAULT_MARGIN
         )
         
         assert isinstance(pdf_content, (bytes, bytearray))
@@ -112,7 +112,7 @@ class TestEndToEndTextInputWorkflow:
         # Step 2: Generate simple grid preview
         simple_html = create_simple_grid_html(
             processed_cards, 
-            hanzi_font='Microsoft YaHei',
+            hanzi_font_family='Microsoft YaHei',
             background_color='#E3F2FD'
         )
         
@@ -126,9 +126,9 @@ class TestEndToEndTextInputWorkflow:
         # Step 3: Generate page preview
         page_html = create_page_preview_html(
             processed_cards, page_num=0,
-            card_size=5.5, gap=0.5, margin=1.0,
-            font_hanzi=48, font_pinyin=18, font_english=14,
-            page_size='A4', hanzi_font='Microsoft YaHei',
+            card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+            page_size='A4', hanzi_font_family='Microsoft YaHei',
             background_color='#E3F2FD'
         )
         
@@ -261,7 +261,7 @@ class TestEndToEndSegmentationWorkflow:
         # Step 4: Export to verify complete pipeline
         export_content = export_cards(
             processed_cards, 'pptx',
-            page_size='A4', card_size=5.5, gap=0.5, margin=1.0
+            page_size='A4', card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0
         )
         
         assert isinstance(export_content, (bytes, bytearray))

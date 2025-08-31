@@ -36,31 +36,31 @@ def test_font_and_color_features():
     test_combinations = [
         {
             'name': 'Default Style',
-            'hanzi_font': 'Microsoft YaHei',
+            'hanzi_font_family': 'Microsoft YaHei',
             'background_color': '#FFFFFF',
             'description': 'Default white background with Microsoft YaHei font'
         },
         {
             'name': 'Light Blue Background',
-            'hanzi_font': 'Microsoft YaHei',
+            'hanzi_font_family': 'Microsoft YaHei',
             'background_color': '#E3F2FD',
             'description': 'Light blue background with Microsoft YaHei font'
         },
         {
             'name': 'SimSun Font',
-            'hanzi_font': 'SimSun',
+            'hanzi_font_family': 'SimSun',
             'background_color': '#FFFFFF',
             'description': 'White background with SimSun font (traditional style)'
         },
         {
             'name': 'KaiTi Font with Light Green',
-            'hanzi_font': 'KaiTi',
+            'hanzi_font_family': 'KaiTi',
             'background_color': '#E8F5E8',
             'description': 'Light green background with KaiTi font (calligraphy style)'
         },
         {
             'name': 'Light Yellow Background',
-            'hanzi_font': 'SimHei',
+            'hanzi_font_family': 'SimHei',
             'background_color': '#FFF9C4',
             'description': 'Light yellow background with SimHei font (bold style)'
         }
@@ -72,7 +72,7 @@ def test_font_and_color_features():
     for i, combo in enumerate(test_combinations, 1):
         print(f"\n--- Test {i}: {combo['name']} ---")
         print(f"Description: {combo['description']}")
-        print(f"Font: {combo['hanzi_font']}")
+        print(f"Font: {combo['hanzi_font_family']}")
         print(f"Background: {combo['background_color']}")
         
         try:
@@ -95,10 +95,10 @@ def test_font_and_color_features():
             success = generator.generate_pptx(
                 test_cards, 
                 output_file,
-                font_hanzi=48,
-                font_pinyin=18,
-                font_english=14,
-                hanzi_font=combo['hanzi_font'],
+                hanzi_font_size=48,
+                pinyin_font_size=18,
+                english_font_size=14,
+                hanzi_font_family=combo['hanzi_font_family'],
                 background_color=combo['background_color']
             )
             
@@ -133,13 +133,13 @@ def test_web_ui_integration():
     # Test export options with new features
     export_options = {
         'page_size': 'A4',
-        'card_size': 5.5,
-        'gap': 0.5,
-        'margin': 1.0,
-        'font_hanzi': 48,
-        'font_pinyin': 18,
-        'font_english': 14,
-        'hanzi_font': 'KaiTi',
+        'card_size_cm': 5.5,
+        'gap_cm': 0.5,
+        'margin_cm': 1.0,
+        'hanzi_font_size': 48,
+        'pinyin_font_size': 18,
+        'english_font_size': 14,
+        'hanzi_font_family': 'KaiTi',
         'background_color': '#F0F8FF'  # Alice Blue
     }
     

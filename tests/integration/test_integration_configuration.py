@@ -27,7 +27,7 @@ if ROOT not in sys.path:
 
 from services.processing import parse_input_text, generate_missing_data
 from services.export import export_cards
-from services.cache import create_page_preview_html, create_simple_grid_html
+from services.cache_v2 import create_page_preview_html, create_simple_grid_html
 from src.dict_utils import create_default_dict, ChineseDict
 from core.constants import (
     DEFAULT_PAGE_SIZE, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
@@ -150,14 +150,14 @@ class TestFontAndLayoutConfigurations:
         for font in HANZI_FONT_OPTIONS:
             # Test in preview generation
             html = create_simple_grid_html(
-                self.sample_cards, hanzi_font=font
+                self.sample_cards, hanzi_font_family=font
             )
             assert isinstance(html, str)
             assert font in html or 'font-family' in html
             
             # Test in export
             content = export_cards(
-                self.sample_cards, 'pptx', hanzi_font=font
+                self.sample_cards, 'pptx', hanzi_font_family=font
             )
             assert isinstance(content, (bytes, bytearray))
             assert len(content) > 1000
@@ -180,43 +180,43 @@ class TestFontAndLayoutConfigurations:
     def test_layout_configuration_matrix(self):
         """Test various layout configuration combinations."""
         layout_configs = [
-            {'rows': 2, 'cols': 2, 'card_size': 4.0},
-            {'rows': 3, 'cols': 3, 'card_size': 5.5},
-            {'rows': 4, 'cols': 3, 'card_size': 3.5},
-            {'rows': 2, 'cols': 4, 'card_size': 4.5},
+            {'layout_rows': 2, 'layout_cols': 2, 'card_size_cm': 4.0},
+            {'layout_rows': 3, 'layout_cols': 3, 'card_size_cm': 5.5},
+            {'layout_rows': 4, 'layout_cols': 3, 'card_size_cm': 3.5},
+            {'layout_rows': 2, 'layout_cols': 4, 'card_size_cm': 4.5},
         ]
         
         for config in layout_configs:
             # Test preview generation
             html = create_page_preview_html(
                 self.sample_cards, page_num=0,
-                card_size=config['card_size'], gap=0.5, margin=1.0,
-                font_hanzi=48, font_pinyin=18, font_english=14,
-                rows=config['rows'], cols=config['cols']
+                card_size_cm=config['card_size_cm'], gap_cm=0.5, margin_cm=1.0,
+                hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+                layout_rows=config['layout_rows'], layout_cols=config['layout_cols']
             )
             assert isinstance(html, str)
             
             # Test export
             content = export_cards(
                 self.sample_cards, 'pptx',
-                card_size=config['card_size'],
-                rows=config['rows'], cols=config['cols']
+                card_size_cm=config['card_size_cm'],
+                layout_rows=config['layout_rows'], layout_cols=config['layout_cols']
             )
             assert isinstance(content, (bytes, bytearray))
     
     def test_font_size_configuration_ranges(self):
         """Test font size configuration ranges."""
         font_size_configs = [
-            {'font_hanzi': 24, 'font_pinyin': 12, 'font_english': 10},  # Small
-            {'font_hanzi': 48, 'font_pinyin': 18, 'font_english': 14},  # Default
-            {'font_hanzi': 72, 'font_pinyin': 36, 'font_english': 24},  # Large
+            {'hanzi_font_size': 24, 'pinyin_font_size': 12, 'english_font_size': 10},  # Small
+            {'hanzi_font_size': 48, 'pinyin_font_size': 18, 'english_font_size': 14},  # Default
+            {'hanzi_font_size': 72, 'pinyin_font_size': 36, 'english_font_size': 24},  # Large
         ]
         
         for config in font_size_configs:
             # Test preview
             html = create_page_preview_html(
                 self.sample_cards, page_num=0,
-                card_size=5.5, gap=0.5, margin=1.0,
+                card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
                 **config
             )
             assert isinstance(html, str)
@@ -259,15 +259,15 @@ class TestExportFormatConfigurations:
     def test_margin_and_spacing_configurations(self):
         """Test margin and spacing configurations."""
         spacing_configs = [
-            {'gap': 0.0, 'margin': 0.5},    # Minimal spacing
-            {'gap': 0.5, 'margin': 1.0},    # Default spacing
-            {'gap': 1.0, 'margin': 2.0},    # Large spacing
+            {'gap_cm': 0.0, 'margin_cm': 0.5},    # Minimal spacing
+            {'gap_cm': 0.5, 'margin_cm': 1.0},    # Default spacing
+            {'gap_cm': 1.0, 'margin_cm': 2.0},    # Large spacing
         ]
         
         for config in spacing_configs:
             content = export_cards(
                 self.sample_cards, 'pptx',
-                card_size=5.0, **config
+                card_size_cm=5.0, **config
             )
             assert isinstance(content, (bytes, bytearray))
             assert len(content) > 1000
@@ -276,13 +276,13 @@ class TestExportFormatConfigurations:
         """Test auto-fill configuration options."""
         # Test with auto-fill enabled
         content_auto = export_cards(
-            self.sample_cards, 'pptx', auto_fill=True
+            self.sample_cards, 'pptx', layout_auto_fill=True
         )
         assert isinstance(content_auto, (bytes, bytearray))
         
         # Test with auto-fill disabled
         content_no_auto = export_cards(
-            self.sample_cards, 'pptx', auto_fill=False
+            self.sample_cards, 'pptx', layout_auto_fill=False
         )
         assert isinstance(content_no_auto, (bytes, bytearray))
         
@@ -381,11 +381,11 @@ class TestCrossPlatformCompatibility:
         for font in platform_fonts:
             # Should not crash even if font is not available
             try:
-                html = create_simple_grid_html(cards, hanzi_font=font)
+                html = create_simple_grid_html(cards, hanzi_font_family=font)
                 assert isinstance(html, str)
                 assert font in html
                 
-                content = export_cards(cards, 'pptx', hanzi_font=font)
+                content = export_cards(cards, 'pptx', hanzi_font_family=font)
                 assert isinstance(content, (bytes, bytearray))
             except Exception as e:
                 # Font might not be available, but shouldn't crash the system
@@ -424,8 +424,8 @@ class TestDeploymentConfigurations:
         # Generate previews
         simple_html = create_simple_grid_html(processed_cards)
         page_html = create_page_preview_html(
-            processed_cards, page_num=0, card_size=5.5, gap=0.5, margin=1.0,
-            font_hanzi=48, font_pinyin=18, font_english=14
+            processed_cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+            hanzi_font_size=48, pinyin_font_size=18, english_font_size=14
         )
         
         # Export both formats

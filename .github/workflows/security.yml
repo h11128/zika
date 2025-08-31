@@ -1,0 +1,293 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety bandit semgrep
+    
+    - name: Run Safety (Python dependency vulnerability scanner)
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check --short-report
+      continue-on-error: true
+    
+    - name: Run Bandit (Python security linter)
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . -ll
+      continue-on-error: true
+    
+    - name: Run Semgrep (Static analysis security scanner)
+      run: |
+        semgrep --config=auto --json --output=semgrep-report.json . || true
+        semgrep --config=auto --error .
+      continue-on-error: true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+          semgrep-report.json
+    
+    - name: Comment PR with security summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          let comment = '## 🔒 Security Scan Results\n\n';
+          
+          // Check if reports exist and add summaries
+          try {
+            if (fs.existsSync('safety-report.json')) {
+              const safety = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+              const vulnCount = safety.vulnerabilities ? safety.vulnerabilities.length : 0;
+              comment += `**Safety (Dependencies):** ${vulnCount} vulnerabilities found\n`;
+            }
+          } catch (e) {
+            comment += '**Safety (Dependencies):** Scan completed\n';
+          }
+          
+          try {
+            if (fs.existsSync('bandit-report.json')) {
+              const bandit = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+              const issueCount = bandit.results ? bandit.results.length : 0;
+              comment += `**Bandit (Code Security):** ${issueCount} issues found\n`;
+            }
+          } catch (e) {
+            comment += '**Bandit (Code Security):** Scan completed\n';
+          }
+          
+          try {
+            if (fs.existsSync('semgrep-report.json')) {
+              const semgrep = JSON.parse(fs.readFileSync('semgrep-report.json', 'utf8'));
+              const findingCount = semgrep.results ? semgrep.results.length : 0;
+              comment += `**Semgrep (Static Analysis):** ${findingCount} findings\n`;
+            }
+          } catch (e) {
+            comment += '**Semgrep (Static Analysis):** Scan completed\n';
+          }
+          
+          comment += '\n📊 Detailed reports are available in the workflow artifacts.';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  license-scan:
+    name: License Compliance Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pip-licenses
+    
+    - name: Check licenses
+      run: |
+        pip-licenses --format=json --output-file=licenses.json
+        pip-licenses --format=markdown --output-file=licenses.md
+        
+        # Check for problematic licenses
+        pip-licenses --format=plain | grep -E "(GPL|AGPL|LGPL)" || echo "No copyleft licenses found"
+    
+    - name: Upload license report
+      uses: actions/upload-artifact@v3
+      with:
+        name: license-report
+        path: |
+          licenses.json
+          licenses.md
+
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better secret detection
+    
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  security-test:
+    name: Security Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+    
+    - name: Run security tests
+      run: |
+        pytest tests/unit/test_security.py -v --cov=services.security --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: security
+        name: security-coverage
+
+  docker-security:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        if [ -f Dockerfile ]; then
+          docker build -t zika-app:latest .
+        else
+          echo "No Dockerfile found, skipping Docker security scan"
+          exit 0
+        fi
+    
+    - name: Run Trivy vulnerability scanner
+      if: hashFiles('Dockerfile') != ''
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'zika-app:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      if: hashFiles('Dockerfile') != ''
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  security-policy-check:
+    name: Security Policy Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Check for security policy
+      run: |
+        if [ ! -f SECURITY.md ]; then
+          echo "⚠️ SECURITY.md file not found. Creating template..."
+          cat > SECURITY.md << 'EOF'
+        # Security Policy
+        
+        ## Supported Versions
+        
+        | Version | Supported          |
+        | ------- | ------------------ |
+        | 1.x.x   | :white_check_mark: |
+        
+        ## Reporting a Vulnerability
+        
+        Please report security vulnerabilities to [security@example.com](mailto:security@example.com).
+        
+        We will respond within 48 hours and provide updates every 7 days until resolved.
+        EOF
+        fi
+        
+        echo "✅ Security policy check completed"
+    
+    - name: Validate security configuration
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        from services.security import get_security_status
+        
+        status = get_security_status()
+        print('🔒 Security Status:')
+        for key, value in status.items():
+            print(f'  {key}: {value}')
+        
+        # Validate critical security features
+        assert status['csp_enabled'] == True, 'CSP must be enabled'
+        assert status['rate_limiting_enabled'] == True, 'Rate limiting must be enabled'
+        assert status['xss_protection_enabled'] == True, 'XSS protection must be enabled'
+        
+        print('✅ All security validations passed')
+        "
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, license-scan, secrets-scan, security-test, security-policy-check]
+    if: always()
+    
+    steps:
+    - name: Generate security summary
+      run: |
+        echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Dependency Scan | ${{ needs.dependency-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| License Scan | ${{ needs.license-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Secrets Detection | ${{ needs.secrets-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Tests | ${{ needs.security-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Policy | ${{ needs.security-policy-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Detailed reports are available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY

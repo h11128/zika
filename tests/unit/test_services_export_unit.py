@@ -23,10 +23,10 @@ def test_export_cards_pptx_and_pdf_success(monkeypatch, tmp_path):
     monkeypatch.setattr(se, "PPTXCardGenerator", lambda **opts: DummyGen(True))
     monkeypatch.setattr(se, "PDFCardGenerator", lambda **opts: DummyGen(True))
 
-    data = se.export_cards(cards, "pptx", page_size="A4", rows=2, cols=2, auto_fill=True)
+    data = se.export_cards(cards, "pptx", page_size="A4", layout_rows=2, layout_cols=2, layout_auto_fill=True)
     assert isinstance(data, (bytes, bytearray))
 
-    data = se.export_cards(cards, "pdf", page_size="A4", rows=2, cols=2, auto_fill=False)
+    data = se.export_cards(cards, "pdf", page_size="A4", layout_rows=2, layout_cols=2, layout_auto_fill=False)
     assert isinstance(data, (bytes, bytearray))
 
 

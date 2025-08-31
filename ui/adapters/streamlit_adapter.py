@@ -10,13 +10,13 @@ from typing import Any, List, Dict, Optional, Union, Callable
 from dataclasses import dataclass
 
 from ui.ports import (
-    UIAdapter, InputsAdapter, PreviewAdapter, LayoutAdapter,
+    UIAdapter, UIInputsPort, UIPreviewPort, UILayoutPort, UINotificationPort, UIRefreshScheduler,
     ComponentConfig, NotificationLevel
 )
 
 
 @dataclass
-class StreamlitInputsAdapter(InputsAdapter):
+class StreamlitInputsAdapter(UIInputsPort):
     """Streamlit implementation of inputs adapter."""
     
     def text_input(self, config: ComponentConfig, value: str = "", **kwargs) -> str:
@@ -113,12 +113,12 @@ class StreamlitInputsAdapter(InputsAdapter):
 
 
 @dataclass
-class StreamlitPreviewAdapter(PreviewAdapter):
+class StreamlitPreviewAdapter(UIPreviewPort):
     """Streamlit implementation of preview adapter."""
     
-    def render_html(self, html_content: str, height: int = 600, **kwargs) -> None:
+    def render_html(self, html_content: str, height_cm: int = 600, **kwargs) -> None:
         """Render HTML content using Streamlit."""
-        st.components.v1.html(html_content, height=height, **kwargs)
+        st.components.v1.html(html_content, height_cm=height, **kwargs)
     
     def render_image(self, image_data: Any, caption: str = "", **kwargs) -> None:
         """Render an image using Streamlit."""
@@ -137,9 +137,21 @@ class StreamlitPreviewAdapter(PreviewAdapter):
             **kwargs
         )
 
+    def container(self):
+        """Create a container using Streamlit."""
+        return st.container()
+
+    def empty_placeholder(self):
+        """Create an empty placeholder using Streamlit."""
+        return st.empty()
+
+    def html_component(self, html: str, height_cm: int = None, width_cm: int = None, scrolling: bool = False):
+        """Render HTML component using Streamlit."""
+        return st.components.v1.html(html, height_cm=height, width_cm=width, scrolling=scrolling)
+
 
 @dataclass
-class StreamlitLayoutAdapter(LayoutAdapter):
+class StreamlitLayoutAdapter(UILayoutPort):
     """Streamlit implementation of layout adapter."""
     
     def columns(self, ratios: List[Union[int, float]]) -> List[Any]:
@@ -163,29 +175,101 @@ class StreamlitLayoutAdapter(LayoutAdapter):
         return st.sidebar
 
 
+@dataclass
+class StreamlitNotificationAdapter(UINotificationPort):
+    """Streamlit implementation of notification adapter."""
+
+    def show_message(self, message: str, level: NotificationLevel = NotificationLevel.INFO) -> None:
+        """Show a message using Streamlit."""
+        if level == NotificationLevel.SUCCESS:
+            st.success(message)
+        elif level == NotificationLevel.WARNING:
+            st.warning(message)
+        elif level == NotificationLevel.ERROR:
+            st.error(message)
+        else:
+            st.info(message)
+
+    def show_success(self, message: str) -> None:
+        """Show success message."""
+        st.success(message)
+
+    def show_warning(self, message: str) -> None:
+        """Show warning message."""
+        st.warning(message)
+
+    def show_error(self, message: str) -> None:
+        """Show error message."""
+        st.error(message)
+
+    def show_progress(self, progress: float, text: str = "") -> None:
+        """Show progress bar."""
+        st.progress(progress, text=text)
+
+    def show_spinner(self, text: str = "Loading..."):
+        """Show spinner context manager."""
+        return st.spinner(text)
+
+
+@dataclass
+class StreamlitRefreshAdapter(UIRefreshScheduler):
+    """Streamlit implementation of refresh scheduler."""
+
+    def schedule_refresh(self, debounce_ms: int = 0) -> None:
+        """Schedule a refresh using Streamlit."""
+        # For now, immediate rerun - could add debouncing later
+        st.rerun()
+
+    def invalidate_cache(self) -> None:
+        """Invalidate cache using Streamlit."""
+        # Clear all cached functions
+        st.cache_data.clear()
+        st.cache_resource.clear()
+
+    def schedule_rerun(self) -> None:
+        """Schedule a rerun using Streamlit."""
+        st.rerun()
+
+
 class StreamlitAdapter(UIAdapter):
     """Streamlit implementation of UI adapter."""
-    
+
     def __init__(self):
         self._inputs = StreamlitInputsAdapter()
         self._preview = StreamlitPreviewAdapter()
         self._layout = StreamlitLayoutAdapter()
+        self._notifications = StreamlitNotificationAdapter()
+        self._refresh = StreamlitRefreshAdapter()
     
     @property
-    def inputs(self) -> InputsAdapter:
+    def inputs(self) -> UIInputsPort:
         """Get the inputs adapter."""
         return self._inputs
-    
+
     @property
-    def preview(self) -> PreviewAdapter:
+    def preview(self) -> UIPreviewPort:
         """Get the preview adapter."""
         return self._preview
-    
+
     @property
-    def layout(self) -> LayoutAdapter:
+    def layout(self) -> UILayoutPort:
         """Get the layout adapter."""
         return self._layout
-    
+
+    @property
+    def notifications(self) -> UINotificationPort:
+        """Get the notifications adapter."""
+        return self._notifications
+
+    @property
+    def refresh(self) -> UIRefreshScheduler:
+        """Get the refresh scheduler."""
+        return self._refresh
+
+    def subheader(self, text: str) -> None:
+        """Render a subheader using Streamlit."""
+        st.subheader(text)
+
     def notify(self, message: str, level: NotificationLevel = NotificationLevel.INFO) -> None:
         """Show a notification using Streamlit."""
         if level == NotificationLevel.SUCCESS:

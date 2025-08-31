@@ -75,7 +75,7 @@ docs/
   - `export_cards(cards, format, options) -> bytes`
   - 对 `layout_pptx/layout_pdf` 进行统一封装，隔离 UI 与导出实现
 
-- services.cache
+- services.cache_v2
   - `cached_create_page_preview_html(...)`
   - `cached_create_simple_grid_html(...)`
   - 集中 `st.cache_data`/`st.cache_resource` 策略，统一键构造
@@ -101,7 +101,7 @@ docs/
 - 页面配置（`st.set_page_config`）
 - 调用 `core.state.init_state()`
 - 基于布局顺序，调用 `ui.sections.*` 渲染各区块
-- 汇总状态，调用 `services.processing` 与 `services.cache` 执行计算与预览
+- 汇总状态，调用 `services.processing` 与 `services.cache_v2` 执行计算与预览
 - 不包含大块 UI 实现与复杂逻辑，长度控制在 ~150 行
 
 ## 五、迁移步骤（小步安全演进）
@@ -110,7 +110,7 @@ docs/
 
 - 新建 `core/constants.py`：预设颜色、字体、默认值
 - 新建 `services/cache.py`：迁移 `cached_create_page_preview_html`、`cached_create_simple_grid_html`
-- `web_ui.py` 改为 `from services.cache import ...`
+- `web_ui.py` 改为 `from services.cache_v2 import ...`
 
 ## 六.1、Cleanup Plan（清理计划）
 
