@@ -9,7 +9,6 @@ import pandas as pd
 from typing import List, Dict, Any
 from io import StringIO
 
-from core.feature_flags import get_feature_flag
 from services.processing import parse_input_text, auto_segment_text
 from ui.ports import UIAdapter, get_ui_adapter, ComponentConfig, NotificationLevel
 
@@ -135,96 +134,60 @@ def render_input_section() -> List[Dict[str, str]]:
             st.session_state.apply_segmentation = False
 
         # Create columns for text area and button
-        if get_feature_flag('adapted_inputs', True):
-            col_text, col_btn = adapter.layout.columns([4, 1])
-        else:
-            col_text, col_btn = st.columns([4, 1])
+        col_text, col_btn = adapter.layout.columns([4, 1])
 
         with col_text:
-            # Use adapter for text area if available
-            if get_feature_flag('adapted_inputs', True):
-                text_config = ComponentConfig(
-                    key="input_text",
-                    label="输入汉字（空格分隔）",
-                    help_text="输入汉字，用空格分隔。支持单字、词语和短句。"
-                )
-                # Note: adapter text_area might need additional parameters
-                text_value = adapter.inputs.text_area(
-                    text_config,
-                    value=st.session_state.get('input_text', ''),
-                    height_cm=150,
-                    placeholder="例如：你好 世界 学习 中文"
-                )
-                # Update session state with new value
-                st.session_state.input_text = text_value
+            # Use adapter for text area
+            text_config = ComponentConfig(
+                key="input_text",
+                label="输入汉字（空格分隔）",
+                help_text="输入汉字，用空格分隔。支持单字、词语和短句。"
+            )
+            # Note: adapter text_area might need additional parameters
+            text_value = adapter.inputs.text_area(
+                text_config,
+                value=st.session_state.get('input_text', ''),
+                height_cm=150,
+                placeholder="例如：你好 世界 学习 中文"
+            )
+            # Update session state with new value
+            st.session_state.input_text = text_value
 
-                adapter.markdown('<span data-testid="input-hanzi" style="display:none"></span>', unsafe_allow_html=True)
+            adapter.markdown('<span data-testid="input-hanzi" style="display:none"></span>', unsafe_allow_html=True)
 
-                # 智能分词选项
-                preserve_config = ComponentConfig(
-                    key="preserve_duplicates",
-                    label="保留重复词",
-                    help_text="勾选后智能分词将保留重复的词汇，不勾选则自动去重"
-                )
-                preserve_duplicates = adapter.inputs.checkbox(
-                    preserve_config,
-                    value=st.session_state.get('preserve_duplicates', False)
-                )
+            # 智能分词选项
+            preserve_config = ComponentConfig(
+                key="preserve_duplicates",
+                label="保留重复词",
+                help_text="勾选后智能分词将保留重复的词汇，不勾选则自动去重"
+            )
+            preserve_duplicates = adapter.inputs.checkbox(
+                preserve_config,
+                value=st.session_state.get('preserve_duplicates', False)
+            )
 
-                # Debug marker
-                adapter.markdown(
-                    f'<span data-testid="dbg-preserve-duplicates" style="display:none">{int(st.session_state.get("preserve_duplicates", False))}</span>',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.text_area(
-                    "输入汉字（空格分隔）",
-                    key="input_text",
-                    height_cm=150,
-                    placeholder="例如：你好 世界 学习 中文",
-                    help="输入汉字，用空格分隔。支持单字、词语和短句。"
-                )
-                st.markdown('<span data-testid="input-hanzi" style="display:none"></span>', unsafe_allow_html=True)
-
-                # 智能分词选项（提前渲染，确保在按钮触发的 rerun 前就完成状态绑定）
-                preserve_duplicates = st.checkbox(
-                    "保留重复词",
-                    key="preserve_duplicates",
-                    help="勾选后智能分词将保留重复的词汇，不勾选则自动去重"
-                )
-                # Debug marker to observe state in E2E without affecting layout
-                st.markdown(
-                    f'<span data-testid="dbg-preserve-duplicates" style="display:none">{int(st.session_state.get("preserve_duplicates", False))}</span>',
-                    unsafe_allow_html=True
-                )
+            # Debug marker
+            adapter.markdown(
+                f'<span data-testid="dbg-preserve-duplicates" style="display:none">{int(st.session_state.get("preserve_duplicates", False))}</span>',
+                unsafe_allow_html=True
+            )
 
         with col_btn:
-            # Use adapter for spacing and button if available
-            if get_feature_flag('adapted_inputs', True):
-                adapter.write("")  # Add some spacing
-                adapter.write("")  # Add some spacing
+            # Use adapter for spacing and button
+            adapter.write("")  # Add some spacing
+            adapter.write("")  # Add some spacing
 
-                segment_config = ComponentConfig(
-                    key="segment_btn",
-                    label="🔄 智能分词",
-                    help_text="对输入文本进行智能分词"
-                )
-                if adapter.inputs.button(segment_config, use_container_width=True):
-                    # Capture checkbox state at click time to avoid race conditions
-                    st.session_state.pending_preserve_duplicates = st.session_state.get('preserve_duplicates', False)
-                    # Trigger apply on next run; the apply step will read and persist the snapshot
-                    st.session_state.apply_segmentation = True
-                    adapter.rerun()
-            else:
-                st.write("")  # Add some spacing
-                st.write("")  # Add some spacing
-
-                if st.button("🔄 智能分词", use_container_width=True, help="对输入文本进行智能分词"):
-                    # Capture checkbox state at click time to avoid race conditions
-                    st.session_state.pending_preserve_duplicates = st.session_state.get('preserve_duplicates', False)
-                    # Trigger apply on next run; the apply step will read and persist the snapshot
-                    st.session_state.apply_segmentation = True
-                    st.rerun()
+            segment_config = ComponentConfig(
+                key="segment_btn",
+                label="🔄 智能分词",
+                help_text="对输入文本进行智能分词"
+            )
+            if adapter.inputs.button(segment_config, use_container_width=True):
+                # Capture checkbox state at click time to avoid race conditions
+                st.session_state.pending_preserve_duplicates = st.session_state.get('preserve_duplicates', False)
+                # Trigger apply on next run; the apply step will read and persist the snapshot
+                st.session_state.apply_segmentation = True
+                adapter.rerun()
 
         # Parse input text
         text_input = st.session_state.input_text
@@ -232,8 +195,14 @@ def render_input_section() -> List[Dict[str, str]]:
             cards = parse_input_text(text_input)
 
     else:  # CSV upload
-        st.markdown('<span data-testid="csv-upload" style="display:none"></span>', unsafe_allow_html=True)
-        uploaded_file = st.file_uploader("选择CSV文件", type=['csv'])
+        adapter.markdown('<span data-testid="csv-upload" style="display:none"></span>', unsafe_allow_html=True)
+
+        upload_config = ComponentConfig(
+            key="csv_upload",
+            label="选择CSV文件",
+            help_text="上传包含汉字的CSV文件"
+        )
+        uploaded_file = adapter.inputs.file_uploader(upload_config, type=['csv'])
         if uploaded_file is not None:
             try:
                 # Read CSV
@@ -243,7 +212,7 @@ def render_input_section() -> List[Dict[str, str]]:
                 # Validate columns
                 required_cols = ['hanzi']
                 if not all(col in df.columns for col in required_cols):
-                    st.error(f"CSV文件必须包含以下列: {', '.join(required_cols)}")
+                    adapter.notifications.show_error(f"CSV文件必须包含以下列: {', '.join(required_cols)}")
                     return []
 
                 # Convert to cards format
@@ -254,13 +223,13 @@ def render_input_section() -> List[Dict[str, str]]:
                         'english': str(row.get('english', ''))
                     })
 
-                st.success(f"成功读取 {len(cards)} 张卡片")
+                adapter.notifications.show_success(f"成功读取 {len(cards)} 张卡片")
 
             except Exception as e:
-                st.error(f"读取CSV文件时出错: {e}")
+                adapter.notifications.show_error(f"读取CSV文件时出错: {e}")
                 return []
         else:
-            st.info("请上传CSV文件")
+            adapter.notifications.show_info("请上传CSV文件")
 
     return cards
 
@@ -305,7 +274,7 @@ def render_manual_input_adapted(adapter: UIAdapter) -> List[Dict[str, str]]:
         label="输入中文文本（每行一个词或短语）",
         help_text="输入要制作卡片的中文文本，每行一个词或短语"
     )
-    input_text = adapter.inputs.text_area(input_config, value="", height_cm=200)
+    input_text = adapter.inputs.text_area(input_config, value="", height=200)
 
     # Processing options
     col1, col2 = adapter.layout.columns([1, 1])

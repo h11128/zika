@@ -11,7 +11,7 @@ from src.layout_pdf import PDFCardGenerator
 from core.constants import (
     DEFAULT_PAGE_SIZE, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
     DEFAULT_ROWS, DEFAULT_COLS, DEFAULT_AUTO_FILL,
-    DEFAULT_FONT_HANZI, DEFAULT_FONT_PINYIN, DEFAULT_FONT_ENGLISH,
+    DEFAULT_HANZI_FONT_SIZE, DEFAULT_PINYIN_FONT_SIZE, DEFAULT_ENGLISH_FONT_SIZE,
     DEFAULT_HANZI_FONT, DEFAULT_BACKGROUND_COLOR
 )
 
@@ -30,9 +30,9 @@ def export_cards(cards: List[Dict[str, str]], format_type: str, **options) -> by
                 card_size_cm=options.get('card_size_cm', DEFAULT_CARD_SIZE),
                 gap_cm=options.get('gap_cm', DEFAULT_GAP),
                 margin_cm=options.get('margin_cm', DEFAULT_MARGIN),
-                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_FONT_HANZI),
-                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_FONT_PINYIN),
-                english_font_size=options.get('english_font_size', DEFAULT_FONT_ENGLISH),
+                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_HANZI_FONT_SIZE),
+                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_PINYIN_FONT_SIZE),
+                english_font_size=options.get('english_font_size', DEFAULT_ENGLISH_FONT_SIZE),
                 page_size=options.get('page_size', DEFAULT_PAGE_SIZE),
                 hanzi_font_family=options.get('hanzi_font_family', DEFAULT_HANZI_FONT),
                 background_color=options.get('background_color', DEFAULT_BACKGROUND_COLOR),
@@ -69,9 +69,9 @@ def export_cards(cards: List[Dict[str, str]], format_type: str, **options) -> by
             )
             success = generator.generate_pptx(
                 cards, tmp_file_path,
-                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_FONT_HANZI),
-                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_FONT_PINYIN),
-                english_font_size=options.get('english_font_size', DEFAULT_FONT_ENGLISH),
+                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_HANZI_FONT_SIZE),
+                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_PINYIN_FONT_SIZE),
+                english_font_size=options.get('english_font_size', DEFAULT_ENGLISH_FONT_SIZE),
                 hanzi_font_family=options.get('hanzi_font_family', DEFAULT_HANZI_FONT),
                 background_color=options.get('background_color', DEFAULT_BACKGROUND_COLOR)
             )
@@ -87,9 +87,9 @@ def export_cards(cards: List[Dict[str, str]], format_type: str, **options) -> by
             )
             success = generator.generate_pdf(
                 cards, tmp_file_path,
-                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_FONT_HANZI),
-                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_FONT_PINYIN),
-                english_font_size=options.get('english_font_size', DEFAULT_FONT_ENGLISH)
+                hanzi_font_size=options.get('hanzi_font_size', DEFAULT_HANZI_FONT_SIZE),
+                pinyin_font_size=options.get('pinyin_font_size', DEFAULT_PINYIN_FONT_SIZE),
+                english_font_size=options.get('english_font_size', DEFAULT_ENGLISH_FONT_SIZE)
             )
         else:
             raise ValueError(f"Unsupported format: {format_type}")

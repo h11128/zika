@@ -8,7 +8,7 @@
 import re
 import pytest
 from services.cache_v2 import create_page_preview_html_v2
-from services.cache import create_simple_grid_html_immediate
+from services.cache_v2 import create_simple_grid_html_immediate
 from services.preview_types import LayoutOptions, Typography, VisualOptions
 
 # Helper function for v2 API compatibility

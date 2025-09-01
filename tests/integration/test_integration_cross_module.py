@@ -78,7 +78,7 @@ def create_simple_grid_html(cards, hanzi_font_family="SimSun", background_color=
 from src.dict_utils import create_default_dict
 from core.constants import (
     DEFAULT_PAGE_SIZE, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
-    DEFAULT_FONT_HANZI, DEFAULT_FONT_PINYIN, DEFAULT_FONT_ENGLISH,
+    DEFAULT_HANZI_FONT_SIZE, DEFAULT_PINYIN_FONT_SIZE, DEFAULT_ENGLISH_FONT_SIZE,
     DEFAULT_HANZI_FONT, DEFAULT_BACKGROUND_COLOR, PRESET_COLORS
 )
 
@@ -121,8 +121,8 @@ class TestServicesIntegration:
         page_html = create_page_preview_html(
             processed_cards, page_num=0,
             card_size_cm=DEFAULT_CARD_SIZE, gap_cm=DEFAULT_GAP, margin_cm=DEFAULT_MARGIN,
-            hanzi_font_size=DEFAULT_FONT_HANZI, pinyin_font_size=DEFAULT_FONT_PINYIN,
-            english_font_size=DEFAULT_FONT_ENGLISH, page_size=DEFAULT_PAGE_SIZE
+            hanzi_font_size=DEFAULT_HANZI_FONT_SIZE, pinyin_font_size=DEFAULT_PINYIN_FONT_SIZE,
+            english_font_size=DEFAULT_ENGLISH_FONT_SIZE, page_size=DEFAULT_PAGE_SIZE
         )
         
         assert page_html
@@ -144,9 +144,9 @@ class TestServicesIntegration:
             card_size_cm=DEFAULT_CARD_SIZE,
             gap_cm=DEFAULT_GAP,
             margin_cm=DEFAULT_MARGIN,
-            hanzi_font_size=DEFAULT_FONT_HANZI,
-            pinyin_font_size=DEFAULT_FONT_PINYIN,
-            english_font_size=DEFAULT_FONT_ENGLISH,
+            hanzi_font_size=DEFAULT_HANZI_FONT_SIZE,
+            pinyin_font_size=DEFAULT_PINYIN_FONT_SIZE,
+            english_font_size=DEFAULT_ENGLISH_FONT_SIZE,
             hanzi_font_family=DEFAULT_HANZI_FONT,
             background_color=DEFAULT_BACKGROUND_COLOR
         )
@@ -157,9 +157,9 @@ class TestServicesIntegration:
             card_size_cm=DEFAULT_CARD_SIZE,
             gap_cm=DEFAULT_GAP,
             margin_cm=DEFAULT_MARGIN,
-            hanzi_font_size=DEFAULT_FONT_HANZI,
-            pinyin_font_size=DEFAULT_FONT_PINYIN,
-            english_font_size=DEFAULT_FONT_ENGLISH
+            hanzi_font_size=DEFAULT_HANZI_FONT_SIZE,
+            pinyin_font_size=DEFAULT_PINYIN_FONT_SIZE,
+            english_font_size=DEFAULT_ENGLISH_FONT_SIZE
         )
         
         # Verify both exports work with processed data

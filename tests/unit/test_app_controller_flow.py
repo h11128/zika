@@ -112,7 +112,8 @@ def test_calculate_pagination_resets_when_out_of_range(monkeypatch):
     called = {"reset": False}
     monkeypatch.setattr(ac, "set_current_page", lambda p: called.__setitem__("reset", True))
 
-    cards_per_page, total_pages = ctrl.calculate_pagination([{}]*3, {"layout_rows": 1, "layout_cols": 2})
+    pagination_info = ctrl.calculate_pagination([{}]*3, {"layout_rows": 1, "layout_cols": 2})
+    cards_per_page, total_pages = pagination_info.cards_per_page, pagination_info.total_pages
     assert cards_per_page == 2 and total_pages == 2
     assert called["reset"] is True
 

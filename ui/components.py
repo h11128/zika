@@ -7,8 +7,10 @@ import streamlit as st
 from typing import List, Dict, Any
 
 from ui.ports import get_ui_adapter, ComponentConfig
+from ui.error_boundaries import with_error_boundary
 
 
+@with_error_boundary("page_navigation")
 def render_page_navigation(total_pages: int) -> None:
     """Render page navigation controls."""
     if total_pages <= 1:
@@ -35,7 +37,8 @@ def render_page_navigation(total_pages: int) -> None:
             st.rerun()
 
 
-def render_page_info(processed_cards: List[Dict[str, str]], 
+@with_error_boundary("page_info")
+def render_page_info(processed_cards: List[Dict[str, str]],
                     cards_per_page: int, total_pages: int) -> None:
     """Render page information."""
     adapter = get_ui_adapter()
@@ -50,6 +53,7 @@ def render_page_info(processed_cards: List[Dict[str, str]],
     adapter.markdown(f"*显示第 {start_idx + 1}-{end_idx} 张卡片，共 {len(processed_cards)} 张*")
 
 
+@with_error_boundary("color_palette")
 def render_color_palette(preset_colors: List[str], on_change=None) -> str:
     """
     Render color palette using working component.
@@ -112,6 +116,7 @@ def render_color_palette(preset_colors: List[str], on_change=None) -> str:
         return current
 
 
+@with_error_boundary("color_palette_legacy")
 def render_color_palette_legacy(preset_colors: List[str]) -> None:
     """
     Legacy wrapper for render_color_palette() with old behavior.
@@ -141,6 +146,7 @@ def render_color_palette_legacy(preset_colors: List[str]) -> None:
     render_color_palette(preset_colors, on_change=handle_color_change)
 
 
+@with_error_boundary("color_palette_state_service")
 def render_color_palette_with_state_service(preset_colors: List[str], state_service=None) -> str:
     """
     Render color palette integrated with state service.
@@ -177,6 +183,7 @@ def render_color_palette_with_state_service(preset_colors: List[str], state_serv
     return render_color_palette(preset_colors, on_change=handle_color_change)
 
 
+@with_error_boundary("preview_section")
 def render_preview_section(processed_cards: List[Dict[str, str]], preview_mode: str,
                           card_size_cm: float, gap_cm: float, margin_cm: float,
                           hanzi_font_size: int, pinyin_font_size: int, english_font_size: int,

@@ -408,6 +408,7 @@ def render_single_card_editor(card: Dict[str, str], card_index: int,
                 st.info("请刷新页面以重置卡片")
 
 
+@with_error_boundary("card_editor_adapted")
 def render_card_editor_adapted(adapter: UIAdapter, processed_cards: List[Dict[str, str]]) -> None:
     """Render card editor using UI adapter."""
     total_cards = len(processed_cards)
@@ -432,6 +433,7 @@ def render_card_editor_adapted(adapter: UIAdapter, processed_cards: List[Dict[st
         render_search_editor_adapted(adapter, processed_cards)
 
 
+@with_error_boundary("paginated_editor_adapted")
 def render_paginated_editor_adapted(adapter: UIAdapter, processed_cards: List[Dict[str, str]]) -> None:
     """Render paginated editor using UI adapter."""
     total_cards = len(processed_cards)
@@ -478,6 +480,7 @@ def render_paginated_editor_adapted(adapter: UIAdapter, processed_cards: List[Di
                 render_single_card_editor_adapted(adapter, card, start_idx + i, processed_cards)
 
 
+@with_error_boundary("search_editor_adapted")
 def render_search_editor_adapted(adapter: UIAdapter, processed_cards: List[Dict[str, str]]) -> None:
     """Render search editor using UI adapter."""
     # Search functionality
@@ -501,7 +504,8 @@ def render_search_editor_adapted(adapter: UIAdapter, processed_cards: List[Dict[
         )
 
 
-def render_single_card_editor_adapted(adapter: UIAdapter, card: Dict[str, str], 
+@with_error_boundary("single_card_editor_adapted")
+def render_single_card_editor_adapted(adapter: UIAdapter, card: Dict[str, str],
                                     card_index: int, all_cards: List[Dict[str, str]]) -> None:
     """Render single card editor using UI adapter."""
     adapter.markdown(f"**编辑卡片 {card_index + 1}**")
@@ -563,6 +567,7 @@ def use_adapted_editor() -> bool:
     return True
 
 
+@with_error_boundary("card_editor_unified")
 def render_card_editor_unified(processed_cards: List[Dict[str, str]]) -> None:
     """
     Unified card editor that chooses between legacy and adapted versions.

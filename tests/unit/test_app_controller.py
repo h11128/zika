@@ -165,7 +165,8 @@ class TestAppController:
         with patch('ui.app_controller.get_layout_settings', return_value={'layout_rows': 2, 'layout_cols': 3}):
             with patch('ui.app_controller.get_current_page', return_value=0):
                 controller = AppController()
-                cards_per_page, total_pages = controller.calculate_pagination(test_cards, {'layout_rows': 2, 'layout_cols': 3})
+                pagination_info = controller.calculate_pagination(test_cards, {'layout_rows': 2, 'layout_cols': 3})
+                cards_per_page, total_pages = pagination_info.cards_per_page, pagination_info.total_pages
                 
                 assert cards_per_page == 6  # 2 * 3
                 assert total_pages == 2     # ceil(10 / 6)
@@ -256,7 +257,8 @@ class TestAppController:
             cards = [{'hanzi': f'字{i}', 'pinyin': f'zi{i}', 'english': f'word{i}'} for i in range(10)]
             layout = {'layout_rows': 2, 'layout_cols': 3}  # 6 cards per page
 
-            cards_per_page, total_pages = controller.calculate_pagination(cards, layout)
+            pagination_info = controller.calculate_pagination(cards, layout)
+            cards_per_page, total_pages = pagination_info.cards_per_page, pagination_info.total_pages
 
             # Should calculate correct pagination
             assert cards_per_page == 6

@@ -13,6 +13,7 @@ import streamlit as st
 
 from core.feature_flags import get_feature_flag
 from ui.ports import get_ui_adapter, ComponentConfig
+from ui.error_boundaries import with_error_boundary
 from core.version import get_code_version
 # Import from the main ui.state module (not the package)
 import importlib.util
@@ -115,6 +116,7 @@ def clear_digest_debug() -> None:
     _debug_collector.clear_debug_entries()
 
 
+@with_error_boundary("digest_debug_panel")
 def render_digest_debug_panel() -> None:
     """Render digest debug panel in Streamlit."""
     if not get_feature_flag('ENABLE_DIGEST_DEBUG', default=False):
@@ -150,6 +152,7 @@ def render_digest_debug_panel() -> None:
             _render_digest_entry(entry)
 
 
+@with_error_boundary("digest_entry")
 def _render_digest_entry(entry: DigestDebugInfo) -> None:
     """Render a single digest debug entry."""
     # Basic info

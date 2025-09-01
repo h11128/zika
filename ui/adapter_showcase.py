@@ -8,8 +8,10 @@ from ui.ports import (
     UIAdapter, get_ui_adapter, ComponentConfig, NotificationLevel
 )
 from core.feature_flags import get_feature_flag
+from ui.error_boundaries import with_error_boundary
 
 
+@with_error_boundary("layout_section_adapted")
 def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int, int]:
     """
     Render layout section using UI adapter.
@@ -70,6 +72,7 @@ def render_layout_section_adapted(adapter: UIAdapter) -> Tuple[float, float, int
     return gap, margin, layout_rows, cols
 
 
+@with_error_boundary("typography_section_adapted")
 def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int, str]:
     """
     Render typography section using UI adapter.
@@ -120,6 +123,7 @@ def render_typography_section_adapted(adapter: UIAdapter) -> Tuple[int, int, int
     return hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family
 
 
+@with_error_boundary("options_section_adapted")
 def render_options_section_adapted(adapter: UIAdapter) -> Tuple[bool, bool, str]:
     """
     Render options section using UI adapter.
@@ -167,6 +171,7 @@ def render_options_section_adapted(adapter: UIAdapter) -> Tuple[bool, bool, str]
     return auto_pinyin, auto_translate, page_size
 
 
+@with_error_boundary("input_section_adapted")
 def render_input_section_adapted(adapter: UIAdapter) -> str:
     """
     Render input section using UI adapter.
@@ -210,6 +215,7 @@ def render_input_section_adapted(adapter: UIAdapter) -> str:
     return input_text
 
 
+@with_error_boundary("preview_section_adapted")
 def render_preview_section_adapted(adapter: UIAdapter, html_content: str) -> None:
     """
     Render preview section using UI adapter.

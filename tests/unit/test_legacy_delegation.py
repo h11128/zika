@@ -13,7 +13,7 @@ from services.cache_v2 import (
     create_simple_grid_html_v2,
     cached_create_simple_grid_html_v2
 )
-from services.cache import (
+from services.cache_v2 import (
     create_page_preview_html_immediate,
     create_simple_grid_html_immediate
 )

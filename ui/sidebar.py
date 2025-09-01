@@ -25,12 +25,9 @@ except ImportError:
 @with_error_boundary("sidebar")
 def render_sidebar() -> None:
     """Render the main sidebar with navigation and settings."""
-    with st.sidebar:
-        render_sidebar_header()
-        render_navigation_menu()
-        render_settings_section()
-        render_info_section()
-        render_debug_section()
+    # Use adapter implementation
+    adapter = get_ui_adapter()
+    render_sidebar_adapted(adapter)
 
 
 @with_error_boundary("sidebar_header")
@@ -229,6 +226,7 @@ def render_sidebar_adapted(adapter: UIAdapter) -> None:
         render_navigation_menu_adapted(adapter)
         render_settings_section_adapted(adapter)
         render_info_section_adapted(adapter)
+        render_debug_section_adapted(adapter)
 
 
 def render_sidebar_header_adapted(adapter: UIAdapter) -> None:
@@ -320,6 +318,57 @@ def render_sidebar_unified() -> None:
         render_sidebar_adapted(adapter)
     else:
         render_sidebar()
+
+
+def render_debug_section_adapted(adapter: UIAdapter) -> None:
+    """Render debug section using UI adapter."""
+    if not get_feature_flag('show_debug_panel', False):
+        return
+
+    adapter.markdown("---")
+    adapter.markdown("### 🔧 调试")
+
+    with adapter.layout.expander("🐛 调试信息", expanded=False):
+        # Feature flags status
+        adapter.markdown("**功能标志:**")
+        debug_flags = [
+            'use_state_service',
+            'use_cache_v2',
+            'use_new_preview_pipeline',
+            'adapted_inputs',
+            'adapted_options',
+            'adapted_preview',
+            'adapted_editor',
+            'adapted_export'
+        ]
+
+        for flag in debug_flags:
+            status = get_feature_flag(flag, False)
+            icon = "✅" if status else "❌"
+            adapter.text(f"{icon} {flag}: {status}")
+
+        # Session state info
+        adapter.markdown("**会话状态:**")
+        state_keys = list(st.session_state.keys())
+        adapter.text(f"状态键数量: {len(state_keys)}")
+
+        # Performance metrics
+        adapter.markdown("**性能指标:**")
+        if 'last_render_time' in st.session_state:
+            adapter.text(f"上次渲染时间: {st.session_state.last_render_time}ms")
+
+        # Clear session state button
+        clear_config = ComponentConfig(
+            key="clear_session_adapted",
+            label="🗑️ 清空会话状态",
+            help_text="清空当前会话的所有状态数据"
+        )
+        if adapter.inputs.button(clear_config):
+            for key in list(st.session_state.keys()):
+                if not key.startswith('_'):  # Keep internal keys
+                    del st.session_state[key]
+            adapter.notifications.show_success("会话状态已清空")
+            adapter.rerun()
 
 
 # Export the main functions

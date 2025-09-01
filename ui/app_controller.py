@@ -128,7 +128,7 @@ class AppController:
         if current_page >= pagination_info.total_pages:
             set_current_page(0)
 
-        return pagination_info.cards_per_page, pagination_info.total_pages
+        return pagination_info
     
     def render_card_editor(self, processed_cards, cards_per_page):
         """Render card editing section."""

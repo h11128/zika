@@ -10,7 +10,7 @@ from typing import Dict, Any
 
 # Import the modules we're testing
 from services.cache_v2 import clear_preview_cache_v2 as clear_preview_cache, cached_create_page_preview_html_v2 as cached_create_page_preview_html, cached_create_simple_grid_html_v2 as cached_create_simple_grid_html
-from services.cache import create_page_preview_html_immediate, create_simple_grid_html_immediate
+from services.cache_v2 import create_page_preview_html_immediate, create_simple_grid_html_immediate
 from ui.components import render_preview_section, render_color_palette
 from ui.options import render_advanced_options
 from core.state import get_all_ui_params, handle_param_changes

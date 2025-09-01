@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Callable, Union, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
 import streamlit as st
 
 from core.feature_flags import get_feature_flag
@@ -37,6 +38,19 @@ class ComponentConfig:
     help_text: Optional[str] = None
     disabled: bool = False
     visible: bool = True
+
+
+@lru_cache(maxsize=256)
+def create_component_config(key: str, label: str, help_text: Optional[str] = None,
+                          disabled: bool = False, visible: bool = True) -> ComponentConfig:
+    """Create a cached ComponentConfig instance to reduce object creation overhead."""
+    return ComponentConfig(
+        key=key,
+        label=label,
+        help_text=help_text,
+        disabled=disabled,
+        visible=visible
+    )
 
 
 class UIInputsPort(ABC):
@@ -628,7 +642,7 @@ _ui_adapter: Optional[UIAdapter] = None
 
 
 def get_ui_adapter() -> UIAdapter:
-    """Get the current UI adapter."""
+    """Get the current UI adapter with optimized singleton pattern."""
     global _ui_adapter
 
     if _ui_adapter is None:
@@ -636,6 +650,7 @@ def get_ui_adapter() -> UIAdapter:
         if get_feature_flag('use_fake_adapter', False):
             _ui_adapter = FakeAdapter()
         else:
+            # Lazy import to reduce startup time
             from ui.adapters.streamlit_adapter import StreamlitAdapter
             _ui_adapter = StreamlitAdapter()
 

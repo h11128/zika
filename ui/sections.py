@@ -32,66 +32,22 @@ except ImportError:
 @with_error_boundary("sidebar")
 def render_sidebar() -> None:
     """Render the sidebar with statistics, export history, and quick links."""
-    from core.feature_flags import get_feature_flag
+    # Use adapter implementation
+    from ui.sidebar import render_sidebar as render_sidebar_adapted
+    render_sidebar_adapted()
+    return
 
-    if get_feature_flag('adapted_sidebar', True):
-        from ui.sidebar import render_sidebar as render_sidebar_adapted
-        render_sidebar_adapted()
-        return
 
-    # Use unified implementation if available
-    if get_feature_flag('unified_sections', False):
-        from ui.sections_unified import render_sidebar as render_sidebar_unified
-        render_sidebar_unified()
-        return
-
-    # Legacy fallback
-    with st.sidebar:
-        st.header("📊 使用统计")
-
-        # Dictionary stats
-        dict_stats = st.session_state.dictionary.get_statistics()
-        st.metric("内置词典", f"{dict_stats['mini_dict_entries']} 词")
-        st.metric("累计生成卡片", st.session_state.total_cards_generated)
-
-        # Export history
-        if st.session_state.export_history:
-            st.subheader("📥 导出历史")
-            for record in reversed(st.session_state.export_history[-5:]):  # Show last 5
-                with st.expander(f"{record['format'].upper()} - {record['cards']}张"):
-                    st.write(f"时间: {record['time']}")
-                    st.write(f"卡片: {record['cards']}张")
-                    st.write(f"格式: {record['format'].upper()}")
-
-        # Quick links
-        st.markdown("### 🔗 快速链接")
-        st.markdown("- [项目文档](https://github.com)")
-        st.markdown("- [问题反馈](https://github.com)")
-        st.markdown("- [使用教程](https://github.com)")
 
 
 @with_error_boundary("export_section")
 def render_export_section(processed_cards: List[Dict[str, str]]) -> None:
     """Render the export section with download buttons for different formats."""
-    from core.feature_flags import get_feature_flag
-    
-    if get_feature_flag('adapted_export', True):
-        from ui.export import render_export_section as render_export_adapted
-        render_export_adapted(processed_cards)
-        return
+    # Use adapter implementation
+    from ui.export import render_export_section as render_export_adapted
+    render_export_adapted(processed_cards)
+    return
 
-    # Use unified implementation if available
-    if get_feature_flag('unified_sections', False):
-        from ui.sections_unified import render_export_section as render_export_unified
-        render_export_unified(processed_cards)
-        return
-
-    # Legacy fallback
-    if not processed_cards:
-        return
-
-    st.header("📥 导出")
-    st.info(f"💡 将导出 {len(processed_cards)} 张卡片")
 
 
 def _effective_preview_params_from_state(passed: dict) -> dict:
@@ -116,96 +72,43 @@ def _effective_preview_params_from_state(passed: dict) -> dict:
 
 def render_left_column():
     """Render the left column with input and options, return all parameters."""
-    from core.feature_flags import get_feature_flag
-    
-    if get_feature_flag('unified_sections', False):
-        from ui.sections_unified import render_left_column as render_left_unified
-        return render_left_unified()
-    
-    if get_feature_flag('adapted_inputs', True) and get_feature_flag('adapted_options', True):
-        from ui.inputs import render_input_section_adapted
-        from ui.options import render_options_section_adapted, render_advanced_options_adapted
-        
-        processed_cards = render_input_section_adapted()
-        auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section_adapted()
-        gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options_adapted()
-    else:
-        # Use existing implementations
-        from ui.inputs import render_input_section
-        from ui.options import render_options_section, render_advanced_options
-        
-        processed_cards = render_input_section()
-        auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section()
-        gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options()
+    # Use adapter implementations
+    from ui.inputs import render_input_section_adapted
+    from ui.options import render_options_section_adapted, render_advanced_options_adapted
+
+    processed_cards = render_input_section_adapted()
+    auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section_adapted()
+    gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options_adapted()
 
     return {
         'processed_cards': processed_cards,
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
         'page_size': page_size,
-        'card_size_cm': card_size,
+        'card_size_cm': card_size_cm,
         'gap_cm': gap,
         'margin_cm': margin,
         'hanzi_font_size': hanzi_font_size,
         'pinyin_font_size': pinyin_font_size,
         'english_font_size': english_font_size,
         'layout_rows': layout_rows,
-        'layout_cols': cols
+        'layout_cols': layout_cols
     }
 
 
 def render_preview_column_header():
     """Render the preview column header with mode selection."""
-    from core.feature_flags import get_feature_flag
-    
-    if get_feature_flag('unified_sections', False):
-        from ui.sections_unified import render_preview_column_header as render_header_unified
-        return render_header_unified()
-    
-    if get_feature_flag('adapted_preview', True):
-        from ui.export_unified import render_right_column_unified
-        return render_right_column_unified()
-    else:
-        # Legacy implementation
-        from core.state import get_ui_preferences
-        
-        prefs = get_ui_preferences()
-        hanzi_font_family, background_color = prefs['hanzi_font_family'], prefs['background_color']
+    # Use adapter implementation
+    from ui.export_unified import render_right_column_unified
+    return render_right_column_unified()
 
-        # Preview mode selection
-        preview_mode = st.radio(
-            "预览模式",
-            ["📄 完整页面", "🔲 简单网格"],
-            horizontal=True,
-            help="完整页面：按实际打印布局预览；简单网格：快速查看卡片内容"
-        )
-        
-        # Use debouncing if available
-        if get_feature_flag('debouncing', False):
-            from ui.debounce import debounce_state_update
-            debounce_state_update('preview_mode', preview_mode, delay_ms=150)
-        else:
-            st.session_state.preview_mode = preview_mode
-
-        return {
-            'hanzi_font_family': hanzi_font_family,
-            'background_color': background_color,
-            'preview_mode': preview_mode
-        }
 
 
 def render_improved_card_editor(processed_cards: List[Dict[str, str]]) -> None:
     """Render an improved card editor that can handle large numbers of cards."""
-    from core.feature_flags import get_feature_flag
-
-    # Use unified editor if available
-    if get_feature_flag('unified_sections', False):
-        from ui.editor_unified import render_improved_card_editor_unified
-        render_improved_card_editor_unified(processed_cards)
-    else:
-        # Delegate to editor module
-        from ui.editor import render_improved_card_editor as render_editor
-        render_editor(processed_cards)
+    # Delegate to editor module
+    from ui.editor import render_improved_card_editor as render_editor
+    render_editor(processed_cards)
 
 
 def render_preview_content_legacy(processed_cards: List[Dict[str, str]], config) -> Tuple[int, int]:

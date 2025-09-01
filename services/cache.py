@@ -514,11 +514,11 @@ def create_preview_html(cards: List[Dict[str, str]], max_cards: int = 9) -> str:
 
     # Use the new page preview function for first page with defaults
     from core.constants import (
-        DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN, DEFAULT_FONT_HANZI,
-        DEFAULT_FONT_PINYIN, DEFAULT_FONT_ENGLISH, DEFAULT_PAGE_SIZE,
+        DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN, DEFAULT_HANZI_FONT_SIZE,
+        DEFAULT_PINYIN_FONT_SIZE, DEFAULT_ENGLISH_FONT_SIZE, DEFAULT_PAGE_SIZE,
         DEFAULT_ROWS, DEFAULT_COLS, DEFAULT_AUTO_FILL
     )
     return cached_create_page_preview_html(cards, 0, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
-                                         DEFAULT_FONT_HANZI, DEFAULT_FONT_PINYIN, DEFAULT_FONT_ENGLISH,
+                                         DEFAULT_HANZI_FONT_SIZE, DEFAULT_PINYIN_FONT_SIZE, DEFAULT_ENGLISH_FONT_SIZE,
                                          DEFAULT_PAGE_SIZE, DEFAULT_HANZI_FONT, DEFAULT_BACKGROUND_COLOR,
                                          DEFAULT_ROWS, DEFAULT_COLS, DEFAULT_AUTO_FILL)

@@ -61,7 +61,7 @@ class NamingStandardizer:
             NamingRule(
                 pattern=r'\bnav_digest\b',
                 replacement='nav_index',
-                description="Rename nav_index to nav_index for clarity",
+                description="Rename nav_digest to nav_index for clarity",
                 file_patterns=["*.py"]
             ),
             

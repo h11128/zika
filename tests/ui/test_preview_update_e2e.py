@@ -12,7 +12,7 @@ from typing import Dict, Any
 
 # Import modules under test
 from services.cache_v2 import clear_preview_cache_v2 as clear_preview_cache
-from services.cache import create_page_preview_html_immediate
+from services.cache_v2 import create_page_preview_html_immediate
 from core.state import initialize_session_state, get_all_ui_params
 from ui.options import render_advanced_options
 from ui.components import render_preview_section

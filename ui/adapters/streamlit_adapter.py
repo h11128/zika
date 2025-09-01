@@ -6,6 +6,7 @@ for Streamlit components.
 """
 
 import streamlit as st
+import time
 from typing import Any, List, Dict, Optional, Union, Callable
 from dataclasses import dataclass
 
@@ -13,12 +14,60 @@ from ui.ports import (
     UIAdapter, UIInputsPort, UIPreviewPort, UILayoutPort, UINotificationPort, UIRefreshScheduler,
     ComponentConfig, NotificationLevel
 )
+from core.feature_flags import get_feature_flag
+
+
+def _lazy_load_heavy_components():
+    """Lazy load heavy components only when needed."""
+    # This could be used for expensive imports or initializations
+    pass
+
+
+def _measure_adapter_performance(method_name: str):
+    """Decorator to measure adapter method performance."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if get_feature_flag('performance_monitoring', True):
+                start_time = time.time()
+                try:
+                    result = func(*args, **kwargs)
+                    duration_ms = (time.time() - start_time) * 1000
+
+                    # Record performance measurement
+                    try:
+                        from services.performance_monitor import measure_performance
+                        measure_performance(f"adapter_{method_name}", duration_ms, {
+                            'method': method_name,
+                            'args_count': len(args),
+                            'kwargs_count': len(kwargs)
+                        })
+                    except ImportError:
+                        # Performance monitoring not available
+                        pass
+
+                    return result
+                except Exception as e:
+                    duration_ms = (time.time() - start_time) * 1000
+                    try:
+                        from services.performance_monitor import measure_performance
+                        measure_performance(f"adapter_{method_name}_error", duration_ms, {
+                            'method': method_name,
+                            'error': str(e)
+                        })
+                    except ImportError:
+                        pass
+                    raise
+            else:
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 @dataclass
 class StreamlitInputsAdapter(UIInputsPort):
     """Streamlit implementation of inputs adapter."""
     
+    @_measure_adapter_performance("text_input")
     def text_input(self, config: ComponentConfig, value: str = "", **kwargs) -> str:
         """Render a text input using Streamlit."""
         return st.text_input(
@@ -235,35 +284,52 @@ class StreamlitAdapter(UIAdapter):
     """Streamlit implementation of UI adapter."""
 
     def __init__(self):
-        self._inputs = StreamlitInputsAdapter()
-        self._preview = StreamlitPreviewAdapter()
-        self._layout = StreamlitLayoutAdapter()
-        self._notifications = StreamlitNotificationAdapter()
-        self._refresh = StreamlitRefreshAdapter()
-    
+        # Lazy initialization to improve startup performance
+        self._inputs = None
+        self._preview = None
+        self._layout = None
+        self._notifications = None
+        self._refresh = None
+        self._initialized = False
+
+    def _ensure_initialized(self):
+        """Ensure all adapters are initialized (lazy loading)."""
+        if not self._initialized:
+            self._inputs = StreamlitInputsAdapter()
+            self._preview = StreamlitPreviewAdapter()
+            self._layout = StreamlitLayoutAdapter()
+            self._notifications = StreamlitNotificationAdapter()
+            self._refresh = StreamlitRefreshAdapter()
+            self._initialized = True
+
     @property
     def inputs(self) -> UIInputsPort:
         """Get the inputs adapter."""
+        self._ensure_initialized()
         return self._inputs
 
     @property
     def preview(self) -> UIPreviewPort:
         """Get the preview adapter."""
+        self._ensure_initialized()
         return self._preview
 
     @property
     def layout(self) -> UILayoutPort:
         """Get the layout adapter."""
+        self._ensure_initialized()
         return self._layout
 
     @property
     def notifications(self) -> UINotificationPort:
         """Get the notifications adapter."""
+        self._ensure_initialized()
         return self._notifications
 
     @property
     def refresh(self) -> UIRefreshScheduler:
         """Get the refresh scheduler."""
+        self._ensure_initialized()
         return self._refresh
 
     def subheader(self, text: str) -> None:
@@ -317,6 +383,23 @@ class StreamlitAdapter(UIAdapter):
     def rerun(self) -> None:
         """Trigger a rerun using Streamlit."""
         st.rerun()
+
+    def cleanup(self) -> None:
+        """Clean up resources and reset adapter state."""
+        if get_feature_flag('performance_monitoring', True):
+            try:
+                from services.performance_monitor import measure_performance
+                measure_performance("adapter_cleanup", 0.0, {'action': 'cleanup'})
+            except ImportError:
+                pass
+
+        # Reset lazy initialization
+        self._inputs = None
+        self._preview = None
+        self._layout = None
+        self._notifications = None
+        self._refresh = None
+        self._initialized = False
 
 
 def get_streamlit_adapter() -> StreamlitAdapter:
