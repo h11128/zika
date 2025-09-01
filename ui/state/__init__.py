@@ -11,17 +11,17 @@ This package provides modular state management with proper separation of concern
 """
 
 from .store import StateStore, get_state_store
-from .rules import StateRules, validate_state_change
-from .digest import StateDigest, compute_state_digest
-from .invalidations import InvalidationService, invalidate_preview_cache
+from .rules import StateRules, validate_state_change, get_state_rules
+from .digest import StateDigest, compute_state_digest, get_state_digest
+from .invalidations import InvalidationService, invalidate_preview_cache, get_invalidation_service
 from .nav import NavigationState, get_navigation_state
 from .ports import StateServicePort, get_state_service
 
 __all__ = [
     'StateStore', 'get_state_store',
-    'StateRules', 'validate_state_change',
-    'StateDigest', 'compute_state_digest',
-    'InvalidationService', 'invalidate_preview_cache',
+    'StateRules', 'validate_state_change', 'get_state_rules',
+    'StateDigest', 'compute_state_digest', 'get_state_digest',
+    'InvalidationService', 'invalidate_preview_cache', 'get_invalidation_service',
     'NavigationState', 'get_navigation_state',
     'StateServicePort', 'get_state_service'
 ]

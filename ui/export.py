@@ -8,25 +8,24 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from core.feature_flags import get_feature_flag
-from services.export_pdf import export_to_pdf
-from services.export_pptx import export_to_pptx
-from services.export_csv import export_to_csv
-from ui.error_boundary import with_error_boundary
+from services.export import export_cards
+from ui.error_boundaries import with_error_boundary
 from ui.ports import UIAdapter, get_ui_adapter, ComponentConfig, NotificationLevel
 
 
 @with_error_boundary("export_section")
-def render_export_section(processed_cards: List[Dict[str, str]], 
+def render_export_section(processed_cards: List[Dict[str, str]],
                          config: Dict[str, Any]) -> None:
     """Render the export section with all export options."""
-    st.header("📤 导出")
+    adapter = get_ui_adapter()
+    adapter.content.header("📤 导出")
 
     if not processed_cards:
-        st.info("请先生成卡片以启用导出功能")
+        adapter.notifications.info("请先生成卡片以启用导出功能")
         return
 
     # Export format selection
-    export_format = st.selectbox(
+    export_format = adapter.inputs.selectbox(
         "选择导出格式",
         ["PDF", "PowerPoint (PPTX)", "CSV"],
         help="选择要导出的文件格式"
@@ -41,29 +40,30 @@ def render_export_section(processed_cards: List[Dict[str, str]],
         render_csv_export_options(processed_cards)
 
 
-def render_pdf_export_options(processed_cards: List[Dict[str, str]], 
+def render_pdf_export_options(processed_cards: List[Dict[str, str]],
                             config: Dict[str, Any]) -> None:
     """Render PDF export options and button."""
-    st.subheader("📄 PDF 导出")
+    adapter = get_ui_adapter()
+    adapter.content.subheader("📄 PDF 导出")
 
     # PDF-specific options
-    col1, col2 = st.columns(2)
+    col1, col2 = adapter.layout.columns(2)
 
     with col1:
-        include_page_numbers = st.checkbox(
+        include_page_numbers = adapter.inputs.checkbox(
             "包含页码",
             value=True,
             help="在PDF页面底部添加页码"
         )
 
-        optimize_for_print = st.checkbox(
+        optimize_for_print = adapter.inputs.checkbox(
             "优化打印",
             value=True,
             help="优化PDF以便打印"
         )
 
     with col2:
-        pdf_quality = st.selectbox(
+        pdf_quality = adapter.inputs.selectbox(
             "PDF质量",
             ["高质量", "标准", "压缩"],
             index=1,
@@ -71,11 +71,12 @@ def render_pdf_export_options(processed_cards: List[Dict[str, str]],
         )
 
     # Export button
-    if st.button("📄 导出为PDF", type="primary"):
-        with st.spinner("正在生成PDF..."):
+    if adapter.inputs.button("📄 导出为PDF", type="primary"):
+        with adapter.layout.spinner("正在生成PDF..."):
             try:
-                pdf_data = export_to_pdf(
+                pdf_data = export_cards(
                     processed_cards,
+                    format_type='pdf',
                     card_size_cm=config.get('card_size_cm', 5.5),
                     gap_cm=config.get('gap_cm', 0.5),
                     margin_cm=config.get('margin_cm', 1.0),
@@ -99,7 +100,7 @@ def render_pdf_export_options(processed_cards: List[Dict[str, str]],
                     filename = f"chinese_cards_{timestamp}.pdf"
 
                     # Provide download
-                    st.download_button(
+                    adapter.inputs.download_button(
                         label="⬇️ 下载PDF文件",
                         data=pdf_data,
                         file_name=filename,
@@ -109,37 +110,38 @@ def render_pdf_export_options(processed_cards: List[Dict[str, str]],
                     # Record export
                     record_export_history("pdf", len(processed_cards), filename)
 
-                    st.success("PDF导出成功！")
+                    adapter.notifications.success("PDF导出成功！")
                 else:
-                    st.error("PDF导出失败")
+                    adapter.notifications.error("PDF导出失败")
 
             except Exception as e:
-                st.error(f"PDF导出错误: {str(e)}")
+                adapter.notifications.error(f"PDF导出错误: {str(e)}")
 
 
-def render_pptx_export_options(processed_cards: List[Dict[str, str]], 
+def render_pptx_export_options(processed_cards: List[Dict[str, str]],
                              config: Dict[str, Any]) -> None:
     """Render PPTX export options and button."""
-    st.subheader("📊 PowerPoint 导出")
+    adapter = get_ui_adapter()
+    adapter.content.subheader("📊 PowerPoint 导出")
 
     # PPTX-specific options
-    col1, col2 = st.columns(2)
+    col1, col2 = adapter.layout.columns(2)
 
     with col1:
-        slide_layout = st.selectbox(
+        slide_layout = adapter.inputs.selectbox(
             "幻灯片布局",
             ["标准布局", "紧凑布局", "大字体布局"],
             help="选择幻灯片的布局样式"
         )
 
-        include_title_slide = st.checkbox(
+        include_title_slide = adapter.inputs.checkbox(
             "包含标题页",
             value=True,
             help="在演示文稿开头添加标题页"
         )
 
     with col2:
-        cards_per_slide = st.number_input(
+        cards_per_slide = adapter.inputs.number_input(
             "每页卡片数",
             min_value=1,
             max_value=12,
@@ -148,11 +150,12 @@ def render_pptx_export_options(processed_cards: List[Dict[str, str]],
         )
 
     # Export button
-    if st.button("📊 导出为PowerPoint", type="primary"):
-        with st.spinner("正在生成PowerPoint..."):
+    if adapter.inputs.button("📊 导出为PowerPoint", type="primary"):
+        with adapter.layout.spinner("正在生成PowerPoint..."):
             try:
-                pptx_data = export_to_pptx(
+                pptx_data = export_cards(
                     processed_cards,
+                    format_type='pptx',
                     card_size_cm=config.get('card_size_cm', 5.5),
                     gap_cm=config.get('gap_cm', 0.5),
                     margin_cm=config.get('margin_cm', 1.0),
@@ -172,7 +175,7 @@ def render_pptx_export_options(processed_cards: List[Dict[str, str]],
                     filename = f"chinese_cards_{timestamp}.pptx"
 
                     # Provide download
-                    st.download_button(
+                    adapter.inputs.download_button(
                         label="⬇️ 下载PowerPoint文件",
                         data=pptx_data,
                         file_name=filename,
@@ -182,36 +185,37 @@ def render_pptx_export_options(processed_cards: List[Dict[str, str]],
                     # Record export
                     record_export_history("pptx", len(processed_cards), filename)
 
-                    st.success("PowerPoint导出成功！")
+                    adapter.notifications.success("PowerPoint导出成功！")
                 else:
-                    st.error("PowerPoint导出失败")
+                    adapter.notifications.error("PowerPoint导出失败")
 
             except Exception as e:
-                st.error(f"PowerPoint导出错误: {str(e)}")
+                adapter.notifications.error(f"PowerPoint导出错误: {str(e)}")
 
 
 def render_csv_export_options(processed_cards: List[Dict[str, str]]) -> None:
     """Render CSV export options and button."""
-    st.subheader("📋 CSV 导出")
+    adapter = get_ui_adapter()
+    adapter.content.subheader("📋 CSV 导出")
 
     # CSV-specific options
-    col1, col2 = st.columns(2)
+    col1, col2 = adapter.layout.columns(2)
 
     with col1:
-        include_headers = st.checkbox(
+        include_headers = adapter.inputs.checkbox(
             "包含列标题",
             value=True,
             help="在CSV文件中包含列标题行"
         )
 
-        encoding = st.selectbox(
+        encoding = adapter.inputs.selectbox(
             "文件编码",
             ["UTF-8", "GBK", "UTF-8 BOM"],
             help="选择CSV文件的字符编码"
         )
 
     with col2:
-        delimiter = st.selectbox(
+        delimiter = adapter.inputs.selectbox(
             "分隔符",
             [",", ";", "\t"],
             format_func=lambda x: {"," : "逗号 (,)", ";" : "分号 (;)", "\t" : "制表符"}[x],
@@ -219,10 +223,11 @@ def render_csv_export_options(processed_cards: List[Dict[str, str]]) -> None:
         )
 
     # Export button
-    if st.button("📋 导出为CSV", type="primary"):
+    if adapter.inputs.button("📋 导出为CSV", type="primary"):
         try:
-            csv_data = export_to_csv(
+            csv_data = export_cards(
                 processed_cards,
+                format_type='csv',
                 include_headers=include_headers,
                 encoding=encoding,
                 delimiter=delimiter
@@ -234,7 +239,7 @@ def render_csv_export_options(processed_cards: List[Dict[str, str]]) -> None:
                 filename = f"chinese_cards_{timestamp}.csv"
 
                 # Provide download
-                st.download_button(
+                adapter.inputs.download_button(
                     label="⬇️ 下载CSV文件",
                     data=csv_data,
                     file_name=filename,
@@ -244,12 +249,12 @@ def render_csv_export_options(processed_cards: List[Dict[str, str]]) -> None:
                 # Record export
                 record_export_history("csv", len(processed_cards), filename)
 
-                st.success("CSV导出成功！")
+                adapter.notifications.success("CSV导出成功！")
             else:
-                st.error("CSV导出失败")
+                adapter.notifications.error("CSV导出失败")
 
         except Exception as e:
-            st.error(f"CSV导出错误: {str(e)}")
+            adapter.notifications.error(f"CSV导出错误: {str(e)}")
 
 
 def render_export_section_adapted(adapter: UIAdapter, processed_cards: List[Dict[str, str]], 

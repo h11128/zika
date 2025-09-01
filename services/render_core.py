@@ -354,9 +354,9 @@ def create_render_options_from_legacy(card_size_cm: float, gap_cm: float, margin
                                     **kwargs) -> RenderOptions:
     """Create RenderOptions from legacy parameter format."""
     return RenderOptions(
-        card_size_cm=card_size,
-        gap_cm=gap,
-        margin_cm=margin,
+        card_size_cm=card_size_cm,
+        gap_cm=gap_cm,
+        margin_cm=margin_cm,
         layout_rows=layout_rows,
         layout_cols=layout_cols,
         layout_auto_fill=layout_auto_fill,

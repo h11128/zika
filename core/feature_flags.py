@@ -226,7 +226,17 @@ DEFAULT_FLAGS = {
     'form_semantics': True,   # Enable form semantics
     'debouncing': True,       # Enable debouncing
 
+    # UI Adapter flags - enabling for comprehensive fixes
+    'ui_adapter': True,       # Enable UI adapter system
+    'adapted_inputs': True,   # Enable adapted input components
+    'adapted_options': True,  # Enable adapted options components
+    'adapted_preview': True,  # Enable adapted preview components
+    'adapted_editor': True,   # Enable adapted editor components
+    'adapted_export': True,   # Enable adapted export components
+    'adapted_sidebar': True,  # Enable adapted sidebar components
+
     # Shared render core
+    'shared_render_core': True,  # Enable shared render core
 
     # Unified sections
 
@@ -244,3 +254,15 @@ def use_persistence() -> bool:
 def show_debug_panel() -> bool:
     """Check if debug panel should be shown."""
     return is_feature_enabled('debug_panel')
+
+def use_new_preview_pipeline() -> bool:
+    """Check if new preview pipeline should be used."""
+    return is_feature_enabled('new_preview_pipeline')
+
+def use_ui_adapter() -> bool:
+    """Check if UI adapter should be used."""
+    return is_feature_enabled('ui_adapter')
+
+def use_state_service() -> bool:
+    """Check if state service should be used."""
+    return is_feature_enabled('state_service')

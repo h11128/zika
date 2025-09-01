@@ -27,7 +27,7 @@ if ROOT not in sys.path:
 
 from services.processing import parse_input_text, generate_missing_data
 from services.export import export_cards
-from services.cache_v2 import create_page_preview_html, create_simple_grid_html
+from services.cache_v2 import create_page_preview_html_v2, create_simple_grid_html_v2
 from src.dict_utils import create_default_dict, ChineseDict
 from core.constants import (
     DEFAULT_PAGE_SIZE, DEFAULT_CARD_SIZE, DEFAULT_GAP, DEFAULT_MARGIN,
@@ -35,6 +35,58 @@ from core.constants import (
     DEFAULT_HANZI_FONT, DEFAULT_BACKGROUND_COLOR, PRESET_COLORS,
     HANZI_FONT_OPTIONS
 )
+from services.preview_types import LayoutOptions, Typography, VisualOptions
+
+
+# Helper functions for v2 API compatibility
+def create_page_preview_html(cards, page_num=0, card_size_cm=5.5, gap_cm=0.5, margin_cm=1.0,
+                           hanzi_font_size=48, pinyin_font_size=18, english_font_size=14,
+                           layout_rows=2, layout_cols=3, hanzi_font_family="SimSun",
+                           background_color="#FFFFFF", **kwargs):
+    """Compatibility wrapper for v2 API."""
+    layout = LayoutOptions(
+        layout_rows=layout_rows,
+        layout_cols=layout_cols,
+        layout_auto_fill=True,
+        card_size_cm=card_size_cm,
+        gap_cm=gap_cm,
+        margin_cm=margin_cm,
+        page_size="A4"
+    )
+    typography = Typography(
+        hanzi_font_size_pt=hanzi_font_size,
+        pinyin_font_size_pt=pinyin_font_size,
+        english_font_size_pt=english_font_size,
+        hanzi_font_family=hanzi_font_family
+    )
+    visual = VisualOptions(
+        background_color=background_color,
+        preview_mode='📄 完整页面'
+    )
+    return create_page_preview_html_v2(cards, page_num, layout, typography, visual)
+
+def create_simple_grid_html(cards, hanzi_font_family="SimSun", background_color="#FFFFFF", **kwargs):
+    """Compatibility wrapper for v2 API."""
+    layout = LayoutOptions(
+        layout_rows=2,
+        layout_cols=3,
+        layout_auto_fill=True,
+        card_size_cm=5.5,
+        gap_cm=0.5,
+        margin_cm=1.0,
+        page_size="A4"
+    )
+    typography = Typography(
+        hanzi_font_size_pt=48,
+        pinyin_font_size_pt=18,
+        english_font_size_pt=14,
+        hanzi_font_family=hanzi_font_family
+    )
+    visual = VisualOptions(
+        background_color=background_color,
+        preview_mode='🔲 简单网格'
+    )
+    return create_simple_grid_html_v2(cards, layout, typography, visual)
 
 
 class TestDataDirectoryConfigurations:

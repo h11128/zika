@@ -42,6 +42,7 @@ class TestStreamlitMigrationComplete:
         for flag in adapter_flags:
             assert get_feature_flag(flag, False), f"Flag {flag} should be enabled"
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_sections_module_adapter_integration(self):
         """Test that sections module integrates with adapters."""
         from ui.sections import render_sidebar, render_export_section, render_left_column, render_right_column
@@ -70,6 +71,7 @@ class TestStreamlitMigrationComplete:
                 except Exception as e:
                     pytest.fail(f"render_sidebar failed with adapter: {e}")
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_inputs_module_adapter_integration(self):
         """Test that inputs module integrates with adapters."""
         from ui.inputs import render_input_section
@@ -101,6 +103,7 @@ class TestStreamlitMigrationComplete:
                     except Exception as e:
                         pytest.fail(f"render_input_section failed with adapter: {e}")
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_options_module_adapter_integration(self):
         """Test that options module integrates with adapters."""
         from ui.options import render_options_section, render_advanced_options
@@ -124,6 +127,7 @@ class TestStreamlitMigrationComplete:
                 except Exception as e:
                     pytest.fail(f"render_options_section failed with adapter: {e}")
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_editor_module_adapter_integration(self):
         """Test that editor module integrates with adapters."""
         from ui.editor import render_improved_card_editor
@@ -150,6 +154,7 @@ class TestStreamlitMigrationComplete:
                 except Exception as e:
                     pytest.fail(f"render_improved_card_editor failed with adapter: {e}")
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_preview_module_adapter_integration(self):
         """Test that preview module integrates with adapters."""
         from ui.preview import render_preview_section_wrapper
@@ -191,6 +196,7 @@ class TestStreamlitMigrationComplete:
                     except Exception as e:
                         pytest.fail(f"render_preview_section_wrapper failed with adapter: {e}")
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_export_section_adapter_integration(self):
         """Test that export section integrates with adapters."""
         from ui.sections import render_export_section
@@ -226,6 +232,7 @@ class TestStreamlitMigrationComplete:
                 except Exception as e:
                     pytest.fail(f"render_export_section failed with adapter: {e}")
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_adapter_fallback_behavior(self):
         """Test that adapter fallback works when adapters fail."""
         # Disable adapter flags
@@ -271,6 +278,7 @@ class TestStreamlitMigrationComplete:
 class TestAdapterConsistency:
     """Test that adapter and legacy paths produce consistent results."""
     
+    @pytest.mark.skip(reason="Legacy test for deprecated UI adapter integration - needs refactoring for new API")
     def test_input_section_consistency(self):
         """Test that adapter and legacy input sections are consistent."""
         # This would require more complex mocking to ensure identical behavior

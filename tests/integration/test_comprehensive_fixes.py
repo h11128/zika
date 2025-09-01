@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import Mock, patch
 from typing import Dict, Any, List
 
-from core.feature_flags import get_feature_flag, set_feature_flag
+from core.feature_flags import get_feature_flag, set_test_override
 
 
 class TestFeatureFlagActivation:
@@ -237,13 +237,30 @@ class TestSharedRenderCoreIntegration:
             'card_size_cm': 5.5,
             'gap_cm': 0.5,
             'margin_cm': 1.0,
-            'page_size': 'A4'
+            'hanzi_font_size': 48,
+            'pinyin_font_size': 18,
+            'english_font_size': 14,
+            'page_size': 'A4',
+            'hanzi_font_family': 'SimHei',
+            'background_color': '#ffffff',
+            'layout_rows': 2,
+            'layout_cols': 3,
+            'layout_auto_fill': True
         }
-        
+
         converted = create_render_options_from_legacy(**legacy_options)
         assert converted.card_size_cm == 5.5
         assert converted.gap_cm == 0.5
         assert converted.margin_cm == 1.0
+        assert converted.hanzi_font_size_pt == 48
+        assert converted.pinyin_font_size_pt == 18
+        assert converted.english_font_size_pt == 14
+        assert converted.page_size == 'A4'
+        assert converted.hanzi_font_family == 'SimHei'
+        assert converted.background_color == '#ffffff'
+        assert converted.layout_rows == 2
+        assert converted.layout_cols == 3
+        assert converted.layout_auto_fill == True
 
 
 class TestLayoutLogicExtraction:
@@ -268,12 +285,12 @@ class TestLayoutLogicExtraction:
         from services.layout import get_page_dimensions_cm
         
         # Test A4
-        width, height_cm = get_page_dimensions_cm('A4')
+        width_cm, height_cm = get_page_dimensions_cm('A4')
         assert width_cm == 21.0
         assert height_cm == 29.7
-        
+
         # Test A3
-        width, height_cm = get_page_dimensions_cm('A3')
+        width_cm, height_cm = get_page_dimensions_cm('A3')
         assert width_cm == 29.7
         assert height_cm == 42.0
     

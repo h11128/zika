@@ -32,9 +32,9 @@ class PPTXCardGenerator:
         self.page_size = page_size
         self.gap_cm = gap_cm
         self.margin_cm = margin_cm
-        self.layout_rows = max(1, int(rows or 3))
-        self.layout_cols = max(1, int(cols or 3))
-        self.layout_auto_fill = bool(auto_fill)
+        self.layout_rows = max(1, int(layout_rows or 3))
+        self.layout_cols = max(1, int(layout_cols or 3))
+        self.layout_auto_fill = bool(layout_auto_fill)
 
         # Set page dimensions
         if page_size.upper() == "A4":
@@ -142,7 +142,7 @@ class PPTXCardGenerator:
 
         # Create rectangle shape
         shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, left, top, width, height
+            MSO_SHAPE.RECTANGLE, left, top, width_cm, height_cm
         )
         
         # Set border

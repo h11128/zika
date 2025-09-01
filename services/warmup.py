@@ -13,7 +13,7 @@ import logging
 
 from core.feature_flags import get_feature_flag
 from services.prefetch import get_prefetch_manager, PrefetchTask, PrefetchType, PrefetchPriority
-from services.cache_v2_strategy import get_preview_cache, CacheLevel
+from services.cache_strategy import get_preview_cache, CacheLevel
 from services.performance_monitor import measure_performance, benchmark
 from services.layout import paginate
 from services.observability import record_cache_hit, record_cache_miss

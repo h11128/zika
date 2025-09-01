@@ -8,7 +8,7 @@ import time
 import threading
 from unittest.mock import patch, MagicMock
 
-from services.cache_v2_strategy import (
+from services.cache_strategy import (
     CacheLevel, CachePolicy, CacheEntry, CacheMetrics, StrategyCache,
     CacheRegistry, get_cache_registry, get_session_cache, get_preview_cache,
     get_export_cache, get_persistent_cache, invalidate_cache_level,

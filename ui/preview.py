@@ -6,9 +6,9 @@ Handles preview display, navigation, and mode selection.
 from typing import List, Dict, Any
 
 from core.feature_flags import get_feature_flag
-from services.cache_v2 import create_preview_html
+from services.cache import create_preview_html
 from services.layout import paginate
-from ui.error_boundary import with_error_boundary
+from ui.error_boundaries import with_error_boundary
 from ui.components import render_page_navigation, render_page_info, render_preview_section
 from ui.ports import UIAdapter, get_ui_adapter, ComponentConfig, NotificationLevel
 from ui.unified import get_unified_ui

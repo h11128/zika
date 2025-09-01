@@ -10,7 +10,7 @@ from typing import Dict, Any, List
 
 from ui.ports import get_ui_adapter, ComponentConfig
 from ui.adapters.streamlit_adapter import StreamlitAdapter
-from core.feature_flags import set_feature_flag, get_feature_flag
+from core.feature_flags import set_test_override, get_feature_flag
 
 
 class MockStreamlit:
@@ -240,11 +240,11 @@ class TestFeatureFlagIntegration:
     def test_feature_flag_controls_adapter_usage(self):
         """Test that feature flags control adapter usage."""
         # Test with adapter disabled
-        set_feature_flag('ui_adapter', False)
+        set_test_override('ui_adapter', False)
         assert not get_feature_flag('ui_adapter', False)
-        
+
         # Test with adapter enabled
-        set_feature_flag('ui_adapter', True)
+        set_test_override('ui_adapter', True)
         assert get_feature_flag('ui_adapter', False)
     
     def test_graceful_fallback_on_adapter_failure(self, mock_streamlit):

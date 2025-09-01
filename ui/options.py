@@ -41,7 +41,7 @@ def render_options_section() -> Tuple[bool, bool, str, float]:
     # Check if we should use adapter
     from core.feature_flags import get_feature_flag
 
-    if get_feature_flag('adapted_options', False):
+    if get_feature_flag('adapted_options', True):
         return render_options_section_adapted(get_ui_adapter())
 
     # Check if we should use form semantics
@@ -198,7 +198,7 @@ def render_advanced_options() -> Tuple[float, float, int, int, int, int, int]:  
     # Check if we should use adapter
     from core.feature_flags import get_feature_flag
 
-    if get_feature_flag('adapted_options', False):
+    if get_feature_flag('adapted_options', True):
         return render_advanced_options_adapted(get_ui_adapter())
 
     # Legacy implementation

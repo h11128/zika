@@ -14,7 +14,7 @@ import logging
 import weakref
 
 from core.feature_flags import get_feature_flag
-from services.cache_v2_strategy import get_preview_cache, get_export_cache, CacheLevel
+from services.cache_strategy import get_preview_cache, get_export_cache, CacheLevel
 from services.performance_monitor import measure_performance, benchmark
 from services.observability import record_error, record_cache_hit
 

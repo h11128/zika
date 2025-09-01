@@ -8,7 +8,7 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 import streamlit as st
-from ui.sections import render_preview_section_wrapper
+from ui.preview import render_preview_section_wrapper
 from ui.app_controller import AppController
 
 

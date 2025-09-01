@@ -135,14 +135,14 @@ def render_input_section() -> List[Dict[str, str]]:
             st.session_state.apply_segmentation = False
 
         # Create columns for text area and button
-        if get_feature_flag('adapted_inputs', False):
+        if get_feature_flag('adapted_inputs', True):
             col_text, col_btn = adapter.layout.columns([4, 1])
         else:
             col_text, col_btn = st.columns([4, 1])
 
         with col_text:
             # Use adapter for text area if available
-            if get_feature_flag('adapted_inputs', False):
+            if get_feature_flag('adapted_inputs', True):
                 text_config = ComponentConfig(
                     key="input_text",
                     label="输入汉字（空格分隔）",
@@ -200,7 +200,7 @@ def render_input_section() -> List[Dict[str, str]]:
 
         with col_btn:
             # Use adapter for spacing and button if available
-            if get_feature_flag('adapted_inputs', False):
+            if get_feature_flag('adapted_inputs', True):
                 adapter.write("")  # Add some spacing
                 adapter.write("")  # Add some spacing
 

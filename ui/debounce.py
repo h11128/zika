@@ -11,7 +11,28 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 from core.feature_flags import get_feature_flag
-from ui.state import set_options_batch, ChangeSet
+try:
+    from ui.state import set_options_batch, ChangeSet
+except ImportError:
+    # Fallback for compatibility
+    from dataclasses import dataclass
+
+    @dataclass
+    class ChangeSet:
+        """Compatibility ChangeSet for tests."""
+        affects_processing: bool = False
+        affects_layout: bool = False
+        affects_style: bool = False
+        affects_navigation: bool = False
+        affects_export: bool = False
+        nav_reset_required: bool = False
+
+    def set_options_batch(changes):
+        """Compatibility function for tests."""
+        import streamlit as st
+        for key, value in changes.items():
+            setattr(st.session_state, key, value)
+        return ChangeSet()
 from ui.ports import get_ui_adapter, ComponentConfig
 
 
@@ -22,6 +43,7 @@ class PendingChange:
     value: Any
     timestamp: datetime
     source: str = "user_input"
+    callback: Optional[callable] = None
 
 
 @dataclass
@@ -117,7 +139,34 @@ class DebounceManager:
         """Schedule multiple changes as a batch."""
         for key, value in changes.items():
             self.schedule_change(key, value, source="batch")
-    
+
+    def debounce_update(self, key: str, value: Any, callback: Optional[callable] = None) -> None:
+        """Schedule a debounced update with optional callback."""
+        self.schedule_change(key, value, source="update")
+        if callback:
+            # Store callback in the pending change for later execution
+            with self.lock:
+                if key in self.pending_changes:
+                    self.pending_changes[key].callback = callback
+
+    def is_pending(self, key: str) -> bool:
+        """Check if a key has pending changes."""
+        with self.lock:
+            return key in self.pending_changes
+
+    def flush_key(self, key: str) -> None:
+        """Flush a specific key immediately."""
+        with self.lock:
+            if key in self.pending_changes:
+                change = self.pending_changes.pop(key)
+                self._apply_changes_immediate({key: change.value})
+                # Execute callback if present
+                if change.callback:
+                    try:
+                        change.callback(key, change.value)
+                    except Exception as e:
+                        self._log_error(f"Callback execution failed for {key}: {e}")
+
     def flush_now(self) -> ChangeSet:
         """Immediately flush all pending changes."""
         with self.lock:
@@ -251,6 +300,21 @@ def debounce_form_input(key: str, value: Any) -> None:
 def debounce_batch(changes: Dict[str, Any]) -> None:
     """Schedule multiple debounced changes."""
     get_debounce_manager().schedule_batch(changes)
+
+
+def debounce_state_update(key: str, value: Any) -> None:
+    """Schedule a state update with debouncing."""
+    get_debounce_manager().schedule_form_input(key, value)
+
+
+def debounce_batch_update(changes: Dict[str, Any]) -> None:
+    """Schedule multiple state updates with debouncing."""
+    get_debounce_manager().schedule_batch(changes)
+
+
+def flush_debounced_updates() -> ChangeSet:
+    """Flush all pending debounced updates."""
+    return get_debounce_manager().flush_now()
 
 
 def flush_debounced_changes() -> ChangeSet:

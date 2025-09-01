@@ -32,10 +32,10 @@ class PDFCardGenerator:
         self.page_size = page_size
         self.gap_cm = gap_cm
         self.margin_cm = margin_cm
-        self.layout_rows = max(1, int(rows or 3))
-        self.layout_cols = max(1, int(cols or 3))
+        self.layout_rows = max(1, int(layout_rows or 3))
+        self.layout_cols = max(1, int(layout_cols or 3))
         self.inner_padding = inner_padding_cm * cm  # inner padding inside each card
-        self.layout_auto_fill = bool(auto_fill)
+        self.layout_auto_fill = bool(layout_auto_fill)
 
         # Set page dimensions
         if page_size.upper() == "A4":

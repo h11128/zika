@@ -45,29 +45,32 @@ def render_sidebar() -> None:
         render_sidebar_unified()
         return
 
-    # Legacy fallback
-    with st.sidebar:
-        st.header("📊 使用统计")
+    # Adapter-based fallback
+    from ui.ports import get_ui_adapter
+    adapter = get_ui_adapter()
+
+    with adapter.layout.sidebar():
+        adapter.content.header("📊 使用统计")
 
         # Dictionary stats
         dict_stats = st.session_state.dictionary.get_statistics()
-        st.metric("内置词典", f"{dict_stats['mini_dict_entries']} 词")
-        st.metric("累计生成卡片", st.session_state.total_cards_generated)
+        adapter.content.metric("内置词典", f"{dict_stats['mini_dict_entries']} 词")
+        adapter.content.metric("累计生成卡片", st.session_state.total_cards_generated)
 
         # Export history
         if st.session_state.export_history:
-            st.subheader("📥 导出历史")
+            adapter.content.subheader("📥 导出历史")
             for record in reversed(st.session_state.export_history[-5:]):  # Show last 5
-                with st.expander(f"{record['format'].upper()} - {record['cards']}张"):
-                    st.write(f"时间: {record['time']}")
-                    st.write(f"卡片: {record['cards']}张")
-                    st.write(f"格式: {record['format'].upper()}")
+                with adapter.layout.expander(f"{record['format'].upper()} - {record['cards']}张"):
+                    adapter.content.write(f"时间: {record['time']}")
+                    adapter.content.write(f"卡片: {record['cards']}张")
+                    adapter.content.write(f"格式: {record['format'].upper()}")
 
         # Quick links
-        st.markdown("### 🔗 快速链接")
-        st.markdown("- [项目文档](https://github.com)")
-        st.markdown("- [问题反馈](https://github.com)")
-        st.markdown("- [使用教程](https://github.com)")
+        adapter.content.markdown("### 🔗 快速链接")
+        adapter.content.markdown("- [项目文档](https://github.com)")
+        adapter.content.markdown("- [问题反馈](https://github.com)")
+        adapter.content.markdown("- [使用教程](https://github.com)")
 
 
 @with_error_boundary("export_section")
@@ -86,12 +89,14 @@ def render_export_section(processed_cards: List[Dict[str, str]]) -> None:
         render_export_unified(processed_cards)
         return
 
-    # Legacy fallback
+    # Adapter-based fallback
     if not processed_cards:
         return
 
-    st.header("📥 导出")
-    st.info(f"💡 将导出 {len(processed_cards)} 张卡片")
+    from ui.ports import get_ui_adapter
+    adapter = get_ui_adapter()
+    adapter.content.header("📥 导出")
+    adapter.notifications.info(f"💡 将导出 {len(processed_cards)} 张卡片")
 
 
 def _effective_preview_params_from_state(passed: dict) -> dict:
@@ -173,7 +178,9 @@ def render_preview_column_header():
         hanzi_font_family, background_color = prefs['hanzi_font_family'], prefs['background_color']
 
         # Preview mode selection
-        preview_mode = st.radio(
+        from ui.ports import get_ui_adapter
+        adapter = get_ui_adapter()
+        preview_mode = adapter.inputs.radio(
             "预览模式",
             ["📄 完整页面", "🔲 简单网格"],
             horizontal=True,

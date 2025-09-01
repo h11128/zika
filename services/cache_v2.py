@@ -434,7 +434,7 @@ def create_page_preview_html_v2(cards: List[Dict[str, str]], page_num: int,
         HTML string for the page preview
     """
     # Direct implementation to avoid recursion with legacy delegation
-    from services.cache_v2 import (
+    from services.cache import (
         _slice_cards_for_page, _compute_page_layout_metrics,
         _compute_page_card_box, _compute_font_px, PageTemplateContext
     )
@@ -504,7 +504,7 @@ def create_simple_grid_html_v2(cards: List[Dict[str, str]],
         HTML string for the simple grid
     """
     # Direct implementation to avoid recursion with legacy delegation
-    from services.cache_v2 import (
+    from services.cache import (
         _compute_simple_grid_css, _compute_simple_grid_font_px,
         _compute_simple_card_box, SimpleGridTemplateContext
     )
@@ -522,7 +522,7 @@ def create_simple_grid_html_v2(cards: List[Dict[str, str]],
     card_box = _compute_simple_card_box(params.card_size_px_calc)
 
     # Build grid cards with padding for empty slots
-    cards_per_page = rows * cols
+    cards_per_page = layout.layout_rows * layout.layout_cols
     grid_cards: List[Dict[str, str]] = []
     for i in range(cards_per_page):
         grid_cards.append(cards[i] if i < len(cards) else None)

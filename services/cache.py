@@ -97,14 +97,14 @@ def _compute_page_layout_metrics(page_size: str, gap_cm: float, margin_cm: float
     avail_h = max(0, page_height_px - 2 * margin_px)
     # Card size
     if layout_auto_fill:
-        size_w = (avail_w - max(0, cols - 1) * gap_px) / max(1, cols)
-        size_h = (avail_h - max(0, rows - 1) * gap_px) / max(1, rows)
+        size_w = (avail_w - max(0, layout_cols - 1) * gap_px) / max(1, layout_cols)
+        size_h = (avail_h - max(0, layout_rows - 1) * gap_px) / max(1, layout_rows)
         card_size_px = max(0, min(size_w, size_h))
     else:
         card_size_px = card_size_cm * CM_TO_MM * MM_TO_PX
     # Grid
-    grid_width = cols * card_size_px + max(0, cols - 1) * gap_px
-    grid_height = rows * card_size_px + max(0, rows - 1) * gap_px
+    grid_width = layout_cols * card_size_px + max(0, layout_cols - 1) * gap_px
+    grid_height = layout_rows * card_size_px + max(0, layout_rows - 1) * gap_px
     # Center inside margins
     start_x = margin_px + max(0, (avail_w - grid_width) / 2)
     start_y = margin_px + max(0, (avail_h - grid_height) / 2)
@@ -132,7 +132,7 @@ def _compute_simple_grid_css(layout_cols: int, card_size_cm: float, layout_auto_
 
     # Always responsive to container width
     # Use auto-fit with a reasonable min size; if manual size is provided, honor it as min
-    min_card_size = max(SIMPLE_MIN_CARD_SIZE_PX, int(card_size_px_calc * (MANUAL_SIZE_MIN_FACTOR if not auto_fill else AUTO_FILL_MIN_FACTOR)))
+    min_card_size = max(SIMPLE_MIN_CARD_SIZE_PX, int(card_size_px_calc * (MANUAL_SIZE_MIN_FACTOR if not layout_auto_fill else AUTO_FILL_MIN_FACTOR)))
 
     grid_columns = f"repeat(auto-fit, minmax({min_card_size}px, 1fr))"
     container_max_width = CSS_CONTAINER_MAX_WIDTH
@@ -327,8 +327,8 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font_family: str 
         preview_params.typography,
         preview_params.visual
     )
-    layout_rows = max(1, int(rows or 3))
-    layout_cols = max(1, int(cols or 3))
+    layout_rows = max(1, int(preview_params.layout.layout_rows or 3))
+    layout_cols = max(1, int(preview_params.layout.layout_cols or 3))
 
     if not cards:
         return "<div style='text-align: center; color: #666; padding: 50px;'>输入汉字以查看预览</div>"

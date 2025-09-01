@@ -385,6 +385,16 @@ def sticky_preview():
         st.markdown('</div>', unsafe_allow_html=True)
 
 
+# Legacy compatibility functions
+def render_sticky_wrapper_start():
+    """Legacy compatibility function for sticky wrapper start."""
+    st.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
+
+def render_sticky_wrapper_end():
+    """Legacy compatibility function for sticky wrapper end."""
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
 
 
 

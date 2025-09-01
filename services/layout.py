@@ -302,8 +302,8 @@ def validate_layout_params(layout_rows: int, layout_cols: int, card_size_cm: flo
     page_width, page_height = get_page_dimensions_cm(page_size)
 
     # Calculate required space
-    total_width = cols * card_size_cm + max(0, cols - 1) * gap_cm + 2 * margin_cm
-    total_height = rows * card_size_cm + max(0, rows - 1) * gap_cm + 2 * margin_cm
+    total_width = layout_cols * card_size_cm + max(0, layout_cols - 1) * gap_cm + 2 * margin_cm
+    total_height = layout_rows * card_size_cm + max(0, layout_rows - 1) * gap_cm + 2 * margin_cm
 
     fits_on_page = total_width <= page_width and total_height <= page_height
 
@@ -325,7 +325,7 @@ def validate_layout_params(layout_rows: int, layout_cols: int, card_size_cm: flo
             result['errors'].append(f"Layout too tall: {total_height:.1f}cm > {page_height:.1f}cm")
 
     # Parameter validation
-    if rows <= 0 or cols <= 0:
+    if layout_rows <= 0 or layout_cols <= 0:
         result['errors'].append("Rows and columns must be positive")
     if card_size_cm <= 0:
         result['errors'].append("Card size must be positive")

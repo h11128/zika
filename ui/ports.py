@@ -234,7 +234,7 @@ class StreamlitInputsAdapter(UIInputsPort):
     def text_area(self, config: ComponentConfig, value: str = "", 
                   height_cm: int = 200) -> str:
         return st.text_area(
-            config.label, value=value, height_cm=height,
+            config.label, value=value, height_cm=height_cm,
             key=config.key, help=config.help_text, disabled=config.disabled
         )
     
@@ -294,7 +294,7 @@ class StreamlitPreviewAdapter(UIPreviewPort):
     """Streamlit implementation of preview port."""
     
     def html_component(self, html_content: str, height_cm: int = 600) -> None:
-        st.components.v1.html(html_content, height_cm=height)
+        st.components.v1.html(html_content, height_cm=height_cm)
     
     def empty_placeholder(self) -> Any:
         return st.empty()
@@ -415,6 +415,17 @@ class FakeInputsAdapter(UIInputsPort):
     def __init__(self):
         self.interactions: List[Dict[str, Any]] = []
         self.values: Dict[str, Any] = {}
+        # Specific tracking for test assertions
+        self.radio_calls: List[Dict[str, Any]] = []
+        self.button_calls: List[Dict[str, Any]] = []
+        self.selectbox_calls: List[Dict[str, Any]] = []
+        self.checkbox_calls: List[Dict[str, Any]] = []
+        self.text_area_calls: List[Dict[str, Any]] = []
+        self.text_input_calls: List[Dict[str, Any]] = []
+        self.number_input_calls: List[Dict[str, Any]] = []
+        self.slider_calls: List[Dict[str, Any]] = []
+        self.file_uploader_calls: List[Dict[str, Any]] = []
+        self.download_button_calls: List[Dict[str, Any]] = []
 
     def _record_interaction(self, component_type: str, config: ComponentConfig, **kwargs):
         self.interactions.append({
@@ -431,7 +442,7 @@ class FakeInputsAdapter(UIInputsPort):
 
     def text_area(self, config: ComponentConfig, value: str = "",
                   height_cm: int = 200) -> str:
-        self._record_interaction('text_area', config, value=value, height_cm=height)
+        self._record_interaction('text_area', config, value=value, height_cm=height_cm)
         return self.values.get(config.key, value)
 
     def number_input(self, config: ComponentConfig, value: float = 0.0,
@@ -460,6 +471,9 @@ class FakeInputsAdapter(UIInputsPort):
               index: int = 0, horizontal: bool = False) -> str:
         self._record_interaction('radio', config, options=options,
                                index=index, horizontal=horizontal)
+        self.radio_calls.append({
+            'config': config, 'options': options, 'index': index, 'horizontal': horizontal
+        })
         return self.values.get(config.key, options[index] if options else "")
 
     def button(self, config: ComponentConfig) -> bool:
@@ -485,7 +499,7 @@ class FakePreviewAdapter(UIPreviewPort):
         self.containers: List[str] = []
 
     def html_component(self, html_content: str, height_cm: int = 600) -> None:
-        self.html_renders.append({'content': html_content, 'height_cm': height})
+        self.html_renders.append({'content': html_content, 'height_cm': height_cm})
 
     def empty_placeholder(self) -> Any:
         placeholder_id = f"placeholder_{len(self.placeholders)}"
@@ -514,7 +528,19 @@ class FakeNotificationAdapter(UINotificationPort):
 
     def show_spinner(self, text: str = "Loading...") -> Any:
         self.spinners.append(text)
-        return f"spinner_{len(self.spinners)}"
+        return FakeContextManager(f"spinner_{len(self.spinners)}")
+
+
+class FakeContextManager:
+    """Simple context manager for testing."""
+    def __init__(self, name: str):
+        self.name = name
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
 
 
 class FakeLayoutAdapter(UILayoutPort):
@@ -527,18 +553,18 @@ class FakeLayoutAdapter(UILayoutPort):
 
     def columns(self, ratios: List[Union[int, float]]) -> List[Any]:
         self.column_layouts.append(ratios)
-        return [f"col_{i}" for i in range(len(ratios))]
+        return [FakeContextManager(f"col_{i}") for i in range(len(ratios))]
 
     def expander(self, label: str, expanded: bool = False) -> Any:
         self.expanders.append({'label': label, 'expanded': expanded})
-        return f"expander_{len(self.expanders)}"
+        return FakeContextManager(f"expander_{len(self.expanders)}")
 
     def tabs(self, labels: List[str]) -> List[Any]:
         self.tab_groups.append(labels)
-        return [f"tab_{i}" for i in range(len(labels))]
+        return [FakeContextManager(f"tab_{i}") for i in range(len(labels))]
 
     def sidebar(self) -> Any:
-        return "sidebar"
+        return FakeContextManager("sidebar")
 
 
 class FakeRefreshAdapter(UIRefreshScheduler):
