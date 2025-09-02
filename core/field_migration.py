@@ -32,15 +32,15 @@ class MigrationResult:
 
 # Field alias definitions
 FIELD_ALIASES = {
-    'gap_cm': FieldAlias(
-        old_name='gap_cm',
+    'gap': FieldAlias(
+        old_name='gap',
         new_name='gap_cm',
         unit_suffix='_cm',
         conversion_factor=1.0,  # Already in cm
         description='Card gap spacing in centimeters'
     ),
-    'margin_cm': FieldAlias(
-        old_name='margin_cm',
+    'margin': FieldAlias(
+        old_name='margin',
         new_name='margin_cm',
         unit_suffix='_cm',
         conversion_factor=1.0,  # Already in cm

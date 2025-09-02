@@ -49,6 +49,7 @@ class AppController:
     
     def render_header(self):
         """Render application header."""
+        # Use UI adapter to render header (keeps Streamlit calls out of UI modules)
         adapter = get_ui_adapter()
         adapter.header("🀄 Chinese Learning Cards Generator", level=1)
         adapter.markdown("输入汉字，自动生成拼音和翻译，制作学习卡片")
@@ -194,9 +195,9 @@ class AppController:
                     cards_per_page, total_pages = render_preview_content_unified(processed_cards, config)
 
                 except ImportError:
-                    # Emergency fallback only
-                    from ui.sections import render_preview_content_legacy
-                    cards_per_page, total_pages = render_preview_content_legacy(processed_cards, preview_params, left_params)
+                    # Emergency fallback only – avoid shadowing module-scope name
+                    from ui.sections import render_preview_content_legacy as _legacy_preview
+                    cards_per_page, total_pages = _legacy_preview(processed_cards, preview_params, left_params)
 
                 # Render card editor
                 self.render_card_editor(processed_cards, cards_per_page)
@@ -225,7 +226,8 @@ class AppController:
                     else:
                         render_preview_content_legacy([], preview_params, left_params)
                 except ImportError:
-                    render_preview_content_legacy([], preview_params, left_params)
+                    from ui.sections import render_preview_content_legacy as _legacy_preview
+                    _legacy_preview([], preview_params, left_params)
 
     def run_main_flow(self):
         """Execute the main application flow using high-level rendering functions with error handling."""

@@ -44,16 +44,22 @@ class Card:
     
     @classmethod
     def create_new(cls, hanzi: str, pinyin: str = "", english: str = "") -> 'Card':
-        """Create a new card with generated UUID."""
+        """Create a new card with generated UUID.
+        Allows creating an 'empty' placeholder card by using a single-space hanzi,
+        which passes validation but is treated as empty by is_empty().
+        """
+        sanitized_hanzi = hanzi.strip()
+        if not sanitized_hanzi:
+            sanitized_hanzi = " "  # placeholder to satisfy validation
         return cls(
             id=str(uuid.uuid4()),
-            hanzi=hanzi.strip(),
+            hanzi=sanitized_hanzi,
             pinyin=pinyin.strip(),
             english=english.strip(),
             version=1,
             created_at=datetime.now(timezone.utc)
         )
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Card':
         """Create card from dictionary (for migration/loading)."""

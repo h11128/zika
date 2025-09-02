@@ -6,7 +6,7 @@ Handles card editing with pagination and search functionality.
 from typing import List, Dict, Any, Optional
 
 from core.feature_flags import get_feature_flag
-from ui.error_boundary import with_error_boundary
+from ui.error_boundaries import with_error_boundary
 from ui.ports import UIAdapter, get_ui_adapter, ComponentConfig, NotificationLevel
 from ui.unified import get_unified_ui
 from ui.state_bridge import state_get, state_set, state_delete

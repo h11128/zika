@@ -3,10 +3,12 @@ Sidebar module for the UI refactor.
 Handles sidebar content including navigation, settings, and information.
 """
 
-import streamlit as st
+# Option C alias: route through ports.st while preserving module-level st for tests
+import ui.ports as ports
+st = ports.st
 from typing import Dict, Any, Optional
 
-from core.feature_flags import get_feature_flag
+from core.feature_flags import get_feature_flag, set_test_override, clear_all_test_overrides, DEFAULT_FLAGS
 from ui.ports import UIAdapter, get_ui_adapter, ComponentConfig, NotificationLevel
 
 # Import error boundaries for UI protection
@@ -330,22 +332,34 @@ def render_debug_section_adapted(adapter: UIAdapter) -> None:
 
     with adapter.layout.expander("🐛 调试信息", expanded=False):
         # Feature flags status
-        adapter.markdown("**功能标志:**")
-        debug_flags = [
-            'use_state_service',
-            'use_cache_v2',
-            'use_new_preview_pipeline',
-            'adapted_inputs',
-            'adapted_options',
-            'adapted_preview',
-            'adapted_editor',
-            'adapted_export'
-        ]
+        adapter.markdown("**功能标志 (会话覆盖)：**")
 
-        for flag in debug_flags:
-            status = get_feature_flag(flag, False)
-            icon = "✅" if status else "❌"
-            adapter.text(f"{icon} {flag}: {status}")
+        # Build full list of flags from defaults plus any cached values
+        all_flags = sorted(set(DEFAULT_FLAGS.keys()))
+
+        # Toggle all flags
+        for flag in all_flags:
+            current = bool(get_feature_flag(flag, DEFAULT_FLAGS.get(flag, False)))
+            cfg = ComponentConfig(key=f"flag_{flag}", label=f"{flag}")
+            new_val = adapter.inputs.checkbox(cfg, value=current)
+            if new_val != current:
+                # Use test override to set during this session
+                set_test_override(flag, new_val)
+                adapter.notifications.show_message(
+                    f"已切换 {flag} = {new_val}", NotificationLevel.INFO
+                )
+                adapter.rerun()
+
+        # Reset overrides to defaults button
+        reset_cfg = ComponentConfig(
+            key="reset_flags_to_defaults",
+            label="↩️ 重置功能标志为默认值",
+            help_text="清除会话中的所有功能标志覆盖"
+        )
+        if adapter.inputs.button(reset_cfg):
+            clear_all_test_overrides()
+            adapter.notifications.show_message("已重置功能标志为默认值", NotificationLevel.SUCCESS)
+            adapter.rerun()
 
         # Session state info
         adapter.markdown("**会话状态:**")

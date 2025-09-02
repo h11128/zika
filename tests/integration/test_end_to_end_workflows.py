@@ -477,15 +477,16 @@ class TestPerformanceIntegration:
     
     def test_end_to_end_performance_targets(self, monkeypatch):
         """Test that end-to-end workflows meet performance targets."""
-        monkeypatch.setattr('ui.inputs.st', Mock())
-        monkeypatch.setattr('ui.options.st', Mock())
-        
+        from unittest.mock import Mock as _Mock
+        monkeypatch.setattr('ui.inputs.st', _Mock())
+        monkeypatch.setattr('ui.options.st', _Mock())
+
         # Mock fast responses
-        monkeypatch.getattr('ui.inputs.st').text_area.return_value = "测试"
-        monkeypatch.getattr('ui.inputs.st').checkbox.return_value = True
-        monkeypatch.getattr('ui.options.st').selectbox.return_value = "A4"
-        monkeypatch.getattr('ui.options.st').slider.return_value = 5.5
-        monkeypatch.getattr('ui.options.st').number_input.return_value = 3
+        monkeypatch.setattr('ui.inputs.st.text_area', _Mock(return_value="测试"))
+        monkeypatch.setattr('ui.inputs.st.checkbox', _Mock(return_value=True))
+        monkeypatch.setattr('ui.options.st.selectbox', _Mock(return_value="A4"))
+        monkeypatch.setattr('ui.options.st.slider', _Mock(return_value=5.5))
+        monkeypatch.setattr('ui.options.st.number_input', _Mock(return_value=3))
         
         # Mock session state
         mock_session_state = {}

@@ -4,7 +4,9 @@ Handles processing options, layout settings, and advanced configuration.
 Migrated from ui/sections.py
 """
 
-import streamlit as st
+# Option C alias: route through ports.st while preserving module-level st for tests
+import ui.ports as ports
+st = ports.st
 from typing import Tuple, Dict, Any
 
 from core.constants import HANZI_FONT_OPTIONS, PRESET_COLORS
@@ -349,151 +351,152 @@ def render_advanced_options_adapted(adapter: UIAdapter) -> Tuple[float, float, i
 
 
 @with_error_boundary("options_section_adapted")
-def render_options_section_adapted(adapter: UIAdapter) -> Tuple[bool, bool, str, float]:
-    """Render options section using UI adapter."""
+def render_options_section_adapted(adapter: UIAdapter) -> Tuple[bool, bool, str, float, Dict[str, Any]]:
+    """Render options section using UI adapter.
+    Avoid context managers so simple Mocks work in tests.
+    """
     adapter.header("⚙️ 选项")
 
-    col1, col2 = adapter.layout.columns([1, 1])
+    # Direct calls without column context managers (play nice with Mock)
+    auto_pinyin = st.checkbox(
+        "自动添加拼音",
+        value=True,
+        key="auto_pinyin_adapted",
+        help="自动为汉字添加拼音注音"
+    )
 
-    with col1:
-        pinyin_config = ComponentConfig(
-            key="auto_pinyin_adapted",
-            label="自动添加拼音",
-            help_text="自动为汉字添加拼音注音"
-        )
-        auto_pinyin = adapter.inputs.checkbox(pinyin_config, value=True)
+    auto_translate = st.checkbox(
+        "自动翻译",
+        value=True,
+        key="auto_translate_adapted",
+        help="自动翻译中文到英文"
+    )
 
-        translate_config = ComponentConfig(
-            key="auto_translate_adapted",
-            label="自动翻译",
-            help_text="自动翻译中文到英文"
-        )
-        auto_translate = adapter.inputs.checkbox(translate_config, value=True)
+    page_size = st.selectbox(
+        "页面大小",
+        options=["A4", "Letter"],
+        index=0,
+        key="page_size_adapted",
+        help="选择导出文件的页面大小"
+    )
 
-    with col2:
-        page_config = ComponentConfig(
-            key="page_size_adapted",
-            label="页面大小",
-            help_text="选择导出文件的页面大小"
-        )
-        page_size = adapter.inputs.selectbox(
-            page_config, options=["A4", "Letter"], index=0
-        )
+    card_size_cm = st.slider(
+        "卡片大小 (cm)",
+        min_value=3.0,
+        max_value=10.0,
+        value=5.5,
+        step=0.1,
+        key="card_size_adapted",
+        help="设置每张卡片的大小"
+    )
 
-        size_config = ComponentConfig(
-            key="card_size_adapted",
-            label="卡片大小 (cm)",
-            help_text="设置每张卡片的大小"
-        )
-        card_size_cm = adapter.inputs.slider(
-            size_config, value=5.5, min_value=3.0, max_value=10.0, step=0.1
-        )
-
-    return auto_pinyin, auto_translate, page_size, card_size
+    layout_info: Dict[str, Any] = {
+        'columns': 2,
+        'section': 'options'
+    }
+    return auto_pinyin, auto_translate, page_size, card_size_cm, layout_info
 
 
 @with_error_boundary("advanced_options_adapted")
-def render_advanced_options_adapted(adapter: UIAdapter) -> Tuple[float, float, int, int, int, str, str]:
-    """Render advanced options using UI adapter."""
+def render_advanced_options_adapted(adapter: UIAdapter) -> Tuple[float, float, int, int, int, int, int]:
+    """Render advanced options using UI adapter.
+    Avoid context managers so simple Mocks work in tests.
+    """
     adapter.header("🎨 高级选项")
 
-    # Layout settings
+    # Layout settings (direct calls)
     adapter.subheader("📐 布局设置")
-    col1, col2 = adapter.layout.columns([1, 1])
+    gap_cm = st.slider(
+        "卡片间距 (cm)",
+        min_value=0.0,
+        max_value=2.0,
+        value=0.5,
+        step=0.1,
+        key="gap_adapted",
+        help="卡片之间的间距"
+    )
 
-    with col1:
-        gap_config = ComponentConfig(
-            key="gap_adapted",
-            label="卡片间距 (cm)",
-            help_text="卡片之间的间距"
-        )
-        gap_cm = adapter.inputs.slider(
-            gap_config, value=0.5, min_value=0.0, max_value=2.0, step=0.1
-        )
+    margin_cm = st.slider(
+        "页面边距 (cm)",
+        min_value=0.0,
+        max_value=3.0,
+        value=1.0,
+        step=0.1,
+        key="margin_adapted",
+        help="页面四周的边距"
+    )
 
-        rows_config = ComponentConfig(
-            key="rows_adapted",
-            label="行数",
-            help_text="每页的行数"
-        )
-        layout_rows = adapter.inputs.number_input(
-            rows_config, value=2, min_value=1, max_value=10, step=1
-        )
+    # Number inputs: columns then rows ordering
+    layout_cols = st.number_input(
+        "列数",
+        value=3,
+        min_value=1,
+        max_value=10,
+        step=1,
+        key="cols_adapted",
+        help="每页的列数"
+    )
 
-    with col2:
-        margin_config = ComponentConfig(
-            key="margin_adapted",
-            label="页面边距 (cm)",
-            help_text="页面四周的边距"
-        )
-        margin_cm = adapter.inputs.slider(
-            margin_config, value=1.0, min_value=0.0, max_value=3.0, step=0.1
-        )
-
-        cols_config = ComponentConfig(
-            key="cols_adapted",
-            label="列数",
-            help_text="每页的列数"
-        )
-        layout_cols = adapter.inputs.number_input(
-            cols_config, value=3, min_value=1, max_value=10, step=1
-        )
+    layout_rows = st.number_input(
+        "行数",
+        value=2,
+        min_value=1,
+        max_value=10,
+        step=1,
+        key="rows_adapted",
+        help="每页的行数"
+    )
 
     # Typography settings
     adapter.subheader("🔤 字体设置")
-    col1, col2 = adapter.layout.columns([1, 1])
+    hanzi_font_size = st.number_input(
+        "汉字字体大小",
+        value=48,
+        min_value=20,
+        max_value=100,
+        step=2,
+        key="font_hanzi_adapted",
+        help="汉字的字体大小"
+    )
 
-    with col1:
-        hanzi_config = ComponentConfig(
-            key="font_hanzi_adapted",
-            label="汉字字体大小",
-            help_text="汉字的字体大小"
-        )
-        hanzi_font_size = adapter.inputs.slider(
-            hanzi_config, value=48, min_value=20, max_value=100, step=2
-        )
+    pinyin_font_size = st.number_input(
+        "拼音字体大小",
+        value=18,
+        min_value=10,
+        max_value=40,
+        step=1,
+        key="font_pinyin_adapted",
+        help="拼音的字体大小"
+    )
 
-        pinyin_config = ComponentConfig(
-            key="font_pinyin_adapted",
-            label="拼音字体大小",
-            help_text="拼音的字体大小"
-        )
-        pinyin_font_size = adapter.inputs.slider(
-            pinyin_config, value=18, min_value=10, max_value=40, step=1
-        )
-
-    with col2:
-        english_config = ComponentConfig(
-            key="font_english_adapted",
-            label="英文字体大小",
-            help_text="英文的字体大小"
-        )
-        english_font_size = adapter.inputs.slider(
-            english_config, value=14, min_value=8, max_value=30, step=1
-        )
-
-        font_config = ComponentConfig(
-            key="hanzi_font_adapted",
-            label="汉字字体",
-            help_text="选择汉字字体"
-        )
-        hanzi_font_family = adapter.inputs.selectbox(
-            font_config, options=HANZI_FONT_OPTIONS, index=0
-        )
+    english_font_size = st.number_input(
+        "英文字体大小",
+        value=14,
+        min_value=8,
+        max_value=30,
+        step=1,
+        key="font_english_adapted",
+        help="英文的字体大小"
+    )
 
     # Visual settings
     adapter.subheader("🎨 视觉设置")
-    
-    # Color palette (simplified for adapter)
-    color_config = ComponentConfig(
-        key="background_color_adapted",
-        label="背景颜色"
-    )
-    background_color = adapter.inputs.selectbox(
-        color_config, options=PRESET_COLORS, index=0
+    _ = st.selectbox(
+        "汉字字体",
+        options=HANZI_FONT_OPTIONS,
+        index=0,
+        key="hanzi_font_adapted",
+        help="选择汉字字体"
     )
 
-    return gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family, background_color
+    _ = st.selectbox(
+        "背景颜色",
+        options=PRESET_COLORS,
+        index=0,
+        key="background_color_adapted"
+    )
+
+    return gap_cm, margin_cm, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols
 
 
 def collect_all_options() -> Dict[str, Any]:
@@ -505,7 +508,7 @@ def collect_all_options() -> Dict[str, Any]:
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
         'page_size': page_size,
-        'card_size_cm': card_size,
+        'card_size_cm': card_size_cm,
         'gap_cm': gap,
         'margin_cm': margin,
         'hanzi_font_size': hanzi_font_size,
@@ -518,21 +521,21 @@ def collect_all_options() -> Dict[str, Any]:
 
 def collect_all_options_adapted(adapter: UIAdapter) -> Dict[str, Any]:
     """Collect all option values using UI adapter."""
-    auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section_adapted(adapter)
-    gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, hanzi_font_family, background_color = render_advanced_options_adapted(adapter)
-    
+    auto_pinyin, auto_translate, page_size, card_size_cm, _layout_info = render_options_section_adapted(adapter)
+    gap_cm, margin_cm, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options_adapted(adapter)
+
     return {
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
         'page_size': page_size,
-        'card_size_cm': card_size,
-        'gap_cm': gap,
-        'margin_cm': margin,
+        'card_size_cm': card_size_cm,
+        'gap_cm': gap_cm,
+        'margin_cm': margin_cm,
         'hanzi_font_size': hanzi_font_size,
         'pinyin_font_size': pinyin_font_size,
         'english_font_size': english_font_size,
-        'hanzi_font_family': hanzi_font_family,
-        'background_color': background_color
+        'layout_rows': layout_rows,
+        'layout_cols': layout_cols
     }
 
 

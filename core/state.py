@@ -116,9 +116,9 @@ def get_layout_settings() -> Dict[str, Any]:
     layout_cols = _ss_get('layout_cols', DEFAULT_COLS)
     layout_auto_fill = _ss_get('layout_auto_fill', DEFAULT_AUTO_FILL)
     return {
-        'layout_rows': rows if rows is not None else DEFAULT_ROWS,
-        'layout_cols': cols if cols is not None else DEFAULT_COLS,
-        'layout_auto_fill': bool(auto_fill) if isinstance(layout_auto_fill, (bool, int)) else DEFAULT_AUTO_FILL,
+        'layout_rows': layout_rows if layout_rows is not None else DEFAULT_ROWS,
+        'layout_cols': layout_cols if layout_cols is not None else DEFAULT_COLS,
+        'layout_auto_fill': bool(layout_auto_fill) if isinstance(layout_auto_fill, (bool, int)) else DEFAULT_AUTO_FILL,
     }
 
 
@@ -176,13 +176,15 @@ def set_current_page(page: int) -> None:
 
 def clear_export_data() -> None:
     """Clear export data when parameters change."""
+    # Always clear in-memory state first
+    st.session_state.export_ready = {}
+    st.session_state.export_data = {}
+    # Then best-effort invalidate any external caches
     try:
         from ui.cache_manager import invalidate_export_cache
         invalidate_export_cache("Parameters changed", "core.state.clear_export_data")
     except ImportError:
-        # Fallback to direct clearing
-        st.session_state.export_ready = {}
-        st.session_state.export_data = {}
+        pass
 
 
 def update_last_params(params: Dict[str, Any]) -> None:
@@ -207,12 +209,12 @@ def clear_processed_cards() -> None:
 
 def update_layout_settings(layout_rows: int = None, layout_cols: int = None, layout_auto_fill: bool = None) -> None:
     """Update layout settings."""
-    if rows is not None:
-        st.session_state.layout_rows = int(rows)
-    if cols is not None:
-        st.session_state.layout_cols = int(cols)
-    if auto_fill is not None:
-        st.session_state.layout_auto_fill = bool(auto_fill)
+    if layout_rows is not None:
+        st.session_state.layout_rows = int(layout_rows)
+    if layout_cols is not None:
+        st.session_state.layout_cols = int(layout_cols)
+    if layout_auto_fill is not None:
+        st.session_state.layout_auto_fill = bool(layout_auto_fill)
 
 
 def update_ui_preferences(hanzi_font_family: str = None, background_color: str = None) -> None:
@@ -265,9 +267,9 @@ def get_all_ui_params(card_size_cm: float, gap_cm: float, margin_cm: float, page
     prefs = get_ui_preferences()
 
     return {
-        'card_size_cm': card_size,
-        'gap_cm': gap,
-        'margin_cm': margin,
+        'card_size_cm': card_size_cm,
+        'gap_cm': gap_cm,
+        'margin_cm': margin_cm,
         'page_size': page_size,
         'hanzi_font_size': hanzi_font_size,
         'pinyin_font_size': pinyin_font_size,

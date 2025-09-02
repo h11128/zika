@@ -128,9 +128,13 @@ def render_left_column():
         return render_left_unified()
     
     if get_feature_flag('adapted_inputs', False) and get_feature_flag('adapted_options', False):
-        from ui.inputs import render_input_section_adapted
-        from ui.options import render_options_section_adapted, render_advanced_options_adapted
-        
+        # Use safe re-exports from ui.sections which supply a default adapter
+        from ui.sections import (
+            render_input_section_adapted,
+            render_options_section_adapted,
+            render_advanced_options_adapted,
+        )
+
         processed_cards = render_input_section_adapted()
         auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section_adapted()
         gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options_adapted()
@@ -148,14 +152,14 @@ def render_left_column():
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
         'page_size': page_size,
-        'card_size_cm': card_size,
+        'card_size_cm': card_size_cm,
         'gap_cm': gap,
         'margin_cm': margin,
         'hanzi_font_size': hanzi_font_size,
         'pinyin_font_size': pinyin_font_size,
         'english_font_size': english_font_size,
         'layout_rows': layout_rows,
-        'layout_cols': cols
+        'layout_cols': layout_cols
     }
 
 

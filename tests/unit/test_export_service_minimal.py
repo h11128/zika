@@ -20,14 +20,20 @@ class DummyGen:
 
 
 def test_export_cards_pptx_and_cleanup(monkeypatch, tmp_path):
-    monkeypatch.setattr(ex, "PPTXCardGenerator", DummyGen)
+    # Disable shared render core feature flag to use legacy path
+    monkeypatch.setattr("core.feature_flags.get_feature_flag", lambda flag, default: False)
+    # Patch the actual import location in the services.export module
+    monkeypatch.setattr("services.export.PPTXCardGenerator", DummyGen)
     cards = [{"hanzi": "你", "pinyin": "ni3", "english": "you"}]
     content = ex.export_cards(cards, "pptx")
     assert content == b"ok"
 
 
 def test_export_cards_pdf_and_cleanup(monkeypatch, tmp_path):
-    monkeypatch.setattr(ex, "PDFCardGenerator", DummyGen)
+    # Disable shared render core feature flag to use legacy path
+    monkeypatch.setattr("core.feature_flags.get_feature_flag", lambda flag, default: False)
+    # Patch the actual import location in the services.export module
+    monkeypatch.setattr("services.export.PDFCardGenerator", DummyGen)
     cards = [{"hanzi": "好", "pinyin": "hao3", "english": "good"}]
     content = ex.export_cards(cards, "pdf")
     assert content == b"ok"

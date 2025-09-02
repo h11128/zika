@@ -39,7 +39,7 @@ class TestEditorFeatures:
         
         # 设置5行6列布局
         layout_rows, layout_cols = 5, 6
-        cards_per_page = rows * cols  # 应该是30
+        cards_per_page = layout_rows * layout_cols  # 应该是30
         
         # 模拟编辑功能的实现
         with patch('streamlit.expander') as mock_expander, \

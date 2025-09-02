@@ -246,10 +246,10 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
 
             # Convert legacy parameters to dataclasses
             preview_params = convert_legacy_params_to_preview_params(
-                card_size, gap, margin, page_size,
+                card_size_cm, gap_cm, margin_cm, page_size,
                 hanzi_font_size, pinyin_font_size, english_font_size,
                 hanzi_font_family, background_color, '📄 完整页面',
-                layout_rows, layout_cols, auto_fill
+                layout_rows, layout_cols, layout_auto_fill
             )
 
             # Delegate to v2 implementation
@@ -274,7 +274,7 @@ def create_page_preview_html(cards: List[Dict[str, str]], page_num: int,
     if not page_cards and page_num > 0:
         return "<div style='text-align: center; color: #666; padding: 50px;'>页面不存在</div>"
 
-    M = _compute_page_layout_metrics(page_size, gap, margin, layout_rows, layout_cols, card_size, auto_fill)
+    M = _compute_page_layout_metrics(page_size, gap_cm, margin_cm, layout_rows, layout_cols, card_size_cm, layout_auto_fill)
     card_box = _compute_page_card_box(M)
     font_px = _compute_font_px(hanzi_font_size, pinyin_font_size, english_font_size, M.scale_factor)
 
@@ -314,10 +314,10 @@ def create_simple_grid_html(cards: List[Dict[str, str]], hanzi_font_family: str 
 
     # Convert legacy parameters to dataclasses
     preview_params = convert_legacy_params_to_preview_params(
-        card_size, 0.5, 1.0, 'A4',  # gap and margin defaults for simple grid
+        card_size_cm, 0.5, 1.0, 'A4',  # gap and margin defaults for simple grid
         hanzi_font_size, pinyin_font_size, english_font_size,
         hanzi_font_family, background_color, '🔲 简单网格',
-        layout_rows, layout_cols, auto_fill
+        layout_rows, layout_cols, layout_auto_fill
     )
 
     # Delegate to v2 implementation

@@ -8,6 +8,8 @@ from unittest.mock import MagicMock, patch, call
 import time
 import json
 
+# Import the module directly to ensure it's available for patching
+import components.browser_storage
 from components.browser_storage import (
     BrowserStorageManager, get_storage_manager, hydrate_once, schedule_save, flush_if_due,
     STORAGE_KEY, SAVE_DEBOUNCE_SECONDS, HYDRATION_SESSION_KEY, SAVE_SCHEDULE_KEY
@@ -65,125 +67,117 @@ class TestBrowserStorageManager:
         self.manager = BrowserStorageManager()
         self.mock_session_state = MockSessionState()
     
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    def test_hydrate_once_disabled_persistence(self, mock_st, mock_persistence):
+    def test_hydrate_once_disabled_persistence(self):
         """Test hydrate_once when persistence is disabled."""
-        mock_persistence.return_value = False
-        mock_st.session_state = self.mock_session_state
-        
-        result = self.manager.hydrate_once()
-        
-        assert result is False
-        assert not self.manager.hydrated
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=False) as mock_persistence, \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
+
+            result = self.manager.hydrate_once()
+
+            assert result is False
+            assert not self.manager.hydrated
     
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    def test_hydrate_once_already_hydrated(self, mock_st, mock_persistence):
+    def test_hydrate_once_already_hydrated(self):
         """Test hydrate_once when already hydrated."""
-        mock_persistence.return_value = True
-        mock_st.session_state = self.mock_session_state
-        
-        # Mark as already hydrated
-        self.mock_session_state._data[HYDRATION_SESSION_KEY] = True
-        
-        result = self.manager.hydrate_once()
-        
-        assert result is False
-        assert self.manager.hydrated is True
-    
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.load_snapshot_from_data')
-    @patch('components.browser_storage.st')
-    def test_hydrate_once_successful(self, mock_st, mock_load_snapshot, mock_persistence):
-        """Test successful hydration with single rerun."""
-        mock_persistence.return_value = True
-        mock_st.session_state = self.mock_session_state
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=True) as mock_persistence, \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
 
-        # Mock snapshot data
-        mock_snapshot = MagicMock()
-        mock_snapshot.cards = [{'hanzi': '测试', 'pinyin': 'ceshi', 'english': 'test'}]
-        mock_load_snapshot.return_value = mock_snapshot
-
-        # Mock localStorage data retrieval
-        with patch.object(self.manager, '_get_from_localstorage_reliable') as mock_get_data:
-            mock_get_data.return_value = {'version': 1, 'cards': []}
+            # Mark as already hydrated
+            self.mock_session_state._data[HYDRATION_SESSION_KEY] = True
 
             result = self.manager.hydrate_once()
 
-            # Should return True when data is found and applied
-            assert result is True
-            assert self.manager.hydrated is True
-            assert HYDRATION_SESSION_KEY in self.mock_session_state
-            assert f"{HYDRATION_SESSION_KEY}_success" in self.mock_session_state
-            mock_snapshot.apply_to_session_state.assert_called_once_with(self.mock_session_state)
-    
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    def test_hydrate_once_no_data(self, mock_st, mock_persistence):
-        """Test hydration when no localStorage data exists."""
-        mock_persistence.return_value = True
-        mock_st.session_state = self.mock_session_state
-        
-        # Mock no localStorage data
-        with patch.object(self.manager, '_get_from_localstorage_reliable') as mock_get_data:
-            mock_get_data.return_value = None
-            
-            result = self.manager.hydrate_once()
-            
             assert result is False
             assert self.manager.hydrated is True
-            assert HYDRATION_SESSION_KEY in self.mock_session_state
-            assert f"{HYDRATION_SESSION_KEY}_attempted" in self.mock_session_state
     
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    def test_schedule_save_disabled_persistence(self, mock_st, mock_persistence):
+    def test_hydrate_once_successful(self):
+        """Test successful hydration with single rerun."""
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=True) as mock_persistence, \
+             patch.object(components.browser_storage, 'load_snapshot_from_data') as mock_load_snapshot, \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
+
+            # Mock snapshot data
+            mock_snapshot = MagicMock()
+            mock_snapshot.cards = [{'hanzi': '测试', 'pinyin': 'ceshi', 'english': 'test'}]
+            mock_load_snapshot.return_value = mock_snapshot
+
+            # Mock localStorage data retrieval
+            with patch.object(self.manager, '_get_from_localstorage_reliable') as mock_get_data:
+                mock_get_data.return_value = {'version': 1, 'cards': []}
+
+                result = self.manager.hydrate_once()
+
+                # Should return True when data is found and applied
+                assert result is True
+                assert self.manager.hydrated is True
+                assert HYDRATION_SESSION_KEY in self.mock_session_state
+                assert f"{HYDRATION_SESSION_KEY}_success" in self.mock_session_state
+                mock_snapshot.apply_to_session_state.assert_called_once_with(self.mock_session_state)
+    
+    def test_hydrate_once_no_data(self):
+        """Test hydration when no localStorage data exists."""
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=True), \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
+
+            # Mock no localStorage data
+            with patch.object(self.manager, '_get_from_localstorage_reliable') as mock_get_data:
+                mock_get_data.return_value = None
+
+                result = self.manager.hydrate_once()
+
+                assert result is False
+                assert self.manager.hydrated is True
+                assert HYDRATION_SESSION_KEY in self.mock_session_state
+                assert f"{HYDRATION_SESSION_KEY}_attempted" in self.mock_session_state
+    
+    def test_schedule_save_disabled_persistence(self):
         """Test schedule_save when persistence is disabled."""
-        mock_persistence.return_value = False
-        mock_st.session_state = self.mock_session_state
-        
-        self.manager.schedule_save()
-        
-        assert not self.manager.pending_save
-        assert not self.manager.save_scheduled
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=False), \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
+
+            self.manager.schedule_save()
+
+            assert not self.manager.pending_save
+            assert not self.manager.save_scheduled
     
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    @patch('components.browser_storage.time')
-    def test_schedule_save_enabled(self, mock_time, mock_st, mock_persistence):
+    def test_schedule_save_enabled(self):
         """Test schedule_save when persistence is enabled."""
-        mock_persistence.return_value = True
-        mock_st.session_state = self.mock_session_state
-        mock_time.time.return_value = 1000.0
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=True), \
+             patch.object(components.browser_storage, 'st') as mock_st, \
+             patch.object(components.browser_storage, 'time') as mock_time:
+            mock_st.session_state = self.mock_session_state
+            mock_time.time.return_value = 1000.0
 
-        self.manager.schedule_save()
+            self.manager.schedule_save()
 
-        assert self.manager.pending_save is True
-        assert self.manager.save_scheduled is True
-        assert self.mock_session_state.get(SAVE_SCHEDULE_KEY) == 1000.0
+            assert self.manager.pending_save is True
+            assert self.manager.save_scheduled is True
+            assert self.mock_session_state.get(SAVE_SCHEDULE_KEY) == 1000.0
     
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    def test_flush_if_due_disabled_persistence(self, mock_st, mock_persistence):
+    def test_flush_if_due_disabled_persistence(self):
         """Test flush_if_due when persistence is disabled."""
-        mock_persistence.return_value = False
-        mock_st.session_state = self.mock_session_state
-        
-        result = self.manager.flush_if_due()
-        
-        assert result is False
-    
-    @patch('components.browser_storage.is_persistence_enabled')
-    @patch('components.browser_storage.st')
-    def test_flush_if_due_no_pending_save(self, mock_st, mock_persistence):
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=False), \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
+
+            result = self.manager.flush_if_due()
+
+            assert result is False
+
+    def test_flush_if_due_no_pending_save(self):
         """Test flush_if_due when no save is pending."""
-        mock_persistence.return_value = True
-        mock_st.session_state = self.mock_session_state
-        
-        result = self.manager.flush_if_due()
-        
-        assert result is False
+        with patch.object(components.browser_storage, 'is_persistence_enabled', return_value=True), \
+             patch.object(components.browser_storage, 'st') as mock_st:
+            mock_st.session_state = self.mock_session_state
+
+            result = self.manager.flush_if_due()
+
+            assert result is False
     
     @patch('components.browser_storage.is_persistence_enabled')
     @patch('components.browser_storage.create_snapshot_from_session')

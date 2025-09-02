@@ -7,9 +7,11 @@ with single rerun on hydration, debounced saves, and graceful degradation.
 import json
 import time
 import logging
+import warnings
 from typing import Optional, Dict, Any, Callable, Tuple
 from datetime import datetime, timezone
 from enum import Enum
+from contextlib import contextmanager
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -107,7 +109,7 @@ class BrowserStorageManager:
 
         # Method 2: Try URL parameters (if data was passed via URL)
         try:
-            query_params = st.experimental_get_query_params()
+            query_params = st.query_params
             if 'localStorage_data' in query_params:
                 data_str = query_params['localStorage_data'][0]
                 return json.loads(data_str)

@@ -302,8 +302,8 @@ class TestEdgeCaseWorkflows:
         monkeypatch.setattr('ui.inputs.st', mock_st)
         
         # Mock empty input
-        self.mock_st.text_area.return_value = ""
-        self.mock_st.file_uploader.return_value = None
+        mock_st.text_area.return_value = ""
+        mock_st.file_uploader.return_value = None
         
         mock_session_state = {}
         monkeypatch.setattr('ui.inputs.st.session_state', mock_session_state)
@@ -314,7 +314,7 @@ class TestEdgeCaseWorkflows:
             mock_process.return_value = []
             
             from ui.inputs import render_input_section_adapted
-            result = render_input_section_adapted()
+            result = render_input_section_adapted(get_ui_adapter())
             
             # Should handle empty input gracefully
             assert isinstance(result, list)

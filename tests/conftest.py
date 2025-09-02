@@ -8,6 +8,30 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+# Prefer the project's local 'components' package over any third-party package named 'components'
+import importlib
+
+def _prefer_local_components():
+    try:
+        mod = sys.modules.get('components')
+        local_pkg_dir = os.path.join(ROOT, 'components').replace('\\', '/').rstrip('/')
+        if mod is None or not getattr(mod, '__file__', '') or not mod.__file__.replace('\\', '/').startswith(local_pkg_dir):
+            if 'components' in sys.modules:
+                # Remove non-local module to avoid name collisions
+                del sys.modules['components']
+            importlib.invalidate_caches()
+            mod = importlib.import_module('components')
+        # Ensure submodule attribute exists for patchers that dot-resolve
+        try:
+            getattr(mod, 'browser_storage')
+        except AttributeError:
+            importlib.import_module('components.browser_storage')
+    except Exception:
+        # Best-effort: don't block tests if this fails
+        pass
+
+_prefer_local_components()
+
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_out_dir_session():

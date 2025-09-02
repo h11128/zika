@@ -19,17 +19,17 @@ class TestFieldAliases:
     
     def test_field_aliases_defined(self):
         """Test that field aliases are properly defined."""
-        assert 'gap_cm' in FIELD_ALIASES
-        assert 'margin_cm' in FIELD_ALIASES
-        
-        gap_alias = FIELD_ALIASES['gap_cm']
-        assert gap_alias.old_name == 'gap_cm'
+        assert 'gap' in FIELD_ALIASES
+        assert 'margin' in FIELD_ALIASES
+
+        gap_alias = FIELD_ALIASES['gap']
+        assert gap_alias.old_name == 'gap'
         assert gap_alias.new_name == 'gap_cm'
         assert gap_alias.unit_suffix == '_cm'
         assert gap_alias.conversion_factor == 1.0
-        
-        margin_alias = FIELD_ALIASES['margin_cm']
-        assert margin_alias.old_name == 'margin_cm'
+
+        margin_alias = FIELD_ALIASES['margin']
+        assert margin_alias.old_name == 'margin'
         assert margin_alias.new_name == 'margin_cm'
         assert margin_alias.unit_suffix == '_cm'
         assert margin_alias.conversion_factor == 1.0
@@ -38,22 +38,21 @@ class TestFieldAliases:
         """Test reverse alias mapping."""
         assert 'gap_cm' in REVERSE_ALIASES
         assert 'margin_cm' in REVERSE_ALIASES
-        
-        assert REVERSE_ALIASES['gap_cm'].old_name == 'gap_cm'
-        assert REVERSE_ALIASES['margin_cm'].old_name == 'margin_cm'
+
+        assert REVERSE_ALIASES['gap_cm'].old_name == 'gap'
+        assert REVERSE_ALIASES['margin_cm'].old_name == 'margin'
     
     def test_get_canonical_field_name(self):
         """Test getting canonical field names."""
-        assert get_canonical_field_name('gap_cm') == 'gap_cm'
-        assert get_canonical_field_name('margin_cm') == 'margin_cm'
+        assert get_canonical_field_name('gap') == 'gap_cm'
+        assert get_canonical_field_name('margin') == 'margin_cm'
         assert get_canonical_field_name('gap_cm') == 'gap_cm'  # Already canonical
         assert get_canonical_field_name('layout_rows') == 'layout_rows'  # No alias
-    
+
     def test_get_legacy_field_name(self):
         """Test getting legacy field names."""
-        assert get_legacy_field_name('gap_cm') == 'gap_cm'
-        assert get_legacy_field_name('margin_cm') == 'margin_cm'
-        assert get_legacy_field_name('gap_cm') is None  # Not a canonical field
+        assert get_legacy_field_name('gap_cm') == 'gap'
+        assert get_legacy_field_name('margin_cm') == 'margin'
         assert get_legacy_field_name('layout_rows') is None  # No alias
 
 
@@ -62,7 +61,7 @@ class TestFieldResolution:
     
     def test_resolve_field_value_canonical_exists(self):
         """Test resolving when canonical field exists."""
-        data = {'gap_cm': 0.8, 'gap_cm': 0.5}  # Both exist
+        data = {'gap_cm': 0.8}  # Canonical field exists
         result = resolve_field_value(data, 'gap_cm', 1.0)
         assert result == 0.8  # Should use canonical
     
@@ -100,23 +99,23 @@ class TestFieldMigration:
     
     def test_migrate_fields_basic(self):
         """Test basic field migration."""
-        data = {'gap_cm': 0.5, 'margin_cm': 1.0, 'layout_rows': 3}
+        data = {'gap': 0.5, 'margin': 1.0, 'layout_rows': 3}
         result = migrate_fields(data, in_place=False)
-        
+
         assert result.migration_applied is True
         assert len(result.migrated_fields) == 2
-        assert 'gap_cm' in result.migrated_fields
-        assert 'margin_cm' in result.migrated_fields
-        
+        assert 'gap' in result.migrated_fields
+        assert 'margin' in result.migrated_fields
+
         # Original data should be unchanged (not in_place)
-        assert 'gap_cm' in data
-        assert 'margin_cm' in data
-        
+        assert 'gap' in data
+        assert 'margin' in data
+
         # Check migrated values
-        assert result.migrated_fields['gap_cm']['new_field'] == 'gap_cm'
-        assert result.migrated_fields['gap_cm']['new_value'] == 0.5
-        assert result.migrated_fields['margin_cm']['new_field'] == 'margin_cm'
-        assert result.migrated_fields['margin_cm']['new_value'] == 1.0
+        assert result.migrated_fields['gap']['new_field'] == 'gap_cm'
+        assert result.migrated_fields['gap']['new_value'] == 0.5
+        assert result.migrated_fields['margin']['new_field'] == 'margin_cm'
+        assert result.migrated_fields['margin']['new_value'] == 1.0
     
     def test_migrate_fields_in_place(self):
         """Test in-place field migration."""

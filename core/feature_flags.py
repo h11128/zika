@@ -239,7 +239,7 @@ DEFAULT_FLAGS = {
     'shared_render_core': True,  # Enable shared render core
 
     # Unified sections
-
+    'unified_sections': True,  # Enable unified sections rendering path
 }
 
 def is_feature_enabled(flag_name: str) -> bool:

@@ -44,7 +44,7 @@ def initialize_new_components():
 
         # Initialize feature flags configuration
         from core.feature_flags import configure_feature_flags
-        configure_feature_flags()
+        configure_feature_flags(config_file_path=".zika_flags.json")
 
         # Show debug panel if enabled
         if get_feature_flag('storage_debug_panel', False):

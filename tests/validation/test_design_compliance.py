@@ -126,7 +126,7 @@ class TestUIPatternCompliance:
         
         # Mock dependencies
         with patch('ui.inputs.get_ui_adapter', return_value=get_ui_adapter()), \
-             patch('ui.inputs.process_text_input') as mock_process:
+             patch('services.processing.parse_input_text') as mock_process:
             
             mock_process.return_value = [
                 {'hanzi': '测试', 'pinyin': 'ceshi', 'english': 'test'}

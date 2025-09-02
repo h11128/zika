@@ -125,16 +125,16 @@ def create_config_from_params(card_size_cm: float, gap_cm: float, margin_cm: flo
     )
     
     layout_config = LayoutConfig(
-        card_size_cm=card_size,
-        gap_cm=gap,
-        margin_cm=margin,
+        card_size_cm=card_size_cm,
+        gap_cm=gap_cm,
+        margin_cm=margin_cm,
         hanzi_font_size=hanzi_font_size,
         pinyin_font_size=pinyin_font_size,
         english_font_size=english_font_size,
         page_size=page_size,
         layout_rows=layout_rows,
         layout_cols=layout_cols,
-        layout_auto_fill=auto_fill
+        layout_auto_fill=layout_auto_fill
     )
-    
+
     return AppConfig(ui=ui_config, layout=layout_config)

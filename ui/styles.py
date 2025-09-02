@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 from contextlib import contextmanager
 import streamlit as st
+import warnings
 
 from core.feature_flags import get_feature_flag
 
@@ -387,11 +388,28 @@ def sticky_preview():
 
 # Legacy compatibility functions
 def render_sticky_wrapper_start():
-    """Legacy compatibility function for sticky wrapper start."""
+    """Legacy compatibility function for sticky wrapper start.
+
+    Deprecated: Use sticky_preview() context manager instead.
+    """
+    warnings.warn(
+        "render_sticky_wrapper_start() is deprecated; please use sticky_preview() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     st.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
 
+
 def render_sticky_wrapper_end():
-    """Legacy compatibility function for sticky wrapper end."""
+    """Legacy compatibility function for sticky wrapper end.
+
+    Deprecated: Use sticky_preview() context manager instead.
+    """
+    warnings.warn(
+        "render_sticky_wrapper_end() is deprecated; please use sticky_preview() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
 

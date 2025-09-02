@@ -1,0 +1,28 @@
+{
+  "feature_flags": {
+    "persistence": true,
+    "debug_panel": true,
+    "ENABLE_DIGEST_DEBUG": false,
+
+    "table_editor": true,
+    "browser_storage": true,
+    "browser_storage_js": true,
+    "storage_debug_panel": true,
+
+    "form_semantics": true,
+    "debouncing": true,
+
+    "ui_adapter": true,
+    "adapted_inputs": true,
+    "adapted_options": true,
+    "adapted_preview": true,
+    "adapted_editor": true,
+    "adapted_export": true,
+    "adapted_sidebar": true,
+
+    "shared_render_core": true,
+
+    "unified_sections": true
+  }
+}
+
