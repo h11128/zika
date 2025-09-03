@@ -101,7 +101,6 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
         from ui.ports import get_ui_adapter, ComponentConfig
         adapter = get_ui_adapter()
 
-        adapter.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
         adapter.header("👀 预览")
 
         # Preview mode selection using adapter
@@ -120,7 +119,6 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
         state_set('preview_mode', preview_mode)
     else:
         ui = get_unified_ui()
-        ui.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
         ui.header("👀 预览")
 
         # Preview mode selection
@@ -233,12 +231,7 @@ def render_preview_section_wrapper(processed_cards: List[Dict[str, str]],
             ui = get_unified_ui()
             ui.html(create_preview_html([]), height_cm=650)
 
-    # Close sticky wrapper for the entire preview column
-    if get_feature_flag('adapted_preview', False):
-        adapter.markdown('</div>', unsafe_allow_html=True)
-    else:
-        ui = get_unified_ui()
-        ui.markdown('</div>', unsafe_allow_html=True)
+    # Sticky wrapper is managed by ui.styles.sticky_preview() at a higher level.
 
 
 def _render_card_editing_section(processed_cards: List[Dict[str, str]]) -> None:
@@ -296,7 +289,6 @@ def _effective_preview_params_from_state(passed: Dict[str, Any]) -> Dict[str, An
 def render_preview_content_adapted(adapter: UIAdapter, processed_cards: List[Dict[str, str]],
                                  config: Dict[str, Any]) -> None:
     """Render preview content using UI adapter."""
-    adapter.markdown('<div class="preview-sticky">', unsafe_allow_html=True)
     adapter.header("👀 预览")
 
     if not processed_cards:
@@ -335,7 +327,7 @@ def render_preview_content_adapted(adapter: UIAdapter, processed_cards: List[Dic
     # Show page info
     render_page_info_adapted(adapter, processed_cards, cards_per_page, total_pages)
 
-    adapter.markdown('</div>', unsafe_allow_html=True)
+    # sticky wrapper is provided by outer context
 
 
 def render_page_navigation_adapted(adapter: UIAdapter, total_pages: int) -> None:

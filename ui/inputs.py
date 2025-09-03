@@ -301,6 +301,14 @@ def render_manual_input_adapted(adapter: UIAdapter) -> List[Dict[str, str]]:
     )
     use_segmented = adapter.inputs.checkbox(segment_config, value=False)
 
+    # Option: preserve duplicates (like legacy)
+    preserve_config = ComponentConfig(
+        key="preserve_duplicates_adapted",
+        label="保留重复词",
+        help_text="勾选后智能分词将保留重复的词汇，不勾选则自动去重"
+    )
+    preserve_duplicates = adapter.inputs.checkbox(preserve_config, value=False)
+
     reprocess_config = ComponentConfig(
         key="reprocess_btn_adapted",
         label="🔄 重新处理"
@@ -315,7 +323,7 @@ def render_manual_input_adapted(adapter: UIAdapter) -> List[Dict[str, str]]:
     if input_text.strip():
         try:
             if use_segmented:
-                segmented_text = auto_segment_text(input_text)
+                segmented_text = auto_segment_text(input_text, preserve_duplicates=preserve_duplicates)
                 cards = process_text_input(segmented_text)
 
                 # Show segmentation result (no expander to avoid context manager on Mock)

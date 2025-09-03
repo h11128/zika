@@ -147,8 +147,16 @@ class StreamlitInputsAdapter(UIInputsPort):
         )
 
     def text_area(self, config: ComponentConfig, value: str = "", **kwargs) -> str:
-        """Render a text area using Streamlit."""
+        """Render a text area using Streamlit.
+        Accepts legacy 'height_cm' kwarg and maps it to Streamlit's 'height'.
+        """
         _st = _get_st()
+        # Back-compat: some callers pass height_cm; Streamlit expects 'height'
+        if 'height_cm' in kwargs and 'height' not in kwargs:
+            try:
+                kwargs['height'] = int(kwargs.pop('height_cm'))
+            except Exception:
+                kwargs['height'] = kwargs.pop('height_cm')
         return _st.text_area(
             label=config.label,
             value=value,
@@ -180,26 +188,35 @@ class StreamlitInputsAdapter(UIInputsPort):
             **kwargs
         )
 
-    def selectbox(self, config: ComponentConfig, options: List[Any], index: int = 0, **kwargs) -> Any:
-        """Render a selectbox using Streamlit (filter unsupported kwargs for test doubles)."""
+    def selectbox(self, config: Union[ComponentConfig, str], options: List[Any], index: int = 0, **kwargs) -> Any:
+        """Render a selectbox using Streamlit (accepts ComponentConfig or plain label string)."""
         _st = _get_st()
         fn = _st.selectbox
         params = _supported_params(fn)
         call_kwargs = {}
         if 'index' in params:
             call_kwargs['index'] = index
-        if 'key' in params and getattr(config, 'key', None) is not None:
-            call_kwargs['key'] = config.key
-        if 'help' in params and getattr(config, 'help_text', None) is not None:
-            call_kwargs['help'] = config.help_text
         for k, v in kwargs.items():
             if k in params:
                 call_kwargs[k] = v
+        if isinstance(config, str):
+            label = config
+            # allow callers to pass key/help via kwargs if needed
+            if 'key' in params and 'key' in kwargs:
+                call_kwargs['key'] = kwargs['key']
+            if 'help' in params and 'help' in kwargs:
+                call_kwargs['help'] = kwargs['help']
+        else:
+            label = config.label
+            if 'key' in params and getattr(config, 'key', None) is not None:
+                call_kwargs['key'] = config.key
+            if 'help' in params and getattr(config, 'help_text', None) is not None:
+                call_kwargs['help'] = config.help_text
         try:
-            return fn(config.label, options, **call_kwargs)
+            return fn(label, options, **call_kwargs)
         except TypeError:
             # Minimal compatible call
-            return fn(config.label, options, index=index)
+            return fn(label, options, index=index)
 
     def radio(self, config: ComponentConfig, options: List[Any], index: int = 0, **kwargs) -> Any:
         """Render radio buttons using Streamlit."""
@@ -213,9 +230,11 @@ class StreamlitInputsAdapter(UIInputsPort):
             **kwargs
         )
 
-    def checkbox(self, config: ComponentConfig, value: bool = False, **kwargs) -> bool:
-        """Render a checkbox using Streamlit."""
+    def checkbox(self, config: Union[ComponentConfig, str], value: bool = False, **kwargs) -> bool:
+        """Render a checkbox using Streamlit (accepts ComponentConfig or plain label string)."""
         _st = _get_st()
+        if isinstance(config, str):
+            return _st.checkbox(label=config, value=value, **kwargs)
         return _st.checkbox(
             label=config.label,
             value=value,
@@ -224,26 +243,29 @@ class StreamlitInputsAdapter(UIInputsPort):
             **kwargs
         )
 
-    def button(self, config: ComponentConfig, **kwargs) -> bool:
-        """Render a button using Streamlit (ensure disabled is forwarded for tests)."""
+    def button(self, config: Union[ComponentConfig, str], **kwargs) -> bool:
+        """Render a button using Streamlit (accepts ComponentConfig or plain label string)."""
         _st = _get_st()
         fn = _st.button
         params = _supported_params(fn)
         call_kwargs = {}
-        if 'key' in params and getattr(config, 'key', None) is not None:
-            call_kwargs['key'] = config.key
-        if 'help' in params and getattr(config, 'help_text', None) is not None:
-            call_kwargs['help'] = config.help_text
-        # Always forward disabled to satisfy tests that assert its presence
-        call_kwargs['disabled'] = getattr(config, 'disabled', False)
         for k, v in kwargs.items():
             if k in params:
                 call_kwargs[k] = v
+        if isinstance(config, str):
+            label = config
+        else:
+            label = config.label
+            if 'key' in params and getattr(config, 'key', None) is not None:
+                call_kwargs['key'] = config.key
+            if 'help' in params and getattr(config, 'help_text', None) is not None:
+                call_kwargs['help'] = config.help_text
+            call_kwargs['disabled'] = getattr(config, 'disabled', False)
         try:
-            return fn(config.label, **call_kwargs)
+            return fn(label, **call_kwargs)
         except TypeError:
             # Minimal compatible call
-            return fn(config.label, disabled=getattr(config, 'disabled', False))
+            return fn(label, disabled=call_kwargs.get('disabled', False))
 
     def file_uploader(self, config: ComponentConfig, **kwargs) -> Optional[Any]:
         """Render a file uploader using Streamlit."""
