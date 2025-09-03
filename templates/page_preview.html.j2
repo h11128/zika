@@ -17,8 +17,8 @@
   width: {{ M.grid_width * M.scale_factor }}px;
   height: {{ M.grid_height * M.scale_factor }}px;
   display: grid;
-  grid-template-columns: repeat({{ ctx.cols }}, {{ M.card_size_px * M.scale_factor }}px);
-  grid-template-rows: repeat({{ ctx.rows }}, {{ M.card_size_px * M.scale_factor }}px);
+  grid-template-columns: repeat({{ ctx.layout_cols }}, {{ M.card_size_px * M.scale_factor }}px);
+  grid-template-rows: repeat({{ ctx.layout_rows }}, {{ M.card_size_px * M.scale_factor }}px);
   gap: {{ M.gap_px * M.scale_factor }}px;
 }
 .page-card {
@@ -28,7 +28,7 @@
   justify-content: center;
   align-items: center;
   background: {{ ctx.background_color }};
-  font-family: '{{ ctx.hanzi_font }}', 'Microsoft YaHei', 'SimSun', sans-serif;
+  font-family: '{{ ctx.hanzi_font_family }}', 'Microsoft YaHei', 'SimSun', sans-serif;
   padding: {{ card_box.padding_px }}px;
   box-sizing: border-box;
 }

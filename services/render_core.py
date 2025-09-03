@@ -72,7 +72,7 @@ class RenderResult:
             content="",
             page_count=0,
             card_count=0,
-            pagination_info=PaginateInfo(0, 0, 0),
+            pagination_info=PaginateInfo(0, 0),
             success=False,
             error_message=message
         )
@@ -98,7 +98,7 @@ def render_page(cards: List[Dict[str, str]], options: RenderOptions) -> RenderRe
                 content=_render_empty_page(options),
                 page_count=1,
                 card_count=0,
-                pagination_info=PaginateInfo(0, 0, 0)
+                pagination_info=PaginateInfo(0, 0)
             )
             _record_render_metrics(start_time, "empty_page", True)
             return result
@@ -143,8 +143,8 @@ def _render_empty_page(options: RenderOptions) -> str:
     """Render empty page placeholder."""
     return f"""
     <div style="
-        width_cm: 100%;
-        height_cm: 400px;
+        width: 100%;
+        height: 400px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -201,11 +201,13 @@ def _generate_html_content(cards: List[Dict[str, str]],
         <style>{css}</style>
     </head>
     <body>
-        <div class="page">
-            <div class="cards-container">
-                {cards_html}
+        <div class="page-wrapper">
+            <div class="page">
+                <div class="cards-container">
+                    {cards_html}
+                </div>
+                {_generate_page_footer(options, pagination_info)}
             </div>
-            {_generate_page_footer(options, pagination_info)}
         </div>
     </body>
     </html>
@@ -220,37 +222,48 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
     return f"""
         @page {{
             size: {options.page_size};
-            margin_cm: {options.margin_cm}cm;
+            margin: {options.margin_cm}cm;
         }}
-        
+
         body {{
-            margin_cm: 0;
+            margin: 0;
             padding: 0;
             font-family: {options.hanzi_font_family}, sans-serif;
-            background-color: {options.background_color};
+            background-color: #f3f4f6; /* light gray page background */
         }}
-        
+
+        .page-wrapper {{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 1cm 0;
+            box-sizing: border-box;
+        }}
+
         .page {{
-            width_cm: {page_width_cm}cm;
-            height_cm: {page_height_cm}cm;
-            margin_cm: 0 auto;
+            width: {page_width_cm}cm;
+            height: {page_height_cm}cm;
+            margin: 0 auto;
             padding: {options.margin_cm}cm;
             box-sizing: border-box;
-            background-color: {options.background_color};
+            background-color: #ffffff; /* paper color */
+            position: relative;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+            border-radius: 4px;
         }}
-        
+
         .cards-container {{
             display: grid;
             grid-template-columns: repeat({options.layout_cols}, 1fr);
-            grid-template-layout_rows: repeat({options.layout_rows}, 1fr);
-            gap_cm: {options.gap_cm}cm;
-            width_cm: 100%;
-            height_cm: calc(100% - 2cm);
+            grid-template-rows: repeat({options.layout_rows}, 1fr);
+            gap: {options.gap_cm}cm;
+            width: 100%;
+            height: calc(100% - 2cm);
         }}
-        
+
         .card {{
-            width_cm: {card_size_cm}cm;
-            height_cm: {card_size_cm}cm;
+            width: {card_size_cm}cm;
+            height: {card_size_cm}cm;
             border: 2px solid #333;
             border-radius: 8px;
             display: flex;
@@ -263,28 +276,28 @@ def _generate_css(options: RenderOptions, card_size_cm: float,
             background-color: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
-        
+
         .hanzi {{
             font-size: {options.hanzi_font_size_pt}pt;
             font-weight: bold;
             color: #000;
             margin-bottom: 0.2cm;
-            line-height_cm: 1.2;
+            line-height: 1.2;
         }}
-        
+
         .pinyin {{
             font-size: {options.pinyin_font_size_pt}pt;
             color: #666;
             margin-bottom: 0.2cm;
-            line-height_cm: 1.2;
+            line-height: 1.2;
         }}
-        
+
         .english {{
             font-size: {options.english_font_size_pt}pt;
             color: #333;
-            line-height_cm: 1.2;
+            line-height: 1.2;
         }}
-        
+
         .page-footer {{
             position: absolute;
             bottom: 0.5cm;

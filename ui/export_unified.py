@@ -207,10 +207,24 @@ def render_empty_preview_unified():
     
     try:
         from services.cache_v2 import create_preview_html
-        # Note: This still uses st.components.v1.html as there's no adapter equivalent yet
-        # This is one of the few remaining direct calls that's acceptable
-        import streamlit as st
-        st.components.v1.html(create_preview_html([]), height_cm=650)
+        # Use unified UI and pass effective parameters explicitly for empty preview
+        html = create_preview_html(
+            cards=[],
+            page_num=0,
+            page_size=state_get('page_size', 'A4'),
+            gap_cm=state_get('gap_cm', 0.5),
+            margin_cm=state_get('margin_cm', 1.0),
+            layout_rows=state_get('layout_rows', 2),
+            layout_cols=state_get('layout_cols', 3),
+            card_size_cm=state_get('card_size_cm', 5.5),
+            hanzi_font_size_pt=state_get('hanzi_font_size', 48),
+            pinyin_font_size_pt=state_get('pinyin_font_size', 18),
+            english_font_size_pt=state_get('english_font_size', 14),
+            hanzi_font_family=state_get('hanzi_font_family', 'SimHei'),
+            background_color=state_get('background_color', '#ffffff'),
+            layout_auto_fill=state_get('layout_auto_fill', True),
+        )
+        ui.html(html, height_cm=650)
     except Exception as e:
         ui.error(f"预览渲染错误: {e}")
 

@@ -591,7 +591,19 @@ def _render_empty_preview():
             html = "<div style='text-align:center;color:#888'>无预览内容</div>"
         fn = getattr(getattr(st, 'components'), 'v1').html
         try:
-            fn(html, height_cm=650)
+            # Be compatible with both real Streamlit (expects 'height') and legacy tests (expect 'height_cm')
+            try:
+                import inspect
+                params = tuple(inspect.signature(fn).parameters.keys())
+            except Exception:
+                params = ()
+            if 'height_cm' in params:
+                fn(html, height_cm=650)
+            elif 'height' in params:
+                fn(html, height=650)
+            else:
+                # Fall back to positional height argument if signature unknown
+                fn(html, 650)
         except Exception as e:
             # Do not propagate; report via st.error as tests expect
             try:
@@ -680,6 +692,23 @@ def render_advanced_options_adapted(adapter=None):
 
 
 def render_export_adapted(processed_cards: List[Dict[str, str]]):
-    """Re-export of adapted export section for integration tests."""
+    """Re-export of adapted export section for integration tests.
+    Builds a config from state and forwards to the adapted implementation.
+    """
     from ui.export import render_export_section as _render_export_adapted
-    return _render_export_adapted(processed_cards)
+    from ui.state_bridge import state_get
+    config = {
+        'card_size_cm': state_get('card_size_cm', 5.5),
+        'gap_cm': state_get('gap_cm', 0.5),
+        'margin_cm': state_get('margin_cm', 1.0),
+        'hanzi_font_size': state_get('hanzi_font_size', 48),
+        'pinyin_font_size': state_get('pinyin_font_size', 18),
+        'english_font_size': state_get('english_font_size', 14),
+        'page_size': state_get('page_size', 'A4'),
+        'hanzi_font_family': state_get('hanzi_font_family', 'SimHei'),
+        'background_color': state_get('background_color', '#ffffff'),
+        'layout_rows': state_get('layout_rows', 2),
+        'layout_cols': state_get('layout_cols', 3),
+        'layout_auto_fill': state_get('layout_auto_fill', True),
+    }
+    return _render_export_adapted(processed_cards, config)

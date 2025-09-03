@@ -14,6 +14,15 @@ try:
     load_dotenv()  # Load .env file from current directory
 except ImportError:
     pass  # dotenv not available, skip
+# Suppress noisy third-party deprecation warning from jieba using pkg_resources
+import warnings as _warnings
+_warnings.filterwarnings(
+    "ignore",
+    message=r"pkg_resources is deprecated as an API.*",
+    category=UserWarning,
+    module=r"jieba\._compat"
+)
+
 
 # Page configuration - must be first Streamlit command
 st.set_page_config(

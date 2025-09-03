@@ -67,7 +67,22 @@ def render_export_section(processed_cards: List[Dict[str, str]]) -> None:
     
     if get_feature_flag('adapted_export', False):
         from ui.export import render_export_section as render_export_adapted
-        render_export_adapted(processed_cards)
+        from ui.state_bridge import state_get
+        config = {
+            'card_size_cm': state_get('card_size_cm', 5.5),
+            'gap_cm': state_get('gap_cm', 0.5),
+            'margin_cm': state_get('margin_cm', 1.0),
+            'hanzi_font_size': state_get('hanzi_font_size', 48),
+            'pinyin_font_size': state_get('pinyin_font_size', 18),
+            'english_font_size': state_get('english_font_size', 14),
+            'page_size': state_get('page_size', 'A4'),
+            'hanzi_font_family': state_get('hanzi_font_family', 'SimHei'),
+            'background_color': state_get('background_color', '#ffffff'),
+            'layout_rows': state_get('layout_rows', 2),
+            'layout_cols': state_get('layout_cols', 3),
+            'layout_auto_fill': state_get('layout_auto_fill', True),
+        }
+        render_export_adapted(processed_cards, config)
         return
 
     # Use unified implementation
@@ -106,7 +121,8 @@ def render_left_column():
         )
 
         processed_cards = render_input_section_adapted()
-        auto_pinyin, auto_translate, page_size, card_size_cm = render_options_section_adapted()
+        options_result = render_options_section_adapted()
+        auto_pinyin, auto_translate, page_size, card_size_cm = options_result[:4]
         gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options_adapted()
     else:
         # Use existing implementations
@@ -118,7 +134,7 @@ def render_left_column():
         gap, margin, hanzi_font_size, pinyin_font_size, english_font_size, layout_rows, layout_cols = render_advanced_options()
 
     return {
-        'processed_cards': processed_cards,
+        'cards': processed_cards,
         'auto_pinyin': auto_pinyin,
         'auto_translate': auto_translate,
         'page_size': page_size,

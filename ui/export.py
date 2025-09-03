@@ -18,7 +18,7 @@ def render_export_section(processed_cards: List[Dict[str, str]],
                          config: Dict[str, Any]) -> None:
     """Render the export section with all export options."""
     adapter = get_ui_adapter()
-    adapter.content.header("📤 导出")
+    adapter.header("📤 导出")
 
     if not processed_cards:
         adapter.notifications.info("请先生成卡片以启用导出功能")
@@ -44,7 +44,7 @@ def render_pdf_export_options(processed_cards: List[Dict[str, str]],
                             config: Dict[str, Any]) -> None:
     """Render PDF export options and button."""
     adapter = get_ui_adapter()
-    adapter.content.subheader("📄 PDF 导出")
+    adapter.subheader("📄 PDF 导出")
 
     # PDF-specific options
     col1, col2 = adapter.layout.columns(2)
@@ -122,7 +122,7 @@ def render_pptx_export_options(processed_cards: List[Dict[str, str]],
                              config: Dict[str, Any]) -> None:
     """Render PPTX export options and button."""
     adapter = get_ui_adapter()
-    adapter.content.subheader("📊 PowerPoint 导出")
+    adapter.subheader("📊 PowerPoint 导出")
 
     # PPTX-specific options
     col1, col2 = adapter.layout.columns(2)
@@ -196,7 +196,7 @@ def render_pptx_export_options(processed_cards: List[Dict[str, str]],
 def render_csv_export_options(processed_cards: List[Dict[str, str]]) -> None:
     """Render CSV export options and button."""
     adapter = get_ui_adapter()
-    adapter.content.subheader("📋 CSV 导出")
+    adapter.subheader("📋 CSV 导出")
 
     # CSV-specific options
     col1, col2 = adapter.layout.columns(2)

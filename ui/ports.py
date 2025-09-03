@@ -350,8 +350,10 @@ class StreamlitInputsAdapter(UIInputsPort):
 
     def text_area(self, config: ComponentConfig, value: str = "",
                   height_cm: int = 200) -> str:
+        # Streamlit expects 'height' in pixels; our API uses height_cm for tests.
+        height_px = height_cm
         return st.text_area(
-            config.label, value=value, height_cm=height_cm,
+            config.label, value=value, height=height_px,
             key=config.key, help=config.help_text, disabled=config.disabled
         )
 
@@ -411,7 +413,8 @@ class StreamlitPreviewAdapter(UIPreviewPort):
     """Streamlit implementation of preview port."""
 
     def html_component(self, html_content: str, height_cm: int = 600) -> None:
-        st.components.v1.html(html_content, height_cm=height_cm)
+        # Streamlit components.html expects 'height' (pixels). Keep our arg name for BC.
+        st.components.v1.html(html_content, height=height_cm)
 
     def empty_placeholder(self) -> Any:
         return st.empty()
@@ -672,7 +675,8 @@ class FakePreviewAdapter(UIPreviewPort):
         self.containers: List[str] = []
 
     def html_component(self, html_content: str, height_cm: int = 600) -> None:
-        self.html_renders.append({'content': html_content, 'height_cm': height_cm})
+        # Record normalized field name 'height' for consistency in tests
+        self.html_renders.append({'content': html_content, 'height': height_cm})
 
     def empty_placeholder(self) -> Any:
         placeholder_id = f"placeholder_{len(self.placeholders)}"

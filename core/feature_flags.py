@@ -57,31 +57,31 @@ def configure_feature_flags(
 def get_feature_flag(flag_name: str, default: Any = False) -> Any:
     """
     Get feature flag value with priority: test overrides > env > config file > remote > default.
-    
+
     Args:
         flag_name: Name of the feature flag
         default: Default value if flag not found
-        
+
     Returns:
         Feature flag value
     """
     # Ensure cache is fresh
     _refresh_cache_if_needed()
-    
+
     # Priority 1: Test overrides
     if flag_name in _flag_state.test_overrides:
         return _flag_state.test_overrides[flag_name]
-    
+
     # Priority 2: Environment variables
     env_key = f"{_flag_state.config.env_prefix}{flag_name.upper()}"
     env_value = os.environ.get(env_key)
     if env_value is not None:
         return _parse_env_value(env_value)
-    
+
     # Priority 3-4: Cached flags (config file + remote)
     if flag_name in _flag_state.cached_flags:
         return _flag_state.cached_flags[flag_name]
-    
+
     # Priority 5: Default flags
     if flag_name in DEFAULT_FLAGS:
         return DEFAULT_FLAGS[flag_name]
@@ -103,11 +103,11 @@ def clear_all_test_overrides() -> None:
 
 class FeatureFlagOverride:
     """Context manager for temporary feature flag overrides in tests."""
-    
+
     def __init__(self, **flags):
         self.flags = flags
         self.original_values = {}
-    
+
     def __enter__(self):
         # Store original values
         for flag_name in self.flags:
@@ -115,13 +115,13 @@ class FeatureFlagOverride:
                 self.original_values[flag_name] = _flag_state.test_overrides[flag_name]
             else:
                 self.original_values[flag_name] = None
-        
+
         # Set new values
         for flag_name, value in self.flags.items():
             set_test_override(flag_name, value)
-        
+
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Restore original values
         for flag_name, original_value in self.original_values.items():
@@ -145,17 +145,17 @@ def _refresh_cache_if_needed() -> None:
 def _refresh_cache() -> None:
     """Refresh cache from config file and remote service."""
     new_flags = {}
-    
+
     # Load from config file
     if _flag_state.config.config_file_path:
         config_flags = _load_config_file(_flag_state.config.config_file_path)
         new_flags.update(config_flags)
-    
+
     # Load from remote service (with exponential backoff on failures)
     if _flag_state.config.remote_service_url:
         remote_flags = _load_remote_flags(_flag_state.config.remote_service_url)
         new_flags.update(remote_flags)
-    
+
     # Update cache
     _flag_state.cached_flags = new_flags
     _flag_state.last_cache_update = time.time()
@@ -187,13 +187,13 @@ def _load_remote_flags(service_url: str) -> Dict[str, Any]:
 def _parse_env_value(value: str) -> Union[bool, int, float, str]:
     """Parse environment variable value to appropriate type."""
     value = value.strip()
-    
+
     # Boolean values
     if value.lower() in ('true', '1', 'yes', 'on'):
         return True
     if value.lower() in ('false', '0', 'no', 'off'):
         return False
-    
+
     # Numeric values
     try:
         if '.' in value:
@@ -202,7 +202,7 @@ def _parse_env_value(value: str) -> Union[bool, int, float, str]:
             return int(value)
     except ValueError:
         pass
-    
+
     # String value
     return value
 
@@ -213,6 +213,10 @@ DEFAULT_FLAGS = {
     'persistence': True,  # Enable persistence system
     'debug_panel': True,  # Enable debug panel for development
     'ENABLE_DIGEST_DEBUG': False,  # Enable digest debug panel (development only)
+
+    # New preview pipeline and cache
+    'new_preview_pipeline': True,  # Enable new unified preview controller by default
+    'cache_v2': True,              # Enable cache_v2 usage where supported
 
     # Modularization flags - enabling for Phase 6
 
@@ -232,11 +236,11 @@ DEFAULT_FLAGS = {
     'adapted_options': True,  # Enable adapted options components
     'adapted_preview': True,  # Enable adapted preview components
     'adapted_editor': True,   # Enable adapted editor components
-    'adapted_export': True,   # Enable adapted export components
+    'adapted_export': False,  # Disable adapted export components (use unified export)
     'adapted_sidebar': True,  # Enable adapted sidebar components
 
     # Shared render core
-    'shared_render_core': True,  # Enable shared render core
+    'shared_render_core': False,  # Disable shared render core for preview (use v2 templates)
 
     # Unified sections
     'unified_sections': True,  # Enable unified sections rendering path
@@ -262,6 +266,12 @@ def use_new_preview_pipeline() -> bool:
 def use_ui_adapter() -> bool:
     """Check if UI adapter should be used."""
     return is_feature_enabled('ui_adapter')
+
+
+def use_cache_v2() -> bool:
+    """Check if v2 cache should be used for preview rendering."""
+    return is_feature_enabled('cache_v2')
+
 
 def use_state_service() -> bool:
     """Check if state service should be used."""

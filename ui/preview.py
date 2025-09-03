@@ -423,8 +423,8 @@ def render_preview_content_html_adapted(adapter: UIAdapter, processed_cards: Lis
                 result = render_cards_unified(processed_cards, render_options, output_format='html')
 
                 if result.success:
-                    # Determine height based on preview mode
-                    height_cm = 850 if preview_mode == '📄 完整页面' else 650
+                    # Determine height based on preview mode (pixels)
+                    height = 850 if preview_mode == '📄 完整页面' else 650
 
                     # Render HTML component
                     adapter.preview.html_component(result.content, height_cm=height)
@@ -459,8 +459,8 @@ def render_preview_content_html_adapted(adapter: UIAdapter, processed_cards: Lis
             layout_auto_fill=config.get('layout_auto_fill', True)
         )
 
-        # Determine height based on preview mode
-        height_cm = 850 if preview_mode == '📄 完整页面' else 650
+        # Determine height based on preview mode (pixels)
+        height = 850 if preview_mode == '📄 完整页面' else 650
 
         # Render HTML component
         adapter.preview.html_component(html_content, height_cm=height)

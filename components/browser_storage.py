@@ -15,6 +15,34 @@ from contextlib import contextmanager
 import streamlit as st
 import streamlit.components.v1 as components
 
+# Helper to call components.html with compatible kwargs across real Streamlit and mocks
+def _components_html(html_content: str, *, height_px: int = 0, width_px: int = None, **kwargs):
+    fn = components.html
+    try:
+        import inspect
+        params = tuple(inspect.signature(fn).parameters.keys())
+    except Exception:
+        params = ()
+    call_kwargs = dict(kwargs)
+    # Prefer real Streamlit names
+    if 'height' in params:
+        call_kwargs['height'] = height_px
+    elif 'height_cm' in params:
+        call_kwargs['height_cm'] = height_px
+    else:
+        # Fall back to positional call without extra kwargs (for strict mocks)
+        return fn(html_content, height_px)
+    if width_px is not None:
+        if 'width' in params:
+            call_kwargs['width'] = width_px
+        elif 'width_cm' in params:
+            call_kwargs['width_cm'] = width_px
+    # Filter out kwargs that target function does not accept (e.g., 'key' for strict stubs)
+    if params:
+        accepted = set(params)
+        call_kwargs = {k: v for k, v in call_kwargs.items() if k in accepted}
+    return fn(html_content, **call_kwargs)
+
 from core.feature_flags import get_feature_flag
 from services.persistence import (
     UserSnapshot, create_snapshot_from_session, load_snapshot_from_data,
@@ -482,7 +510,7 @@ class BrowserStorageManager:
         """
 
         # Render the JavaScript
-        components.html(js_code, height_cm=0, key=f"get_storage_{int(time.time() * 1000)}")
+        _components_html(js_code, height_px=0, key=f"get_storage_{int(time.time() * 1000)}")
 
         # Try to get data from session state (may have been set by previous runs)
         return st.session_state.get(storage_state_key, None)
@@ -542,7 +570,7 @@ class BrowserStorageManager:
             """
 
             # Execute JavaScript
-            components.html(js_code, height_cm=0, width_cm=0)
+            _components_html(js_code, height_px=0, width_px=0)
 
             # Store success in session state for verification
             st.session_state[f"_localStorage_save_success_{int(time.time())}"] = True
@@ -554,7 +582,7 @@ class BrowserStorageManager:
             return False
         
         # Render the JavaScript
-        components.html(js_code, height_cm=0, key=f"save_{int(time.time() * 1000)}")
+        _components_html(js_code, height_px=0, key=f"save_{int(time.time() * 1000)}")
     
     def _clear_localstorage(self) -> None:
         """Clear localStorage using JavaScript."""
@@ -582,7 +610,7 @@ class BrowserStorageManager:
         </script>
         """
         
-        components.html(js_code, height_cm=0, key=f"clear_{int(time.time() * 1000)}")
+        _components_html(js_code, height_px=0, key=f"clear_{int(time.time() * 1000)}")
 
     def _get_storage_estimate(self) -> Optional[Dict[str, Any]]:
         """Get storage estimate using Storage API if available."""
@@ -624,7 +652,7 @@ class BrowserStorageManager:
             </script>
             """
 
-            components.html(js_code, height_cm=0, width_cm=0)
+            _components_html(js_code, height_px=0, width_px=0)
 
             # Check if result is available in session state
             if estimate_key in st.session_state:
@@ -674,7 +702,7 @@ class BrowserStorageManager:
             </script>
             """
 
-            components.html(js_code, height_cm=0, width_cm=0)
+            _components_html(js_code, height_px=0, width_px=0)
 
             # For now, return basic info since we can't easily get the result
             return {

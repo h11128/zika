@@ -433,6 +433,19 @@ class StreamlitNotificationAdapter(UINotificationPort):
         _st = _get_st()
         _st.error(message)
 
+    # Convenience aliases expected by some call sites (adapter.notifications.info/...)
+    def info(self, message: str) -> None:
+        self.show_info(message)
+
+    def success(self, message: str) -> None:
+        self.show_success(message)
+
+    def warning(self, message: str) -> None:
+        self.show_warning(message)
+
+    def error(self, message: str) -> None:
+        self.show_error(message)
+
     def show_progress(self, progress: float, text: str = "") -> None:
         """Show progress bar."""
         _st = _get_st()
@@ -599,15 +612,8 @@ class StreamlitAdapter(UIAdapter):
         """
         _st = _get_st()
         if level == 1:
-            # Call both title and header to satisfy different test expectations
-            try:
-                _st.title(text)
-            except Exception:
-                pass
-            try:
-                _st.header(text)
-            except Exception:
-                pass
+            # Use Streamlit title for top-level heading to avoid duplicate rendering
+            _st.title(text)
         elif level == 2:
             _st.subheader(text)
         else:

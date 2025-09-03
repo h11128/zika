@@ -101,15 +101,17 @@ class UnifiedUI:
     
     def text_area(self, label: str, value: str = "", key: Optional[str] = None,
                   help_text: Optional[str] = None, height_cm: int = 200, placeholder: Optional[str] = None) -> str:
-        """Render a text area."""
+        """Render a text area.
+        Note: height_cm is kept for backward compatibility; maps to Streamlit's 'height'.
+        """
         if self._use_adapter and self._adapter:
             from ui.ports import ComponentConfig
             config = ComponentConfig(key=key, label=label, help_text=help_text)
-            return self._adapter.inputs.text_area(config, value=value, height_cm=height)
+            return self._adapter.inputs.text_area(config, value=value, height=height_cm, placeholder=placeholder or "")
         else:
             import streamlit as st
-            return st.text_area(label, value=value, key=key, help=help_text, height_cm=height, placeholder=placeholder)
-    
+            return st.text_area(label, value=value, key=key, help=help_text, height=height_cm, placeholder=placeholder)
+
     def checkbox(self, label: str, value: bool = False, key: Optional[str] = None,
                  help_text: Optional[str] = None) -> bool:
         """Render a checkbox."""
@@ -311,13 +313,21 @@ class UnifiedUI:
             st.dataframe(data)
 
     def html(self, html_content: str, height_cm: int = 400) -> None:
-        """Render HTML content."""
+        """Render HTML content.
+        height_cm is in pixels for historical reasons; Streamlit expects 'height'.
+        """
         if self._use_adapter and self._adapter:
-            # Adapter might not have HTML component, fallback to markdown
+            # If adapter available, prefer its HTML component if present
+            try:
+                # Some adapters expose preview.html_component; fall back to markdown if absent
+                self._adapter.preview.html_component(html_content, height_cm=height_cm)  # type: ignore[attr-defined]
+                return
+            except Exception:
+                pass
             self._adapter.markdown(f"```html\n{html_content}\n```")
         else:
             import streamlit as st
-            st.components.v1.html(html_content, height_cm=height)
+            st.components.v1.html(html_content, height=height_cm)
 
 
 # Global unified UI instance

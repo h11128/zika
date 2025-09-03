@@ -10,6 +10,15 @@ from src.pinyin_utils import hanzi_to_pinyin, contains_chinese
 from .translation import translate_with_google, clean_english_text, translate_with_strategy
 
 
+# Backward-compatible wrapper expected by some UI code/tests
+# Delegates to parse_input_text to produce initial cards structure
+# Accepts arbitrary whitespace/newline-separated input
+# and filters non-Chinese tokens via parse_input_text
+
+def process_text(text: str) -> List[Dict[str, str]]:
+    return parse_input_text(text)
+
+
 
 def parse_input_text(text: str) -> List[Dict[str, str]]:
     """Parse space-separated Chinese characters into card data."""

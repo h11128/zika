@@ -173,10 +173,10 @@ class AppController:
                 # Use SINGLE unified preview entry point
                 try:
                     from ui.preview_controller import render_preview_content_unified
-                    from services.preview_types import AppConfig
+                    from core.config import create_config_from_params
 
-                    # Build unified config - SINGLE configuration format
-                    config = AppConfig(
+                    # Build unified AppConfig from individual parameters
+                    config = create_config_from_params(
                         card_size_cm=left_params.get('card_size_cm', 5.5),
                         gap_cm=left_params.get('gap_cm', 0.5),
                         margin_cm=left_params.get('margin_cm', 1.0),
@@ -186,6 +186,7 @@ class AppController:
                         english_font_size=left_params.get('english_font_size', 14),
                         hanzi_font_family=preview_params.get('hanzi_font_family', 'SimHei'),
                         background_color=preview_params.get('background_color', '#ffffff'),
+                        preview_mode=preview_params.get('preview_mode', '📄 完整页面'),
                         layout_rows=left_params.get('layout_rows', 2),
                         layout_cols=left_params.get('layout_cols', 3),
                         layout_auto_fill=left_params.get('layout_auto_fill', True)

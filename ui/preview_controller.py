@@ -155,71 +155,42 @@ class PreviewController:
                                     use_cache: bool) -> str:
         """Create page preview HTML with v2 pipeline."""
         if use_cache and use_cache_v2():
-            from services.cache_v2 import cached_preview_render
-            return cached_preview_render(
-                self._create_page_preview_html_immediate,
-                processed_cards, page_num, params
+            from services.cache_v2 import cached_create_page_preview_html_v2
+            html = cached_create_page_preview_html_v2(
+                processed_cards, page_num, params.layout, params.typography, params.visual
             )
         else:
-            return self._create_page_preview_html_immediate(
-                processed_cards, page_num, params
+            from services.cache_v2 import create_page_preview_html_v2
+            html = create_page_preview_html_v2(
+                processed_cards, page_num, params.layout, params.typography, params.visual
             )
-    
+        # Wrap with a light-gray canvas and center the page like legacy preview
+        return (
+            "<div style=\"width:100%;display:flex;justify-content:center;"
+            "background-color:#f3f4f6;padding:16px 0;\">" + html + "</div>"
+        )
+
     def _create_simple_grid_html_v2(self, processed_cards: List[Dict[str, str]], 
                                    params: PreviewParams, use_cache: bool) -> str:
         """Create simple grid HTML with v2 pipeline."""
         if use_cache and use_cache_v2():
-            from services.cache_v2 import cached_preview_render
-            return cached_preview_render(
-                self._create_simple_grid_html_immediate,
-                processed_cards, params
+            from services.cache_v2 import cached_create_simple_grid_html_v2
+            return cached_create_simple_grid_html_v2(
+                processed_cards, params.layout, params.typography, params.visual
             )
         else:
-            return self._create_simple_grid_html_immediate(processed_cards, params)
-    
+            from services.cache_v2 import create_simple_grid_html_v2
+            return create_simple_grid_html_v2(
+                processed_cards, params.layout, params.typography, params.visual
+            )
+
     def _create_page_preview_html_immediate(self, processed_cards: List[Dict[str, str]],
                                           page_num: int, params: PreviewParams) -> str:
-        """Create page preview HTML immediately using shared render core."""
-        # Try to use shared render core if available
-        from core.feature_flags import get_feature_flag
-
-        if get_feature_flag('shared_render_core', True):
-            try:
-                from services.render_core import render_cards_unified
-                from services.preview_types import convert_preview_params_to_render_options
-
-                # Convert to render options
-                render_options = convert_preview_params_to_render_options(params)
-
-                # Get cards for current page
-                cards_per_page = params.layout.layout_rows * params.layout.layout_cols
-                start_idx = page_num * cards_per_page
-                end_idx = min(start_idx + cards_per_page, len(processed_cards))
-                page_cards = processed_cards[start_idx:end_idx]
-
-                # Use unified rendering
-                result = render_cards_unified(page_cards, render_options, output_format='html')
-
-                if result.success:
-                    return result.content
-
-            except Exception as e:
-                # Fall back to legacy implementation
-                import logging
-                logging.warning(f"Shared render core failed for page preview, falling back: {e}")
-
-        # Legacy implementation fallback
-        from services.cache_v2 import create_page_preview_html
-        from services.preview_types import extract_legacy_params
-
-        legacy_params = extract_legacy_params(params)
-
-        return create_page_preview_html(
-            processed_cards, page_num,
-            legacy_params['card_size_cm'], legacy_params['gap_cm'], legacy_params['margin_cm'],
-            legacy_params['hanzi_font_size'], legacy_params['pinyin_font_size'], legacy_params['english_font_size'],
-            legacy_params['page_size'], legacy_params['hanzi_font_family'], legacy_params['background_color'],
-            legacy_params['layout_rows'], legacy_params['layout_cols'], legacy_params['layout_auto_fill']
+        """Create page preview HTML immediately using v2 template (no shared core)."""
+        # Always use the v2 page template to ensure legacy zoom/pagination behavior
+        from services.cache_v2 import create_page_preview_html_v2
+        return create_page_preview_html_v2(
+            processed_cards, page_num, params.layout, params.typography, params.visual
         )
 
     def _create_simple_grid_html_immediate(self, processed_cards: List[Dict[str, str]],
